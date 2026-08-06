@@ -20,6 +20,11 @@ export interface ServerEntry {
   status: "aktiv" | "abgeschaltet";
   /** Offizielles Herstellerzeichen. Fehlt es, wird der Buchstabe genommen. */
   mark?: Mark;
+  /**
+   * Fremde Marke eines Drittanbieters. Steuert den Hinweis im Seitenfuß — der soll
+   * genau die Namen nennen, die uns nicht gehören, und nicht fest verdrahtet sein.
+   */
+  thirdPartyBrand?: boolean;
   accent: string;
   icon: string;
   /**
@@ -39,6 +44,21 @@ export interface ServerEntry {
   notes?: string[];
 }
 
+/**
+ * Tarifcheck ist ein eigener Dienst, keine fremde Marke — das Zeichen ist deshalb frei
+ * gewählt: drei Balken, der letzte kürzer, wie Absätze in einem Vertragstext.
+ */
+const TARIF_MARK: Mark = {
+  inner:
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><g fill="#ffffff">' +
+    '<rect x="10" y="16" width="44" height="7" rx="3.5"/>' +
+    '<rect x="10" y="29" width="44" height="7" rx="3.5"/>' +
+    '<rect x="10" y="42" width="26" height="7" rx="3.5"/></g></svg>',
+  bg: "#1F7A5C",
+  accent: "#1F7A5C",
+  fill: 0.62,
+};
+
 export const REGISTRY: ServerEntry[] = [
   {
     id: "hero",
@@ -52,6 +72,7 @@ export const REGISTRY: ServerEntry[] = [
     auth: "oauth",
     status: "aktiv",
     mark: HERO_MARK,
+    thirdPartyBrand: true,
     accent: HERO_MARK.accent,
     icon: "H",
     catalog: "tools.json",
@@ -74,6 +95,7 @@ export const REGISTRY: ServerEntry[] = [
     auth: "oauth",
     status: "aktiv",
     mark: LEXWARE_MARK,
+    thirdPartyBrand: true,
     accent: LEXWARE_MARK.accent,
     icon: "L",
     catalog: "tools.json",
@@ -87,6 +109,34 @@ export const REGISTRY: ServerEntry[] = [
       "PDFs bekommen einen zeitlich begrenzten Link von diesem Server — Lexware selbst " +
         "kennt keine öffentlichen Dokumentlinks.",
       "Der API-Katalog stammt aus github.com/JannikWempe/mcp-lexware-office (MIT).",
+    ],
+  },
+  {
+    id: "tarifcheck",
+    name: "Tarifcheck",
+    tagline: "Tarifverträge",
+    description:
+      "Die Tarifverträge der Gruppenwerk-Gewerke — Bau, Gerüstbau, Maler, Tischler. " +
+      "Täglich automatisch abgeglichen, jede Fassung archiviert. Nur lesend.",
+    origin: "https://tarifcheck.ksqsebastian.workers.dev",
+    mcpUrl: "https://tarifcheck.ksqsebastian.workers.dev/mcp",
+    auth: "oauth",
+    status: "aktiv",
+    mark: TARIF_MARK,
+    accent: TARIF_MARK.accent,
+    icon: "T",
+    catalog: "tools.json",
+    binding: "TARIFCHECK",
+    notes: [
+      "Eigene Anmeldung mit Benutzer und Passwort — dieselbe wie auf der Seite. " +
+        "Kein externer Anbieter dahinter.",
+      "Ausschließlich lesend. Hochladen und Quellen ändern geht nur über die Seite selbst.",
+      "Jede Antwort führt mit, von wann die Fassung ist und ob sie allgemeinverbindlich " +
+        "ist. Beim Maler-Rahmentarifvertrag kursieren ältere Fassungen — ohne diesen " +
+        "Vorbehalt wäre eine Zahl daraus wertlos.",
+      "Für das Tischlerhandwerk gibt es keine Allgemeinverbindlicherklärung und damit " +
+        "keine öffentliche Volltextquelle. Überwacht wird dort nur die Downloadseite; " +
+        "der Vertragstext wird von Hand hochgeladen.",
     ],
   },
 ];

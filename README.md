@@ -7,6 +7,7 @@ OAuth-geschützte MCP-Server auf Cloudflare Workers — plus die Übersichtsseit
 | Übersicht aller Server | https://mcp-hub.ksqsebastian.workers.dev |
 | HERO MCP (Endpoint für Claude) | https://hero-mcp.ksqsebastian.workers.dev/mcp |
 | Lexware Office MCP | https://lexware-mcp.ksqsebastian.workers.dev/mcp |
+| Tarifcheck MCP | https://tarifcheck.ksqsebastian.workers.dev/mcp |
 
 Der Vorgänger auf Vercel (`hero-mcp.vercel.app`) ist am 06.08.2026 abgeschaltet worden und
 antwortet auf jeden Aufruf mit HTTP 410 samt Verweis auf den neuen Endpoint. Aus der Übersicht
@@ -167,6 +168,16 @@ die den Begriff zum ersten Mal lesen, nicht an Entwickler.
 
 ## Einen Server aufnehmen
 
-`hub/src/registry.ts` um einen Eintrag ergänzen. Die Tool-Liste wird nicht dort gepflegt,
-sondern zur Laufzeit vom Server geholt (`/tools.json` oder `tools/list`), damit die
-Übersicht nicht auseinanderläuft.
+`hub/src/registry.ts` um einen Eintrag ergänzen und in `hub/wrangler.jsonc` das passende
+Service-Binding eintragen. Die Tool-Liste wird nicht in der Registry gepflegt, sondern zur
+Laufzeit vom Server geholt (`/tools.json` oder `tools/list`), damit die Übersicht nicht
+auseinanderläuft.
+
+Der Server muss nicht aus diesem Repo kommen — **Tarifcheck** liegt in einem eigenen Repo
+und wird nur eingetragen. Nötig ist von ihm nur ein `/tools.json` im bekannten Format;
+`auth` und `mcpUrl` darin sind optional, der Hub nutzt sie nicht.
+
+Trägt ein Server nur lesende oder nur schreibende Tools, fällt der jeweils leere Abschnitt
+auf der Detailseite weg, und die Übersicht schreibt „nur lesend" statt „6 lesend,
+0 schreibend". Der Markenhinweis im Fuß nennt die Anbieter, die in der Registry als
+`thirdPartyBrand` markiert sind — eigene Dienste stehen dort nicht.

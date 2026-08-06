@@ -26,6 +26,12 @@ function composeLogo(mark, size = 512) {
 }
 
 // hub/src/registry.ts
+var TARIF_MARK = {
+  inner: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><g fill="#ffffff"><rect x="10" y="16" width="44" height="7" rx="3.5"/><rect x="10" y="29" width="44" height="7" rx="3.5"/><rect x="10" y="42" width="26" height="7" rx="3.5"/></g></svg>',
+  bg: "#1F7A5C",
+  accent: "#1F7A5C",
+  fill: 0.62
+};
 var REGISTRY = [
   {
     id: "hero",
@@ -37,6 +43,7 @@ var REGISTRY = [
     auth: "oauth",
     status: "aktiv",
     mark: HERO_MARK,
+    thirdPartyBrand: true,
     accent: HERO_MARK.accent,
     icon: "H",
     catalog: "tools.json",
@@ -57,6 +64,7 @@ var REGISTRY = [
     auth: "oauth",
     status: "aktiv",
     mark: LEXWARE_MARK,
+    thirdPartyBrand: true,
     accent: LEXWARE_MARK.accent,
     icon: "L",
     catalog: "tools.json",
@@ -67,6 +75,27 @@ var REGISTRY = [
       "Lexware erlaubt nur 2 Anfragen pro Sekunde. Der Server h\xE4lt den Abstand selbst ein, gro\xDFe Auswertungen dauern deshalb sp\xFCrbar.",
       "PDFs bekommen einen zeitlich begrenzten Link von diesem Server \u2014 Lexware selbst kennt keine \xF6ffentlichen Dokumentlinks.",
       "Der API-Katalog stammt aus github.com/JannikWempe/mcp-lexware-office (MIT)."
+    ]
+  },
+  {
+    id: "tarifcheck",
+    name: "Tarifcheck",
+    tagline: "Tarifvertr\xE4ge",
+    description: "Die Tarifvertr\xE4ge der Gruppenwerk-Gewerke \u2014 Bau, Ger\xFCstbau, Maler, Tischler. T\xE4glich automatisch abgeglichen, jede Fassung archiviert. Nur lesend.",
+    origin: "https://tarifcheck.ksqsebastian.workers.dev",
+    mcpUrl: "https://tarifcheck.ksqsebastian.workers.dev/mcp",
+    auth: "oauth",
+    status: "aktiv",
+    mark: TARIF_MARK,
+    accent: TARIF_MARK.accent,
+    icon: "T",
+    catalog: "tools.json",
+    binding: "TARIFCHECK",
+    notes: [
+      "Eigene Anmeldung mit Benutzer und Passwort \u2014 dieselbe wie auf der Seite. Kein externer Anbieter dahinter.",
+      "Ausschlie\xDFlich lesend. Hochladen und Quellen \xE4ndern geht nur \xFCber die Seite selbst.",
+      "Jede Antwort f\xFChrt mit, von wann die Fassung ist und ob sie allgemeinverbindlich ist. Beim Maler-Rahmentarifvertrag kursieren \xE4ltere Fassungen \u2014 ohne diesen Vorbehalt w\xE4re eine Zahl daraus wertlos.",
+      "F\xFCr das Tischlerhandwerk gibt es keine Allgemeinverbindlicherkl\xE4rung und damit keine \xF6ffentliche Volltextquelle. \xDCberwacht wird dort nur die Downloadseite; der Vertragstext wird von Hand hochgeladen."
     ]
   }
 ];
@@ -432,12 +461,16 @@ ${body}
 var header = (right = "") => `<header><div class="wrap inner">
 <a class="wordmark" href="/"><span class="mark"></span>MCP-Server</a>
 <div class="right">${right}</div></div></header>`;
-var footer = `<footer><div class="wrap">
+function footer() {
+  const fremd = REGISTRY.filter((e) => e.thirdPartyBrand).map((e) => e.name);
+  const hinweis = fremd.length ? `<br>${esc(fremd.join(" und "))} ${fremd.length > 1 ? "sind Marken" : "ist eine Marke"} der
+jeweiligen Anbieter. Die Logos stehen hier zur Kennzeichnung des angebundenen Systems;
+es sind keine offiziellen Integrationen.` : "";
+  return `<footer><div class="wrap">
 Die Tool-Listen werden live von den Servern geholt, nicht hier gepflegt \u2014 was hier steht,
-ist das, was der Server wirklich kann. <a href="/registry.json">registry.json</a><br>
-HERO und Lexware Office sind Marken der jeweiligen Anbieter. Die Logos stehen hier zur
-Kennzeichnung des angebundenen Systems; es sind keine offiziellen Integrationen.
+ist das, was der Server wirklich kann. <a href="/registry.json">registry.json</a>${hinweis}
 </div></footer>`;
+}
 function urlbar(url, short = false) {
   const shown = short ? url.replace(/^https?:\/\//, "") : url;
   return `<div class="urlbar"><input readonly value="${esc(shown)}"
@@ -458,9 +491,10 @@ function overviewPage(rows) {
   const cards = rows.map(({ entry, catalog }, i) => {
     const read = catalog.tools.filter((t) => t.annotations?.readOnlyHint).length;
     const write = catalog.tools.length - read;
+    const kinds = !write ? "nur lesend" : !read ? "nur schreibend" : `${read} lesend, ${write} schreibend`;
     const facts = catalog.ok ? `<span class="live">Aktiv</span><span class="sep">\xB7</span>
            <span>${catalog.tools.length} Tools</span><span class="sep">\xB7</span>
-           <span>${read} lesend, ${write} schreibend</span><span class="sep">\xB7</span><span>OAuth</span>` : catalog.retired ? `<span class="down">Abgeschaltet</span>` : `<span class="down">Nicht erreichbar</span>`;
+           <span>${kinds}</span><span class="sep">\xB7</span><span>OAuth</span>` : catalog.retired ? `<span class="down">Abgeschaltet</span>` : `<span class="down">Nicht erreichbar</span>`;
     return `<div class="card srv hoverable rise d${Math.min(6, i + 3)}">
 <div class="top">${tile(entry)}
 <div><h3><a href="/s/${esc(entry.id)}">${esc(entry.name)}</a></h3>
@@ -508,7 +542,7 @@ euch beim Verbinden anmeldet.</p>
 <div class="section-head rise d4"><h2>Server</h2><span class="meta">${rows.length} verf\xFCgbar</span></div>
 <div class="grid">${cards}</div>
 </div></section>
-${footer}`
+${footer()}`
   );
 }
 function argLine(tool) {
@@ -528,6 +562,13 @@ function toolBlock(tool) {
 ${tool.title ? `<span class="t">${esc(tool.title)}</span>` : ""}</div>
 <p class="d">${esc(tool.description)}</p>${argLine(tool)}</div>`;
 }
+function group(title, hint, tools) {
+  if (!tools.length) return "";
+  return `<section class="group"><div class="head"><h2>${esc(title)}</h2>
+<span class="count" data-total="${tools.length}">${tools.length} Tools</span></div>
+<p class="hint">${esc(hint)}</p>
+${tools.map(toolBlock).join("")}</section>`;
+}
 function serverPage(entry, catalog) {
   const read = catalog.tools.filter((t) => t.annotations?.readOnlyHint);
   const write = catalog.tools.filter((t) => !t.annotations?.readOnlyHint);
@@ -535,12 +576,8 @@ function serverPage(entry, catalog) {
 <input id="q" class="search" placeholder="Tools durchsuchen" autocomplete="off">
 </div>
 <div id="none" class="empty" hidden>Kein Tool passt zu dieser Suche.</div>
-<section class="group"><div class="head"><h2>Lesend</h2><span class="count" data-total="${read.length}">${read.length} Tools</span></div>
-<p class="hint">Fragen ab. K\xF6nnen nichts ver\xE4ndern.</p>
-${read.map(toolBlock).join("")}</section>
-<section class="group"><div class="head"><h2>Schreibend</h2><span class="count" data-total="${write.length}">${write.length} Tools</span></div>
-<p class="hint">Legen Neues an. \xC4ndern und l\xF6schen nichts Bestehendes.</p>
-${write.map(toolBlock).join("")}</section>` : catalog.retired ? `<div class="note" style="margin-top:34px">Dieser Server ist abgeschaltet. Sein Endpoint
+${group("Lesend", "Fragen ab. K\xF6nnen nichts ver\xE4ndern.", read)}
+${group("Schreibend", "Legen Neues an. \xC4ndern und l\xF6schen nichts Bestehendes.", write)}` : catalog.retired ? `<div class="note" style="margin-top:34px">Dieser Server ist abgeschaltet. Sein Endpoint
 antwortet auf jeden Aufruf mit <b>HTTP 410</b> und nennt den Nachfolger.</div>` : `<div class="note" style="margin-top:34px">Der Server antwortet gerade nicht
 (${esc(catalog.error)}). Die Tool-Liste wird live geholt und fehlt deshalb, w\xE4hrend der Server
 neu startet.</div>`;
@@ -563,7 +600,7 @@ neu startet.</div>`;
 ${entry.notes?.length ? `<ul class="notes rise d3 detail-body">${entry.notes.map((n) => `<li>${esc(n)}</li>`).join("")}</ul>` : ""}
 ${tools}
 </div>
-${footer}`,
+${footer()}`,
     FILTER_JS
   );
 }
@@ -575,7 +612,7 @@ function notFound() {
 <h1 class="display rise" style="font-size:2.4rem">Nicht gefunden</h1>
 <p class="lede rise d1" style="margin-top:16px">Diese Seite gibt es nicht.</p>
 <p class="rise d2" style="margin-top:26px"><a class="go" href="/">Alle Server <span class="arrow">\u2192</span></a></p>
-</div>${footer}`,
+</div>${footer()}`,
     "",
     404
   );

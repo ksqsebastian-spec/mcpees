@@ -1,5 +1,5 @@
 /** Die Übersichtsseite. Alles inline — kein CDN, keine externen Assets, kein Tracking. */
-import type { ServerEntry } from "./registry";
+import { REGISTRY, type ServerEntry } from "./registry";
 import type { Catalog, ToolInfo } from "./catalog";
 import { BASE_CSS, COPY_JS, inkOn } from "../../shared/src/style";
 import { composeLogo } from "../../shared/src/marks";
@@ -184,12 +184,23 @@ const header = (right = "") => `<header><div class="wrap inner">
 <a class="wordmark" href="/"><span class="mark"></span>MCP-Server</a>
 <div class="right">${right}</div></div></header>`;
 
-const footer = `<footer><div class="wrap">
+/**
+ * Der Markenhinweis nennt genau die Anbieter, deren Zeichen hier auftauchen — aus der
+ * Registry gelesen, nicht fest verdrahtet. Sonst nennt er beim nächsten Server die
+ * falschen Namen oder vergisst einen.
+ */
+function footer(): string {
+  const fremd = REGISTRY.filter((e) => e.thirdPartyBrand).map((e) => e.name);
+  const hinweis = fremd.length
+    ? `<br>${esc(fremd.join(" und "))} ${fremd.length > 1 ? "sind Marken" : "ist eine Marke"} der
+jeweiligen Anbieter. Die Logos stehen hier zur Kennzeichnung des angebundenen Systems;
+es sind keine offiziellen Integrationen.`
+    : "";
+  return `<footer><div class="wrap">
 Die Tool-Listen werden live von den Servern geholt, nicht hier gepflegt — was hier steht,
-ist das, was der Server wirklich kann. <a href="/registry.json">registry.json</a><br>
-HERO und Lexware Office sind Marken der jeweiligen Anbieter. Die Logos stehen hier zur
-Kennzeichnung des angebundenen Systems; es sind keine offiziellen Integrationen.
+ist das, was der Server wirklich kann. <a href="/registry.json">registry.json</a>${hinweis}
 </div></footer>`;
+}
 
 /**
  * Angezeigt wird die URL ohne Schema — sonst passt sie in der Kachel nicht und bricht ab.
@@ -221,10 +232,13 @@ export function overviewPage(rows: Array<{ entry: ServerEntry; catalog: Catalog 
     .map(({ entry, catalog }, i) => {
       const read = catalog.tools.filter((t) => t.annotations?.readOnlyHint).length;
       const write = catalog.tools.length - read;
+      // Bei einem reinen Lesedienst wäre "6 lesend, 0 schreibend" umständlich —
+      // "nur lesend" sagt dasselbe und ist obendrein die interessantere Aussage.
+      const kinds = !write ? "nur lesend" : !read ? "nur schreibend" : `${read} lesend, ${write} schreibend`;
       const facts = catalog.ok
         ? `<span class="live">Aktiv</span><span class="sep">·</span>
            <span>${catalog.tools.length} Tools</span><span class="sep">·</span>
-           <span>${read} lesend, ${write} schreibend</span><span class="sep">·</span><span>OAuth</span>`
+           <span>${kinds}</span><span class="sep">·</span><span>OAuth</span>`
         : catalog.retired
           ? `<span class="down">Abgeschaltet</span>`
           : `<span class="down">Nicht erreichbar</span>`;
@@ -277,7 +291,7 @@ euch beim Verbinden anmeldet.</p>
 <div class="section-head rise d4"><h2>Server</h2><span class="meta">${rows.length} verfügbar</span></div>
 <div class="grid">${cards}</div>
 </div></section>
-${footer}`,
+${footer()}`,
   );
 }
 
@@ -308,6 +322,19 @@ ${tool.title ? `<span class="t">${esc(tool.title)}</span>` : ""}</div>
 <p class="d">${esc(tool.description)}</p>${argLine(tool)}</div>`;
 }
 
+/**
+ * Eine Tool-Gruppe. Leere Gruppen fallen weg: ein reiner Lesedienst hätte sonst einen
+ * Abschnitt „Schreibend — 0 Tools" mit der Erklärung, was schreibende Tools tun. Das las
+ * sich, als fehle etwas.
+ */
+function group(title: string, hint: string, tools: ToolInfo[]): string {
+  if (!tools.length) return "";
+  return `<section class="group"><div class="head"><h2>${esc(title)}</h2>
+<span class="count" data-total="${tools.length}">${tools.length} Tools</span></div>
+<p class="hint">${esc(hint)}</p>
+${tools.map(toolBlock).join("")}</section>`;
+}
+
 export function serverPage(entry: ServerEntry, catalog: Catalog): Response {
   const read = catalog.tools.filter((t) => t.annotations?.readOnlyHint);
   const write = catalog.tools.filter((t) => !t.annotations?.readOnlyHint);
@@ -317,12 +344,8 @@ export function serverPage(entry: ServerEntry, catalog: Catalog): Response {
 <input id="q" class="search" placeholder="Tools durchsuchen" autocomplete="off">
 </div>
 <div id="none" class="empty" hidden>Kein Tool passt zu dieser Suche.</div>
-<section class="group"><div class="head"><h2>Lesend</h2><span class="count" data-total="${read.length}">${read.length} Tools</span></div>
-<p class="hint">Fragen ab. Können nichts verändern.</p>
-${read.map(toolBlock).join("")}</section>
-<section class="group"><div class="head"><h2>Schreibend</h2><span class="count" data-total="${write.length}">${write.length} Tools</span></div>
-<p class="hint">Legen Neues an. Ändern und löschen nichts Bestehendes.</p>
-${write.map(toolBlock).join("")}</section>`
+${group("Lesend", "Fragen ab. Können nichts verändern.", read)}
+${group("Schreibend", "Legen Neues an. Ändern und löschen nichts Bestehendes.", write)}`
     : catalog.retired
       ? `<div class="note" style="margin-top:34px">Dieser Server ist abgeschaltet. Sein Endpoint
 antwortet auf jeden Aufruf mit <b>HTTP 410</b> und nennt den Nachfolger.</div>`
@@ -352,7 +375,7 @@ neu startet.</div>`;
 ${entry.notes?.length ? `<ul class="notes rise d3 detail-body">${entry.notes.map((n) => `<li>${esc(n)}</li>`).join("")}</ul>` : ""}
 ${tools}
 </div>
-${footer}`,
+${footer()}`,
     FILTER_JS,
   );
 }
@@ -365,7 +388,7 @@ export function notFound(): Response {
 <h1 class="display rise" style="font-size:2.4rem">Nicht gefunden</h1>
 <p class="lede rise d1" style="margin-top:16px">Diese Seite gibt es nicht.</p>
 <p class="rise d2" style="margin-top:26px"><a class="go" href="/">Alle Server <span class="arrow">→</span></a></p>
-</div>${footer}`,
+</div>${footer()}`,
     "",
     404,
   );
