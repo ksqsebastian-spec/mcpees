@@ -24,6 +24,8 @@ export interface Catalog {
   tools: ToolInfo[];
   serverVersion?: string;
   error?: string;
+  /** Server ist abgeschaltet — kein Katalog erwartet, kein Fehler. */
+  retired?: boolean;
 }
 
 const CACHE_SECONDS = 300;
@@ -33,6 +35,10 @@ export interface HubEnv {
 }
 
 export async function fetchCatalog(entry: ServerEntry, env: HubEnv = {}): Promise<Catalog> {
+  // Abgeschaltete Server werden nicht angefragt. Sonst stünde bei ihnen dauerhaft
+  // "nicht erreichbar" — was nach Störung aussieht statt nach Absicht.
+  if (entry.catalog === "none") return { ok: false, tools: [], retired: true };
+
   // Über ein Service-Binding geht der Aufruf direkt an den anderen Worker, ohne Netz —
   // per fetch() wäre es ein Worker-zu-Worker-Aufruf auf derselben Zone und damit gesperrt.
   const service = entry.binding ? env[entry.binding] : undefined;

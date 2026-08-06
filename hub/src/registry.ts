@@ -15,15 +15,16 @@ export interface ServerEntry {
   /** Der Endpoint, den man in Claude einträgt. */
   mcpUrl: string;
   auth: "oauth" | "none";
-  status: "aktiv" | "abgelöst";
+  status: "aktiv" | "abgeschaltet";
   accent: string;
   icon: string;
   /**
    * Woher der Tool-Katalog kommt:
    *   "tools.json" — GET {origin}/tools.json (unser Format, kein Login nötig)
    *   "mcp"        — POST {mcpUrl} mit tools/list (nur bei Servern ohne Auth möglich)
+   *   "none"       — nicht abfragen (abgeschaltete Server)
    */
-  catalog: "tools.json" | "mcp";
+  catalog: "tools.json" | "mcp" | "none";
   /**
    * Name eines Service-Bindings auf denselben Worker. Cloudflare lässt einen Worker nicht
    * per fetch() an einen anderen Worker derselben Zone (beide auf workers.dev) — solche
@@ -59,21 +60,23 @@ export const REGISTRY: ServerEntry[] = [
   {
     id: "hero-vercel",
     name: "HERO (alt)",
-    tagline: "Python-Server auf Vercel",
+    tagline: "abgeschaltet",
     description:
-      "Die erste Fassung des HERO-Servers: gleiche 34 Tools, aber ohne Authentifizierung und " +
-      "mit fest verdrahtetem API-Key für genau einen Mandanten. Abgelöst durch die " +
-      "Cloudflare-Fassung mit OAuth.",
+      "Die erste Fassung des HERO-Servers lief auf Vercel ohne Authentifizierung und mit " +
+      "fest verdrahtetem API-Key für genau einen Mandanten. Abgeschaltet am 06.08.2026 — " +
+      "der Endpoint antwortet jetzt mit HTTP 410 und verweist auf die Cloudflare-Fassung.",
     origin: "https://hero-mcp.vercel.app",
     mcpUrl: "https://hero-mcp.vercel.app/mcp",
     auth: "none",
-    status: "abgelöst",
+    status: "abgeschaltet",
     accent: "#8b8b93",
     icon: "H",
-    catalog: "mcp",
+    catalog: "none",
     notes: [
-      "Ohne Auth: wer die URL kennt, kann den hinterlegten HERO-Account bedienen.",
-      "upload_file und attach_pdf erwarten dort einen lokalen Dateipfad, den es serverseitig nicht gibt.",
+      "Antwortet auf jeden Aufruf mit 410 Gone und nennt den neuen Endpoint.",
+      "Bewusst kein Redirect: ein MCP-Client kann dem neuen Endpoint nicht folgen, " +
+        "er müsste sich dort erst per OAuth anmelden.",
+      "Die alten Deployments liegen weiter im Vercel-Projekt — ein Rollback ist möglich.",
     ],
   },
 ];

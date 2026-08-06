@@ -127,16 +127,19 @@ export function overviewPage(rows: Array<{ entry: ServerEntry; catalog: Catalog 
 <div><h3><a href="/s/${esc(entry.id)}">${esc(entry.name)}</a></h3>
 <div class="sub">${esc(entry.tagline)}</div></div></div>
 <p style="margin:0;font-size:14.5px">${esc(entry.description)}</p>
-<div class="chips">${authChip(entry)}
-${entry.status === "aktiv" ? "" : `<span class="chip">abgelöst</span>`}
+<div class="chips">${entry.status === "abgeschaltet" ? "" : authChip(entry)}
 ${
-  catalog.ok
-    ? `<span class="chip">${catalog.tools.length} Tools</span>
-       <span class="chip">${read} lesend</span><span class="chip">${write} schreibend</span>`
-    : `<span class="chip warn">nicht erreichbar</span>`
+  catalog.retired
+    ? `<span class="chip warn">abgeschaltet</span><span class="chip">HTTP 410</span>`
+    : catalog.ok
+      ? `<span class="chip">${catalog.tools.length} Tools</span>
+         <span class="chip">${read} lesend</span><span class="chip">${write} schreibend</span>`
+      : `<span class="chip warn">nicht erreichbar</span>`
 }</div>
 ${urlBox(entry.mcpUrl)}
-<div style="font-size:14px"><a href="/s/${esc(entry.id)}">Alle Tools ansehen →</a></div>
+<div style="font-size:14px"><a href="/s/${esc(entry.id)}">${
+        catalog.retired ? "Was daraus wurde" : "Alle Tools ansehen"
+      } →</a></div>
 </article>`;
     })
     .join("");
@@ -200,7 +203,10 @@ export function serverPage(entry: ServerEntry, catalog: Catalog): Response {
 <div class="card" style="padding:6px 22px">${read.map(toolBlock).join("")}</div>
 <h2>Schreibend <span class="count">${write.length} Tools · legen an, ändern und löschen nichts</span></h2>
 <div class="card" style="padding:6px 22px">${write.map(toolBlock).join("")}</div>`
-    : `<div class="note">Der Server antwortet gerade nicht (${esc(catalog.error)}).
+    : catalog.retired
+      ? `<div class="note">Dieser Server ist abgeschaltet. Sein Endpoint antwortet auf jeden
+Aufruf mit <b>HTTP 410 Gone</b> und nennt den Nachfolger — es gibt deshalb keine Tool-Liste mehr.</div>`
+      : `<div class="note">Der Server antwortet gerade nicht (${esc(catalog.error)}).
 Die Tool-Liste wird live geholt und kann deshalb hier fehlen, während der Server neu startet.</div>`;
 
   return shell(
@@ -211,8 +217,9 @@ Die Tool-Liste wird live geholt und kann deshalb hier fehlen, während der Serve
 <div><h1 style="margin:0;font-size:27px">${esc(entry.name)}</h1>
 <div class="sub" style="color:var(--muted)">${esc(entry.tagline)}</div></div></div>
 <p>${esc(entry.description)}</p>
-<div class="chips" style="margin-bottom:16px">${authChip(entry)}
-<span class="chip">${entry.status}</span>
+<div class="chips" style="margin-bottom:16px">${
+  entry.status === "abgeschaltet" ? `<span class="chip warn">abgeschaltet</span>` : authChip(entry)
+}
 ${catalog.ok ? `<span class="chip">${catalog.tools.length} Tools</span>` : ""}
 ${catalog.serverVersion ? `<span class="chip">v${esc(catalog.serverVersion)}</span>` : ""}</div>
 ${urlBox(entry.mcpUrl)}

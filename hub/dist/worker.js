@@ -22,18 +22,19 @@ var REGISTRY = [
   {
     id: "hero-vercel",
     name: "HERO (alt)",
-    tagline: "Python-Server auf Vercel",
-    description: "Die erste Fassung des HERO-Servers: gleiche 34 Tools, aber ohne Authentifizierung und mit fest verdrahtetem API-Key f\xFCr genau einen Mandanten. Abgel\xF6st durch die Cloudflare-Fassung mit OAuth.",
+    tagline: "abgeschaltet",
+    description: "Die erste Fassung des HERO-Servers lief auf Vercel ohne Authentifizierung und mit fest verdrahtetem API-Key f\xFCr genau einen Mandanten. Abgeschaltet am 06.08.2026 \u2014 der Endpoint antwortet jetzt mit HTTP 410 und verweist auf die Cloudflare-Fassung.",
     origin: "https://hero-mcp.vercel.app",
     mcpUrl: "https://hero-mcp.vercel.app/mcp",
     auth: "none",
-    status: "abgel\xF6st",
+    status: "abgeschaltet",
     accent: "#8b8b93",
     icon: "H",
-    catalog: "mcp",
+    catalog: "none",
     notes: [
-      "Ohne Auth: wer die URL kennt, kann den hinterlegten HERO-Account bedienen.",
-      "upload_file und attach_pdf erwarten dort einen lokalen Dateipfad, den es serverseitig nicht gibt."
+      "Antwortet auf jeden Aufruf mit 410 Gone und nennt den neuen Endpoint.",
+      "Bewusst kein Redirect: ein MCP-Client kann dem neuen Endpoint nicht folgen, er m\xFCsste sich dort erst per OAuth anmelden.",
+      "Die alten Deployments liegen weiter im Vercel-Projekt \u2014 ein Rollback ist m\xF6glich."
     ]
   }
 ];
@@ -42,6 +43,7 @@ var byId = new Map(REGISTRY.map((s) => [s.id, s]));
 // hub/src/catalog.ts
 var CACHE_SECONDS = 300;
 async function fetchCatalog(entry, env = {}) {
+  if (entry.catalog === "none") return { ok: false, tools: [], retired: true };
   const service = entry.binding ? env[entry.binding] : void 0;
   const get = (url, init) => service ? service.fetch(new Request(url, init)) : fetch(url, init);
   try {
@@ -181,12 +183,11 @@ function overviewPage(rows) {
 <div><h3><a href="/s/${esc(entry.id)}">${esc(entry.name)}</a></h3>
 <div class="sub">${esc(entry.tagline)}</div></div></div>
 <p style="margin:0;font-size:14.5px">${esc(entry.description)}</p>
-<div class="chips">${authChip(entry)}
-${entry.status === "aktiv" ? "" : `<span class="chip">abgel\xF6st</span>`}
-${catalog.ok ? `<span class="chip">${catalog.tools.length} Tools</span>
-       <span class="chip">${read} lesend</span><span class="chip">${write} schreibend</span>` : `<span class="chip warn">nicht erreichbar</span>`}</div>
+<div class="chips">${entry.status === "abgeschaltet" ? "" : authChip(entry)}
+${catalog.retired ? `<span class="chip warn">abgeschaltet</span><span class="chip">HTTP 410</span>` : catalog.ok ? `<span class="chip">${catalog.tools.length} Tools</span>
+         <span class="chip">${read} lesend</span><span class="chip">${write} schreibend</span>` : `<span class="chip warn">nicht erreichbar</span>`}</div>
 ${urlBox(entry.mcpUrl)}
-<div style="font-size:14px"><a href="/s/${esc(entry.id)}">Alle Tools ansehen \u2192</a></div>
+<div style="font-size:14px"><a href="/s/${esc(entry.id)}">${catalog.retired ? "Was daraus wurde" : "Alle Tools ansehen"} \u2192</a></div>
 </article>`;
   }).join("");
   return shell(
@@ -234,7 +235,8 @@ function serverPage(entry, catalog) {
 <h2>Lesend <span class="count">${read.length} Tools \xB7 k\xF6nnen nichts ver\xE4ndern</span></h2>
 <div class="card" style="padding:6px 22px">${read.map(toolBlock).join("")}</div>
 <h2>Schreibend <span class="count">${write.length} Tools \xB7 legen an, \xE4ndern und l\xF6schen nichts</span></h2>
-<div class="card" style="padding:6px 22px">${write.map(toolBlock).join("")}</div>` : `<div class="note">Der Server antwortet gerade nicht (${esc(catalog.error)}).
+<div class="card" style="padding:6px 22px">${write.map(toolBlock).join("")}</div>` : catalog.retired ? `<div class="note">Dieser Server ist abgeschaltet. Sein Endpoint antwortet auf jeden
+Aufruf mit <b>HTTP 410 Gone</b> und nennt den Nachfolger \u2014 es gibt deshalb keine Tool-Liste mehr.</div>` : `<div class="note">Der Server antwortet gerade nicht (${esc(catalog.error)}).
 Die Tool-Liste wird live geholt und kann deshalb hier fehlen, w\xE4hrend der Server neu startet.</div>`;
   return shell(
     `${entry.name} \u2014 MCP-Server`,
@@ -244,8 +246,7 @@ Die Tool-Liste wird live geholt und kann deshalb hier fehlen, w\xE4hrend der Ser
 <div><h1 style="margin:0;font-size:27px">${esc(entry.name)}</h1>
 <div class="sub" style="color:var(--muted)">${esc(entry.tagline)}</div></div></div>
 <p>${esc(entry.description)}</p>
-<div class="chips" style="margin-bottom:16px">${authChip(entry)}
-<span class="chip">${entry.status}</span>
+<div class="chips" style="margin-bottom:16px">${entry.status === "abgeschaltet" ? `<span class="chip warn">abgeschaltet</span>` : authChip(entry)}
 ${catalog.ok ? `<span class="chip">${catalog.tools.length} Tools</span>` : ""}
 ${catalog.serverVersion ? `<span class="chip">v${esc(catalog.serverVersion)}</span>` : ""}</div>
 ${urlBox(entry.mcpUrl)}
