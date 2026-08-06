@@ -83,28 +83,6 @@ export const REGISTRY: ServerEntry[] = [
       "Der API-Katalog stammt aus github.com/JannikWempe/mcp-lexware-office (MIT).",
     ],
   },
-  {
-    id: "hero-vercel",
-    name: "HERO (alt)",
-    tagline: "abgeschaltet",
-    description:
-      "Die erste Fassung des HERO-Servers lief auf Vercel ohne Authentifizierung und mit " +
-      "fest verdrahtetem API-Key für genau einen Mandanten. Abgeschaltet am 06.08.2026 — " +
-      "der Endpoint antwortet jetzt mit HTTP 410 und verweist auf die Cloudflare-Fassung.",
-    origin: "https://hero-mcp.vercel.app",
-    mcpUrl: "https://hero-mcp.vercel.app/mcp",
-    auth: "none",
-    status: "abgeschaltet",
-    accent: "#8b8b93",
-    icon: "H",
-    catalog: "none",
-    notes: [
-      "Antwortet auf jeden Aufruf mit 410 Gone und nennt den neuen Endpoint.",
-      "Bewusst kein Redirect: ein MCP-Client kann dem neuen Endpoint nicht folgen, " +
-        "er müsste sich dort erst per OAuth anmelden.",
-      "Die alten Deployments liegen weiter im Vercel-Projekt — ein Rollback ist möglich.",
-    ],
-  },
 ];
 
 export const byId = new Map(REGISTRY.map((s) => [s.id, s]));

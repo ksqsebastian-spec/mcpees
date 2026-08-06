@@ -64,51 +64,197 @@ async function verifyPkceS256(verifier, challenge) {
   return timingSafeEqual(b64url(new Uint8Array(d)), challenge);
 }
 
+// shared/src/style.ts
+var BASE_CSS = `
+:root {
+  --ink: #131316;
+  --ink-2: #6e6e78;
+  --ink-3: #9b9ba4;
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --line: #e7e7ea;
+  --line-strong: #d2d2d8;
+  --wash: #f7f7f8;
+  --focus: #131316;
+  --radius: 18px;
+  --ease: cubic-bezier(.22,.61,.25,1);
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #f4f4f6;
+    --ink-2: #a0a0aa;
+    --ink-3: #70707a;
+    --bg: #0b0b0d;
+    --surface: #131316;
+    --line: #26262c;
+    --line-strong: #3a3a42;
+    --wash: #17171b;
+    --focus: #f4f4f6;
+  }
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+a { color: inherit; text-decoration: none; }
+h1, h2, h3 { margin: 0; font-weight: 640; letter-spacing: -.028em; line-height: 1.12; }
+p { margin: 0; }
+
+/* \u2500\u2500 Typografische Stufen \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.display { font-size: clamp(2.3rem, 6.2vw, 3.65rem); letter-spacing: -.042em; line-height: 1.03; font-weight: 660; }
+.lede { font-size: clamp(1.05rem, 1.9vw, 1.28rem); color: var(--ink-2); line-height: 1.5; max-width: 34ch; }
+.eyebrow {
+  font-size: .74rem; font-weight: 620; letter-spacing: .13em; text-transform: uppercase;
+  color: var(--ink-3);
+}
+.meta { font-size: .9rem; color: var(--ink-2); }
+.mono, code { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace; }
+
+/* \u2500\u2500 Raster \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 28px; }
+.narrow { max-width: 720px; }
+
+/* \u2500\u2500 Bewegung: nur beim Eintreten und bei Interaktion \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.rise { animation: rise .62s var(--ease) both; }
+.d1 { animation-delay: .04s } .d2 { animation-delay: .09s } .d3 { animation-delay: .14s }
+.d4 { animation-delay: .19s } .d5 { animation-delay: .24s } .d6 { animation-delay: .29s }
+
+/* \u2500\u2500 Kachel mit dem Systemk\xFCrzel \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.tile {
+  width: 44px; height: 44px; border-radius: 13px; flex: 0 0 auto;
+  display: grid; place-items: center;
+  font-weight: 700; font-size: 19px; letter-spacing: -.03em;
+}
+
+/* \u2500\u2500 Karten \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 26px;
+  transition: transform .28s var(--ease), box-shadow .28s var(--ease), border-color .28s var(--ease);
+}
+a.card:hover, .card.hoverable:hover {
+  transform: translateY(-3px);
+  border-color: var(--line-strong);
+  box-shadow: 0 14px 34px -14px rgba(0,0,0,.18);
+}
+
+/* \u2500\u2500 Links mit Pfeil \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.go { display: inline-flex; align-items: center; gap: .42em; font-weight: 560; font-size: .96rem; }
+.go .arrow { transition: transform .28s var(--ease); }
+.go:hover .arrow { transform: translateX(4px); }
+
+/* \u2500\u2500 URL-Feld mit Kopierknopf \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.urlbar {
+  display: flex; align-items: stretch; gap: 8px;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--wash);
+  padding: 5px 5px 5px 14px; transition: border-color .28s var(--ease);
+}
+.urlbar:focus-within { border-color: var(--line-strong); }
+.urlbar input {
+  flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink);
+  font: 500 13.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  padding: 7px 0; outline: none;
+}
+.copy {
+  border: 0; border-radius: 9px; padding: 7px 14px; cursor: pointer;
+  background: var(--ink); color: var(--bg);
+  font: 620 13px/1.4 inherit; letter-spacing: -.01em;
+  transition: opacity .2s var(--ease), transform .2s var(--ease);
+}
+.copy:hover { opacity: .84; }
+.copy:active { transform: scale(.96); }
+.copy.done { background: #12833f; color: #fff; }
+
+/* \u2500\u2500 Eingabefelder \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.field {
+  width: 100%; padding: 13px 15px; font: 400 16px/1.5 inherit;
+  border: 1px solid var(--line); border-radius: 12px;
+  background: var(--surface); color: var(--ink);
+  transition: border-color .2s var(--ease), box-shadow .2s var(--ease);
+}
+.field::placeholder { color: var(--ink-3); }
+.field:focus { outline: none; border-color: var(--focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 14%, transparent); }
+
+/* \u2500\u2500 Knopf \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.btn {
+  display: block; width: 100%; padding: 14px 18px; border: 0; border-radius: 12px;
+  background: var(--ink); color: var(--bg); cursor: pointer;
+  font: 620 15.5px/1.4 inherit; letter-spacing: -.011em;
+  transition: opacity .2s var(--ease), transform .2s var(--ease);
+}
+.btn:hover { opacity: .86; }
+.btn:active { transform: scale(.988); }
+
+/* \u2500\u2500 Hinweise und Fehler \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.note { background: var(--wash); border-radius: 14px; padding: 18px 20px; font-size: .94rem; color: var(--ink-2); }
+.note strong, .note b { color: var(--ink); font-weight: 600; }
+.err {
+  border-left: 2px solid #c8382f; background: color-mix(in srgb, #c8382f 7%, transparent);
+  border-radius: 0 10px 10px 0; padding: 12px 16px; font-size: .93rem; color: var(--ink);
+}
+
+/* \u2500\u2500 Trennlinien \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.rule { height: 1px; background: var(--line); border: 0; margin: 0; }
+
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+`;
+var COPY_JS = `
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('[data-copy]');
+  if (!b) return;
+  navigator.clipboard.writeText(b.getAttribute('data-copy')).then(function () {
+    var old = b.textContent;
+    b.textContent = 'Kopiert';
+    b.classList.add('done');
+    setTimeout(function () { b.textContent = old; b.classList.remove('done'); }, 1500);
+  });
+});`;
+
 // shared/src/ui.ts
 function esc(s) {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
-var css = (accent) => `
-:root { color-scheme: light dark; }
-* { box-sizing: border-box; }
-body { margin:0; font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
-  background:#fafafa; color:#1b1b1b; display:flex; align-items:center; justify-content:center;
-  min-height:100vh; padding:32px 20px; }
-.card { background:#fff; max-width:520px; width:100%; border-radius:16px; padding:32px;
-  box-shadow:0 1px 3px rgba(0,0,0,.06), 0 12px 32px rgba(0,0,0,.08); }
-.brand { display:flex; align-items:center; gap:12px; margin-bottom:24px; }
-.brand .logo { width:40px; height:40px; border-radius:10px; flex:0 0 auto; }
-.brand b { font-size:18px; letter-spacing:-.01em; }
-.brand span { display:block; font-size:13px; color:#6b7280; font-weight:400; }
-h1 { font-size:20px; margin:0 0 8px; letter-spacing:-.02em; }
-p { margin:0 0 16px; color:#3f3f46; }
-.muted { color:#6b7280; font-size:14px; }
-label { display:block; font-weight:600; font-size:14px; margin:20px 0 6px; }
-input[type=password], input[type=text] { width:100%; padding:11px 13px; font-size:15px;
-  border:1px solid #d4d4d8; border-radius:9px; background:#fff; color:inherit; font-family:inherit; }
-input:focus { outline:2px solid ${accent}; outline-offset:1px; border-color:transparent; }
-button { width:100%; margin-top:22px; padding:12px 16px; font-size:15px; font-weight:650;
-  border:0; border-radius:9px; background:${accent}; color:#1b1b1b; cursor:pointer; font-family:inherit; }
-button:hover { filter:brightness(.95); }
-.app { background:#f4f4f5; border-radius:10px; padding:14px 16px; margin:20px 0;
-  font-size:14px; border:1px solid #e4e4e7; }
-.app b { display:block; font-size:15px; }
-.err { background:#fef2f2; border:1px solid #fecaca; color:#991b1b; border-radius:10px;
-  padding:12px 14px; margin-bottom:16px; font-size:14px; }
-code { background:#f2f2f3; padding:2px 6px; border-radius:5px; font-size:.9em;
-  font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
-ul { padding-left:20px; color:#3f3f46; } li { margin:6px 0; }
-a { color:#0b62d0; }
-.foot { margin-top:26px; padding-top:18px; border-top:1px solid #ececed; font-size:13px; color:#6b7280; }
-@media (prefers-color-scheme: dark) {
-  body { background:#111113; color:#ececed; }
-  .card { background:#19191c; box-shadow:0 1px 3px rgba(0,0,0,.5); }
-  input[type=password], input[type=text] { background:#0e0e10; border-color:#2e2e33; color:#ececed; }
-  .app { background:#111113; border-color:#2e2e33; }
-  p, ul { color:#c4c4c8; } .muted,.foot { color:#8b8b93; }
-  code { background:#26262b; } .foot { border-color:#26262b; }
-  .err { background:#2a1416; border-color:#5c2427; color:#fca5a5; }
-}`;
+var PAGE_CSS = `
+body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 40px 24px; }
+main { width: 100%; max-width: 460px; }
+.brand { display: flex; align-items: center; gap: 13px; margin-bottom: 38px; }
+.brand .name { font-weight: 620; font-size: 16.5px; letter-spacing: -.02em; }
+.brand .sub { font-size: 13.5px; color: var(--ink-3); margin-top: 1px; }
+h1 { font-size: 1.72rem; letter-spacing: -.035em; margin-bottom: 12px; }
+.body { color: var(--ink-2); font-size: 1rem; line-height: 1.62; }
+.body + .body { margin-top: 12px; }
+label { display: block; font-weight: 600; font-size: .88rem; margin: 26px 0 8px; letter-spacing: -.008em; }
+.client {
+  display: flex; align-items: center; gap: 12px;
+  border: 1px solid var(--line); border-radius: 14px; padding: 15px 17px; margin: 24px 0;
+}
+.client .dot { width: 8px; height: 8px; border-radius: 50%; background: #12833f; flex: 0 0 auto; }
+.client .who { font-weight: 600; font-size: .96rem; letter-spacing: -.012em; }
+.client .uri { font-size: .82rem; color: var(--ink-3); margin-top: 1px; }
+.foot { margin-top: 30px; padding-top: 22px; border-top: 1px solid var(--line); font-size: .86rem; color: var(--ink-3); line-height: 1.6; }
+.foot a { color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; }
+ul.points { list-style: none; padding: 0; margin: 26px 0 0; }
+ul.points li { position: relative; padding-left: 20px; margin: 11px 0; color: var(--ink-2); font-size: .96rem; line-height: 1.55; }
+ul.points li::before { content: ""; position: absolute; left: 2px; top: .62em; width: 5px; height: 5px; border-radius: 50%; background: var(--ink-3); }
+ul.points li b { color: var(--ink); font-weight: 600; }
+`;
 var dataUri = (svg) => `data:image/svg+xml;base64,${btoa(svg)}`;
 function page(brand, title, body, status = 200) {
   const logo = dataUri(brand.logoSvg);
@@ -116,10 +262,12 @@ function page(brand, title, body, status = 200) {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)}</title>
 <link rel="icon" href="${logo}">
-<style>${css(brand.accent)}</style></head><body><main class="card">
-<div class="brand"><img class="logo" src="${logo}" alt="">
-<div><b>${esc(brand.name)}</b><span>${esc(brand.tagline)}</span></div></div>
-${body}</main></body></html>`;
+<style>${BASE_CSS}${PAGE_CSS}</style></head><body>
+<main class="rise">
+<div class="brand"><img class="tile" src="${logo}" alt="" width="44" height="44">
+<div><div class="name">${esc(brand.name)}</div><div class="sub">${esc(brand.tagline)}</div></div></div>
+${body}</main>
+<script>${COPY_JS}</script></body></html>`;
   return new Response(html, {
     status,
     headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" }
@@ -130,37 +278,42 @@ function consentPage(opts) {
   return page(
     opts.brand,
     `${opts.brand.name} verbinden`,
-    `${opts.error ? `<div class="err">${esc(opts.error)}</div>` : ""}
+    `${opts.error ? `<div class="err" style="margin-bottom:20px">${esc(opts.error)}</div>` : ""}
 <h1>Zugriff erlauben</h1>
-<div class="app"><b>${esc(opts.clientName)}</b>
-<span class="muted">${opts.clientUri ? esc(opts.clientUri) : "m\xF6chte auf deinen Account zugreifen"}</span></div>
-<p>Gib deinen pers\xF6nlichen ${esc(opts.brand.credentialLabel)} ein. Er wird gegen das System gepr\xFCft
-und danach <b>verschl\xFCsselt</b> gespeichert \u2014 entschl\xFCsseln kann ihn nur der Client, der das
-ausgestellte Token h\xE4lt.</p>
+<p class="body">Gib deinen ${esc(opts.brand.credentialLabel)} ein. Er wird gegen
+${esc(opts.brand.system)} gepr\xFCft und dann verschl\xFCsselt gespeichert \u2014 lesen kann ihn nur der
+Client, der das ausgestellte Token h\xE4lt.</p>
+<div class="client"><span class="dot"></span>
+<div><div class="who">${esc(opts.clientName)}</div>
+${opts.clientUri ? `<div class="uri">${esc(opts.clientUri)}</div>` : ""}</div></div>
 <form method="post">${hidden}
 <label for="key">${esc(opts.brand.credentialLabel)}</label>
-<input id="key" name="credential" type="password" autocomplete="off" spellcheck="false"
-  placeholder="${esc(opts.brand.credentialPlaceholder)}" required autofocus>
-<button type="submit">Pr\xFCfen und verbinden</button></form>
+<input id="key" class="field" name="credential" type="password" autocomplete="off"
+  spellcheck="false" placeholder="${esc(opts.brand.credentialPlaceholder)}" required autofocus>
+<button class="btn" style="margin-top:20px" type="submit">Verbinden</button></form>
 <div class="foot">${opts.brand.credentialHelp}</div>`
   );
 }
 function errorPage(brand, title, message, status = 400) {
-  return page(brand, title, `<h1>${esc(title)}</h1><div class="err">${esc(message)}</div>`, status);
+  return page(
+    brand,
+    title,
+    `<h1>${esc(title)}</h1><div class="err" style="margin-top:16px">${esc(message)}</div>`,
+    status
+  );
 }
 function landingPage(brand, origin, toolCount, hubUrl) {
   return page(
     brand,
     brand.name,
-    `<h1>${esc(brand.name)}</h1>
-<p>${brand.summary} <b>${toolCount} Tools</b>. Gesch\xFCtzt mit OAuth 2.1; jeder Nutzer verbindet
-seinen eigenen Account.</p>
-<label>Server-URL</label>
-<input type="text" readonly value="${esc(origin)}/mcp" onclick="this.select()">
-<p class="muted" style="margin-top:12px">In Claude: <b>Einstellungen \u2192 Connectors \u2192 Connector
-hinzuf\xFCgen</b>, URL einf\xFCgen, dann \xF6ffnet sich die Anmeldung.</p>
-<ul>${brand.bullets.map((b) => `<li>${b}</li>`).join("")}</ul>
-<div class="foot"><a href="${esc(hubUrl)}">Alle MCP-Server im \xDCberblick \u2192</a></div>`
+    `<h1>${esc(brand.tagline)}</h1>
+<p class="body">${brand.summary} <b style="color:var(--ink);font-weight:600">${toolCount} Tools</b>,
+gesch\xFCtzt mit OAuth. Jeder Nutzer verbindet seinen eigenen Zugang.</p>
+<label>Server-URL f\xFCr Claude</label>
+<div class="urlbar"><input readonly value="${esc(origin)}/mcp" onclick="this.select()">
+<button class="copy" data-copy="${esc(origin)}/mcp">Kopieren</button></div>
+<ul class="points">${brand.bullets.map((b) => `<li>${b}</li>`).join("")}</ul>
+<div class="foot"><a href="${esc(hubUrl)}">Alle MCP-Server im \xDCberblick</a></div>`
   );
 }
 

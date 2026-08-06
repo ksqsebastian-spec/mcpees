@@ -17,8 +17,8 @@ import type { ToolContext } from "./context";
 
 const LOGO = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
 <rect width="512" height="512" rx="112" fill="#00A03C"/>
-<path fill="#fff" d="M152 128 h64 v198 h124 v58 H152 Z"/>
-<path fill="#fff" d="M300 128 h68 l-44 74 44 74 h-68 l-44-74 Z" opacity=".55"/></svg>`;
+<path fill="#fff" d="M158 126 h66 v202 h130 v58 H158 Z"/>
+<circle cx="330" cy="168" r="26" fill="#fff" opacity=".5"/></svg>`;
 
 const tools = [...readTools, ...writeTools];
 

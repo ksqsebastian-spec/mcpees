@@ -9,13 +9,13 @@ OAuth-geschützte MCP-Server auf Cloudflare Workers — plus die Übersichtsseit
 | Lexware Office MCP | https://lexware-mcp.ksqsebastian.workers.dev/mcp |
 
 Der Vorgänger auf Vercel (`hero-mcp.vercel.app`) ist am 06.08.2026 abgeschaltet worden und
-antwortet auf jeden Aufruf mit HTTP 410 samt Verweis auf den neuen Endpoint. Die alten
-Deployments liegen weiter im Vercel-Projekt, ein Instant Rollback ist also möglich.
+antwortet auf jeden Aufruf mit HTTP 410 samt Verweis auf den neuen Endpoint. Aus der Übersicht
+ist er entfernt; der 410-Stub bleibt für alle, die noch die alte URL eingetragen haben.
 
 ## Was hier drin ist
 
 ```
-shared/           OAuth-Server, MCP-Protokoll, Seiten — von allen Servern benutzt
+shared/           OAuth-Server, MCP-Protokoll, Gestaltung — von allen Servern benutzt
 servers/hero/     HERO-Handwerkersoftware, 34 Tools
 servers/lexware/  Lexware Office, 17 Tools
 hub/              Übersichtsseite: alle Server, alle Tools, live vom Server geholt
@@ -129,6 +129,20 @@ node scripts/deploy.mjs hub/wrangler.jsonc hub/dist/worker.js
 Die Bindings liest das Deploy-Skript aus `wrangler.jsonc`, weil die Cloudflare-API bei
 jedem Upload *alle* Bindings ersetzt — ein vergessenes Flag löscht sonst still ein Binding.
 Mit installiertem Wrangler geht auch `npx wrangler deploy --config servers/hero/wrangler.jsonc`.
+
+## Gestaltung
+
+Ein Stylesheet für alles: `shared/src/style.ts`. Viel Weiß, wenige Farben, harte Kontraste
+bei der Schrift, Haarlinien statt Schatten. Die Akzentfarbe gehört dem jeweiligen System
+(HERO gelb, Lexware grün) und kommt nur in kleinen Flächen vor — die Seiten selbst bleiben
+schwarzweiß.
+
+Bewegung gibt es nur dort, wo sie etwas bedeutet: Inhalt tritt beim Laden gestaffelt ein,
+Karten heben sich beim Überfahren, der Kopierknopf quittiert. Nichts blinkt, nichts bewegt
+sich von allein weiter, und `prefers-reduced-motion` schaltet alles ab.
+
+Die Übersichtsseite erklärt zuerst, was ein MCP überhaupt ist — sie richtet sich an Kollegen,
+die den Begriff zum ersten Mal lesen, nicht an Entwickler.
 
 ## Einen Server aufnehmen
 

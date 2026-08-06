@@ -39,24 +39,6 @@ var REGISTRY = [
       "PDFs bekommen einen zeitlich begrenzten Link von diesem Server \u2014 Lexware selbst kennt keine \xF6ffentlichen Dokumentlinks.",
       "Der API-Katalog stammt aus github.com/JannikWempe/mcp-lexware-office (MIT)."
     ]
-  },
-  {
-    id: "hero-vercel",
-    name: "HERO (alt)",
-    tagline: "abgeschaltet",
-    description: "Die erste Fassung des HERO-Servers lief auf Vercel ohne Authentifizierung und mit fest verdrahtetem API-Key f\xFCr genau einen Mandanten. Abgeschaltet am 06.08.2026 \u2014 der Endpoint antwortet jetzt mit HTTP 410 und verweist auf die Cloudflare-Fassung.",
-    origin: "https://hero-mcp.vercel.app",
-    mcpUrl: "https://hero-mcp.vercel.app/mcp",
-    auth: "none",
-    status: "abgeschaltet",
-    accent: "#8b8b93",
-    icon: "H",
-    catalog: "none",
-    notes: [
-      "Antwortet auf jeden Aufruf mit 410 Gone und nennt den neuen Endpoint.",
-      "Bewusst kein Redirect: ein MCP-Client kann dem neuen Endpoint nicht folgen, er m\xFCsste sich dort erst per OAuth anmelden.",
-      "Die alten Deployments liegen weiter im Vercel-Projekt \u2014 ein Rollback ist m\xF6glich."
-    ]
   }
 ];
 var byId = new Map(REGISTRY.map((s) => [s.id, s]));
@@ -93,195 +75,473 @@ async function fetchCatalog(entry, env = {}) {
   }
 }
 
-// hub/src/ui.ts
-function esc(s) {
-  return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+// shared/src/style.ts
+function inkOn(hex) {
+  const h = hex.replace("#", "");
+  const n = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(n.slice(i, i + 2), 16) / 255);
+  const lin = (c) => c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  const L = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  return L > 0.45 ? "#16161a" : "#ffffff";
 }
-var CSS = `
-:root { color-scheme: light dark;
-  --bg:#fbfbfc; --fg:#17171a; --muted:#6b7280; --card:#fff; --line:#e8e8ea;
-  --chip:#f3f3f5; --link:#0b62d0; --ok:#0f7b3d; --okbg:#e8f6ee; --warn:#8a5a00; --warnbg:#fdf3dc; }
-@media (prefers-color-scheme: dark) { :root {
-  --bg:#0d0d0f; --fg:#ececed; --muted:#8b8b93; --card:#16161a; --line:#26262b;
-  --chip:#1e1e23; --link:#6aa9f5; --ok:#57cc8a; --okbg:#12261a; --warn:#e8b45a; --warnbg:#2a2110; } }
-* { box-sizing:border-box; }
-body { margin:0; background:var(--bg); color:var(--fg);
-  font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
-  -webkit-font-smoothing:antialiased; }
-.wrap { max-width:960px; margin:0 auto; padding:56px 22px 88px; }
-a { color:var(--link); text-decoration:none; } a:hover { text-decoration:underline; }
-h1 { font-size:34px; line-height:1.2; letter-spacing:-.03em; margin:0 0 12px; }
-h2 { font-size:20px; letter-spacing:-.02em; margin:44px 0 14px; }
-h3 { font-size:16px; margin:0; letter-spacing:-.01em; }
-p { margin:0 0 16px; color:var(--muted); max-width:66ch; }
-.lede { font-size:18px; color:var(--muted); margin-bottom:34px; }
-.grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); }
-.card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:22px;
-  display:flex; flex-direction:column; gap:12px; }
-.card.link:hover { border-color:var(--muted); }
-.head { display:flex; align-items:center; gap:13px; }
-.ico { width:42px; height:42px; border-radius:11px; flex:0 0 auto; display:grid; place-items:center;
-  font-weight:800; font-size:19px; color:#17171a; letter-spacing:-.02em; }
-.head .sub { color:var(--muted); font-size:13px; }
-.chips { display:flex; flex-wrap:wrap; gap:6px; }
-.chip { font-size:12px; font-weight:600; padding:3px 9px; border-radius:999px;
-  background:var(--chip); color:var(--muted); border:1px solid var(--line); white-space:nowrap; }
-.chip.ok { background:var(--okbg); color:var(--ok); border-color:transparent; }
-.chip.warn { background:var(--warnbg); color:var(--warn); border-color:transparent; }
-.url { display:flex; gap:8px; align-items:stretch; }
-.url input { flex:1; min-width:0; font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;
-  padding:9px 11px; border-radius:9px; border:1px solid var(--line);
-  background:var(--chip); color:var(--fg); }
-.url button { padding:9px 13px; border-radius:9px; border:1px solid var(--line);
-  background:var(--card); color:var(--fg); font:600 13px/1 inherit; cursor:pointer; }
-.url button:hover { background:var(--chip); }
-.tool { border-top:1px solid var(--line); padding:15px 0; }
-.tool:first-of-type { border-top:0; }
-.tool .tname { display:flex; align-items:baseline; gap:9px; flex-wrap:wrap; }
-code, .mono { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
-.tool code.n { font-size:14.5px; font-weight:650; color:var(--fg); }
-.tool p { margin:5px 0 0; font-size:14.5px; }
-.args { margin:9px 0 0; display:flex; flex-wrap:wrap; gap:6px; }
-.arg { font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace; padding:2px 8px;
-  border-radius:7px; background:var(--chip); border:1px solid var(--line); color:var(--muted); }
-.arg b { color:var(--fg); font-weight:650; }
-.arg .req { color:#c2410c; }
-@media (prefers-color-scheme: dark) { .arg .req { color:#fb923c; } }
-.search { width:100%; padding:11px 14px; font:15px/1.4 inherit; border-radius:10px;
-  border:1px solid var(--line); background:var(--card); color:var(--fg); margin-bottom:18px; }
-.search:focus { outline:2px solid var(--link); outline-offset:1px; }
-.note { background:var(--chip); border:1px solid var(--line); border-radius:11px;
-  padding:14px 16px; font-size:14px; color:var(--muted); }
-.note ul { margin:0; padding-left:19px; } .note li { margin:4px 0; }
-.foot { margin-top:56px; padding-top:22px; border-top:1px solid var(--line);
-  font-size:13.5px; color:var(--muted); }
-.back { font-size:14px; display:inline-block; margin-bottom:20px; }
-.count { color:var(--muted); font-size:14px; font-weight:400; }
+var BASE_CSS = `
+:root {
+  --ink: #131316;
+  --ink-2: #6e6e78;
+  --ink-3: #9b9ba4;
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --line: #e7e7ea;
+  --line-strong: #d2d2d8;
+  --wash: #f7f7f8;
+  --focus: #131316;
+  --radius: 18px;
+  --ease: cubic-bezier(.22,.61,.25,1);
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #f4f4f6;
+    --ink-2: #a0a0aa;
+    --ink-3: #70707a;
+    --bg: #0b0b0d;
+    --surface: #131316;
+    --line: #26262c;
+    --line-strong: #3a3a42;
+    --wash: #17171b;
+    --focus: #f4f4f6;
+  }
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+a { color: inherit; text-decoration: none; }
+h1, h2, h3 { margin: 0; font-weight: 640; letter-spacing: -.028em; line-height: 1.12; }
+p { margin: 0; }
+
+/* \u2500\u2500 Typografische Stufen \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.display { font-size: clamp(2.3rem, 6.2vw, 3.65rem); letter-spacing: -.042em; line-height: 1.03; font-weight: 660; }
+.lede { font-size: clamp(1.05rem, 1.9vw, 1.28rem); color: var(--ink-2); line-height: 1.5; max-width: 34ch; }
+.eyebrow {
+  font-size: .74rem; font-weight: 620; letter-spacing: .13em; text-transform: uppercase;
+  color: var(--ink-3);
+}
+.meta { font-size: .9rem; color: var(--ink-2); }
+.mono, code { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace; }
+
+/* \u2500\u2500 Raster \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 28px; }
+.narrow { max-width: 720px; }
+
+/* \u2500\u2500 Bewegung: nur beim Eintreten und bei Interaktion \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.rise { animation: rise .62s var(--ease) both; }
+.d1 { animation-delay: .04s } .d2 { animation-delay: .09s } .d3 { animation-delay: .14s }
+.d4 { animation-delay: .19s } .d5 { animation-delay: .24s } .d6 { animation-delay: .29s }
+
+/* \u2500\u2500 Kachel mit dem Systemk\xFCrzel \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.tile {
+  width: 44px; height: 44px; border-radius: 13px; flex: 0 0 auto;
+  display: grid; place-items: center;
+  font-weight: 700; font-size: 19px; letter-spacing: -.03em;
+}
+
+/* \u2500\u2500 Karten \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 26px;
+  transition: transform .28s var(--ease), box-shadow .28s var(--ease), border-color .28s var(--ease);
+}
+a.card:hover, .card.hoverable:hover {
+  transform: translateY(-3px);
+  border-color: var(--line-strong);
+  box-shadow: 0 14px 34px -14px rgba(0,0,0,.18);
+}
+
+/* \u2500\u2500 Links mit Pfeil \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.go { display: inline-flex; align-items: center; gap: .42em; font-weight: 560; font-size: .96rem; }
+.go .arrow { transition: transform .28s var(--ease); }
+.go:hover .arrow { transform: translateX(4px); }
+
+/* \u2500\u2500 URL-Feld mit Kopierknopf \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.urlbar {
+  display: flex; align-items: stretch; gap: 8px;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--wash);
+  padding: 5px 5px 5px 14px; transition: border-color .28s var(--ease);
+}
+.urlbar:focus-within { border-color: var(--line-strong); }
+.urlbar input {
+  flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink);
+  font: 500 13.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  padding: 7px 0; outline: none;
+}
+.copy {
+  border: 0; border-radius: 9px; padding: 7px 14px; cursor: pointer;
+  background: var(--ink); color: var(--bg);
+  font: 620 13px/1.4 inherit; letter-spacing: -.01em;
+  transition: opacity .2s var(--ease), transform .2s var(--ease);
+}
+.copy:hover { opacity: .84; }
+.copy:active { transform: scale(.96); }
+.copy.done { background: #12833f; color: #fff; }
+
+/* \u2500\u2500 Eingabefelder \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.field {
+  width: 100%; padding: 13px 15px; font: 400 16px/1.5 inherit;
+  border: 1px solid var(--line); border-radius: 12px;
+  background: var(--surface); color: var(--ink);
+  transition: border-color .2s var(--ease), box-shadow .2s var(--ease);
+}
+.field::placeholder { color: var(--ink-3); }
+.field:focus { outline: none; border-color: var(--focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 14%, transparent); }
+
+/* \u2500\u2500 Knopf \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.btn {
+  display: block; width: 100%; padding: 14px 18px; border: 0; border-radius: 12px;
+  background: var(--ink); color: var(--bg); cursor: pointer;
+  font: 620 15.5px/1.4 inherit; letter-spacing: -.011em;
+  transition: opacity .2s var(--ease), transform .2s var(--ease);
+}
+.btn:hover { opacity: .86; }
+.btn:active { transform: scale(.988); }
+
+/* \u2500\u2500 Hinweise und Fehler \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.note { background: var(--wash); border-radius: 14px; padding: 18px 20px; font-size: .94rem; color: var(--ink-2); }
+.note strong, .note b { color: var(--ink); font-weight: 600; }
+.err {
+  border-left: 2px solid #c8382f; background: color-mix(in srgb, #c8382f 7%, transparent);
+  border-radius: 0 10px 10px 0; padding: 12px 16px; font-size: .93rem; color: var(--ink);
+}
+
+/* \u2500\u2500 Trennlinien \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.rule { height: 1px; background: var(--line); border: 0; margin: 0; }
+
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
 `;
 var COPY_JS = `
 document.addEventListener('click', function (e) {
   var b = e.target.closest('[data-copy]');
   if (!b) return;
   navigator.clipboard.writeText(b.getAttribute('data-copy')).then(function () {
-    var old = b.textContent; b.textContent = 'Kopiert'; setTimeout(function(){ b.textContent = old; }, 1400);
+    var old = b.textContent;
+    b.textContent = 'Kopiert';
+    b.classList.add('done');
+    setTimeout(function () { b.textContent = old; b.classList.remove('done'); }, 1500);
   });
 });`;
+
+// hub/src/ui.ts
+function esc(s) {
+  return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+var HUB_CSS = `
+header {
+  position: sticky; top: 0; z-index: 10;
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  border-bottom: 1px solid transparent;
+  transition: border-color .3s var(--ease);
+}
+header.stuck { border-bottom-color: var(--line); }
+header .inner { display: flex; align-items: center; justify-content: space-between; height: 62px; }
+.wordmark { font-weight: 620; font-size: 15.5px; letter-spacing: -.022em; display: flex; align-items: center; gap: 9px; }
+.wordmark .mark { width: 9px; height: 9px; border-radius: 3px; background: var(--ink); }
+header .right { font-size: 13.5px; color: var(--ink-3); }
+
+/* \u2500\u2500 Kopfbereich \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.hero { padding: 86px 0 68px; }
+.hero .lede { margin-top: 20px; }
+
+/* \u2500\u2500 Erkl\xE4rung \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.explain { padding: 8px 0 74px; }
+.explain h2 { font-size: 1.6rem; letter-spacing: -.032em; margin: 14px 0 18px; }
+.explain p { color: var(--ink-2); font-size: 1.04rem; line-height: 1.66; max-width: 58ch; }
+.explain p + p { margin-top: 15px; }
+.explain b { color: var(--ink); font-weight: 600; }
+.steps { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line);
+  border-radius: var(--radius); overflow: hidden; margin-top: 34px; grid-template-columns: repeat(3, 1fr); }
+.step { background: var(--surface); padding: 24px 22px; }
+.step .n {
+  width: 25px; height: 25px; border-radius: 50%; display: grid; place-items: center;
+  border: 1px solid var(--line-strong); font-size: 12.5px; font-weight: 620; color: var(--ink-2);
+  margin-bottom: 13px;
+}
+.step h3 { font-size: 1rem; letter-spacing: -.018em; margin-bottom: 6px; }
+.step p { font-size: .91rem; color: var(--ink-2); line-height: 1.55; }
+@media (max-width: 720px) { .steps { grid-template-columns: 1fr; } }
+
+/* \u2500\u2500 Serverliste \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.servers { padding-bottom: 90px; }
+.section-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 22px; }
+.grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.srv { display: flex; flex-direction: column; gap: 15px; }
+.srv .top { display: flex; align-items: center; gap: 14px; }
+.srv h3 { font-size: 1.14rem; letter-spacing: -.024em; }
+.srv .go { margin-top: auto; }
+.srv .tag { font-size: .84rem; color: var(--ink-3); margin-top: 2px; }
+.srv .desc { color: var(--ink-2); font-size: .95rem; line-height: 1.57; }
+.srv .facts { font-size: .84rem; color: var(--ink-3); display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+.srv .facts .sep { opacity: .45; }
+.srv .facts .live { color: #12833f; font-weight: 600; }
+.srv .facts .down { color: #b8442e; font-weight: 600; }
+
+/* \u2500\u2500 Detailseite \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.back { display: inline-flex; align-items: center; gap: .4em; font-size: .9rem; color: var(--ink-2); padding: 30px 0 26px; }
+.back .arrow { transition: transform .28s var(--ease); }
+.back:hover .arrow { transform: translateX(-3px); }
+.detail-body { max-width: 68ch; }
+.detail-head { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+.detail-head h1 { font-size: 2.05rem; letter-spacing: -.038em; }
+.detail-head .tag { color: var(--ink-3); font-size: .93rem; margin-top: 3px; }
+.notes { list-style: none; padding: 0; margin: 26px 0 0; }
+.notes li { position: relative; padding-left: 19px; margin: 10px 0; color: var(--ink-2); font-size: .93rem; line-height: 1.55; }
+.notes li::before { content: ""; position: absolute; left: 2px; top: .6em; width: 5px; height: 5px; border-radius: 50%; background: var(--ink-3); }
+
+.toolbar { position: relative; margin: 54px 0 6px; max-width: 68ch; }
+.search {
+  width: 100%; padding: 13px 15px 13px 42px; font: 400 15.5px/1.5 inherit;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink);
+  transition: border-color .2s var(--ease), box-shadow .2s var(--ease);
+}
+.search::placeholder { color: var(--ink-3); }
+.search:focus { outline: none; border-color: var(--focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 13%, transparent); }
+.toolbar .glass { position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
+  color: var(--ink-3); pointer-events: none; display: flex; }
+
+.group { margin-top: 42px; max-width: 76ch; }
+.group .head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px; }
+.group .head h2 { font-size: 1.06rem; letter-spacing: -.02em; }
+.group .head .count { font-size: .86rem; color: var(--ink-3); }
+.group .hint { font-size: .88rem; color: var(--ink-3); margin-bottom: 14px; }
+
+.tool { padding: 20px 0; border-top: 1px solid var(--line); transition: opacity .2s var(--ease); }
+.tool .row { display: flex; align-items: baseline; gap: 11px; flex-wrap: wrap; }
+.tool .n { font: 600 14.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: -.01em; }
+.tool .t { font-size: .88rem; color: var(--ink-3); }
+.tool .d { margin-top: 6px; color: var(--ink-2); font-size: .94rem; line-height: 1.58; max-width: 74ch; }
+.tool .a { margin-top: 9px; font: 400 12.5px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--ink-3); }
+.tool .a b { color: var(--ink-2); font-weight: 600; }
+.tool .a .req { color: #b8442e; }
+.tool[hidden] { display: none; }
+.empty { padding: 34px 0; color: var(--ink-3); font-size: .95rem; }
+
+footer { border-top: 1px solid var(--line); padding: 34px 0 60px; font-size: .87rem; color: var(--ink-3); line-height: 1.65; }
+footer a { color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; }
+`;
+var FAVICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#131316"/><rect x="18" y="18" width="10" height="10" rx="3" fill="#fff"/><rect x="36" y="18" width="10" height="10" rx="3" fill="#fff" opacity=".55"/><rect x="18" y="36" width="10" height="10" rx="3" fill="#fff" opacity=".55"/><rect x="36" y="36" width="10" height="10" rx="3" fill="#fff"/></svg>';
+var HEADER_JS = `
+(function () {
+  var h = document.querySelector('header');
+  if (!h) return;
+  var onScroll = function () { h.classList.toggle('stuck', window.scrollY > 6); };
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+})();`;
 var FILTER_JS = `
-var q = document.getElementById('q');
-if (q) q.addEventListener('input', function () {
-  var v = this.value.toLowerCase();
-  document.querySelectorAll('[data-tool]').forEach(function (el) {
-    el.style.display = el.getAttribute('data-tool').indexOf(v) === -1 ? 'none' : '';
+(function () {
+  var q = document.getElementById('q');
+  if (!q) return;
+  q.addEventListener('input', function () {
+    var v = this.value.trim().toLowerCase();
+    var visible = 0;
+    document.querySelectorAll('[data-tool]').forEach(function (el) {
+      var hit = !v || el.getAttribute('data-tool').indexOf(v) !== -1;
+      el.hidden = !hit;
+      if (hit) visible++;
+    });
+    document.querySelectorAll('.group').forEach(function (g) {
+      var shown = g.querySelectorAll('.tool:not([hidden])').length;
+      g.hidden = shown === 0;
+      // Der Z\xE4hler muss mitlaufen, sonst behauptet die \xDCberschrift eine Zahl,
+      // die neben der gefilterten Liste sichtbar falsch ist.
+      var c = g.querySelector('.count');
+      if (c) {
+        var total = c.getAttribute('data-total');
+        c.textContent = v ? shown + ' von ' + total : total + ' Tools';
+      }
+    });
+    var none = document.getElementById('none');
+    if (none) none.hidden = visible > 0;
   });
-});`;
-function shell(title, body, extraJs = "") {
+})();`;
+function shell(title, description, body, extraJs = "", status = 200) {
   const html = `<!doctype html><html lang="de"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)}</title>
-<meta name="description" content="\xDCbersicht der MCP-Server: Endpunkte, Authentifizierung und alle Tools.">
-<link rel="icon" href="data:image/svg+xml,${encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0b62d0"/><path d="M18 44V20h7l7 12 7-12h7v24h-7V32l-7 11-7-11v12z" fill="#fff"/></svg>'
-  )}">
-<style>${CSS}</style></head><body><div class="wrap">${body}</div>
-<script>${COPY_JS}${extraJs}</script></body></html>`;
+<meta name="description" content="${esc(description)}">
+<link rel="icon" href="data:image/svg+xml,${encodeURIComponent(FAVICON)}">
+<style>${BASE_CSS}${HUB_CSS}</style></head><body>
+${body}
+<script>${COPY_JS}${HEADER_JS}${extraJs}</script></body></html>`;
   return new Response(html, {
-    headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=120" }
+    status,
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      // Ein 404 darf nicht am Rand hängenbleiben — sonst bleibt eine entfernte Seite
+      // noch Minuten lang „vorhanden".
+      "cache-control": status === 200 ? "public, max-age=120" : "no-store"
+    }
   });
 }
-function urlBox(url) {
-  return `<div class="url"><input readonly value="${esc(url)}" onclick="this.select()">
-<button data-copy="${esc(url)}">Kopieren</button></div>`;
+var header = (right = "") => `<header><div class="wrap inner">
+<a class="wordmark" href="/"><span class="mark"></span>MCP-Server</a>
+<div class="right">${right}</div></div></header>`;
+var footer = `<footer><div class="wrap">
+Die Tool-Listen werden live von den Servern geholt, nicht hier gepflegt \u2014 was hier steht,
+ist das, was der Server wirklich kann. <a href="/registry.json">registry.json</a>
+</div></footer>`;
+function urlbar(url, short = false) {
+  const shown = short ? url.replace(/^https?:\/\//, "") : url;
+  return `<div class="urlbar"><input readonly value="${esc(shown)}"
+onfocus="this.value='${esc(url)}';this.select()" onblur="this.value='${esc(shown)}'"
+aria-label="Server-URL"><button class="copy" data-copy="${esc(url)}">Kopieren</button></div>`;
 }
-function authChip(entry) {
-  return entry.auth === "oauth" ? `<span class="chip ok">OAuth 2.1</span>` : `<span class="chip warn">ohne Auth</span>`;
+function tile(entry, size = 44) {
+  return `<span class="tile" style="background:${esc(entry.accent)};color:${inkOn(entry.accent)};
+width:${size}px;height:${size}px;font-size:${Math.round(size * 0.43)}px">${esc(entry.icon)}</span>`;
 }
 function overviewPage(rows) {
-  const cards = rows.map(({ entry, catalog }) => {
+  const total = rows.reduce((n, r) => n + r.catalog.tools.length, 0);
+  const cards = rows.map(({ entry, catalog }, i) => {
     const read = catalog.tools.filter((t) => t.annotations?.readOnlyHint).length;
     const write = catalog.tools.length - read;
-    return `<article class="card link">
-<div class="head"><div class="ico" style="background:${esc(entry.accent)}">${esc(entry.icon)}</div>
+    const facts = catalog.ok ? `<span class="live">Aktiv</span><span class="sep">\xB7</span>
+           <span>${catalog.tools.length} Tools</span><span class="sep">\xB7</span>
+           <span>${read} lesend, ${write} schreibend</span><span class="sep">\xB7</span><span>OAuth</span>` : catalog.retired ? `<span class="down">Abgeschaltet</span>` : `<span class="down">Nicht erreichbar</span>`;
+    return `<div class="card srv hoverable rise d${Math.min(6, i + 3)}">
+<div class="top">${tile(entry)}
 <div><h3><a href="/s/${esc(entry.id)}">${esc(entry.name)}</a></h3>
-<div class="sub">${esc(entry.tagline)}</div></div></div>
-<p style="margin:0;font-size:14.5px">${esc(entry.description)}</p>
-<div class="chips">${entry.status === "abgeschaltet" ? "" : authChip(entry)}
-${catalog.retired ? `<span class="chip warn">abgeschaltet</span><span class="chip">HTTP 410</span>` : catalog.ok ? `<span class="chip">${catalog.tools.length} Tools</span>
-         <span class="chip">${read} lesend</span><span class="chip">${write} schreibend</span>` : `<span class="chip warn">nicht erreichbar</span>`}</div>
-${urlBox(entry.mcpUrl)}
-<div style="font-size:14px"><a href="/s/${esc(entry.id)}">${catalog.retired ? "Was daraus wurde" : "Alle Tools ansehen"} \u2192</a></div>
-</article>`;
+<div class="tag">${esc(entry.tagline)}</div></div></div>
+<p class="desc">${esc(entry.description)}</p>
+<div class="facts">${facts}</div>
+${urlbar(entry.mcpUrl, true)}
+<a class="go" href="/s/${esc(entry.id)}">Tools ansehen <span class="arrow">\u2192</span></a></div>`;
   }).join("");
   return shell(
-    "MCP-Server \u2014 \xDCbersicht",
-    `<h1>MCP-Server</h1>
-<p class="lede">Alle selbst betriebenen Model-Context-Protocol-Server an einem Ort:
-Endpunkt, Authentifizierung und was jedes Tool tut.</p>
+    "MCP-Server",
+    "Eigene MCP-Server f\xFCr Claude: Endpunkte, Anmeldung und alle Tools im \xDCberblick.",
+    `${header(`${rows.length} Server \xB7 ${total} Tools`)}
+<section class="hero"><div class="wrap">
+<h1 class="display rise">Eure Systeme,<br>direkt im Chat.</h1>
+<p class="lede rise d1">Eigene MCP-Server, die Claude mit der Software verbinden,
+mit der ihr ohnehin arbeitet. Ohne Export, ohne Copy-Paste.</p>
+</div></section>
+
+<section class="explain"><div class="wrap">
+<div class="eyebrow rise d2">Kurz erkl\xE4rt</div>
+<h2 class="rise d2">Was ist ein MCP?</h2>
+<div class="rise d3">
+<p><b>MCP steht f\xFCr Model Context Protocol</b> \u2014 eine gemeinsame Sprache, mit der ein
+KI-Assistent wie Claude mit einer Software reden kann. Ungef\xE4hr das, was USB-C f\xFCr Stecker
+ist: eine Form, auf die sich alle einigen, damit nicht jedes Ger\xE4t sein eigenes Kabel braucht.</p>
+<p>Ohne MCP wei\xDF Claude nur, was im Gespr\xE4ch steht. Mit MCP kann er in eure Systeme schauen
+und dort arbeiten \u2014 nachsehen, wer noch nicht bezahlt hat, ein Angebot schreiben, einen Termin
+eintragen. <b>Ein Server verbindet Claude mit genau einem System.</b></p>
+<p>Was er darf, steht in seiner Tool-Liste, und mehr geht nicht. Die Server hier k\xF6nnen lesen
+und anlegen \u2014 <b>\xE4ndern und l\xF6schen k\xF6nnen sie nicht</b>. Und sie sehen nur das, wof\xFCr ihr
+euch beim Verbinden anmeldet.</p>
+</div>
+<div class="steps rise d4">
+<div class="step"><div class="n">1</div><h3>URL eintragen</h3>
+<p>In Claude unter Einstellungen \u2192 Connectors die Server-URL einf\xFCgen.</p></div>
+<div class="step"><div class="n">2</div><h3>Einmal anmelden</h3>
+<p>Es \xF6ffnet sich eine Anmeldeseite. Dort hinterlegt ihr euren Zugang zum jeweiligen System.</p></div>
+<div class="step"><div class="n">3</div><h3>Fragen stellen</h3>
+<p>\u201EWer schuldet uns noch was?" \u2014 Claude nutzt die passenden Tools von selbst.</p></div>
+</div>
+</div></section>
+
+<section class="servers"><div class="wrap">
+<div class="section-head rise d4"><h2>Server</h2><span class="meta">${rows.length} verf\xFCgbar</span></div>
 <div class="grid">${cards}</div>
-<h2>Einen Server in Claude verbinden</h2>
-<div class="note"><ol style="margin:0;padding-left:19px">
-<li>In Claude: <b>Einstellungen \u2192 Connectors \u2192 Connector hinzuf\xFCgen</b>.</li>
-<li>Die Server-URL von oben einf\xFCgen und best\xE4tigen.</li>
-<li>Bei Servern mit OAuth \xF6ffnet sich eine Anmeldeseite \u2014 dort einmalig die Zugangsdaten
-f\xFCr das jeweilige Fachsystem hinterlegen.</li>
-</ol></div>
-<div class="foot">Die Tool-Listen werden live von den Servern geholt, nicht hier gepflegt \u2014
-was hier steht, ist das, was der Server wirklich kann.
-<a href="/registry.json">registry.json</a></div>`
+</div></section>
+${footer}`
   );
 }
-function argChips(tool) {
+function argLine(tool) {
   const props = tool.inputSchema?.properties ?? {};
   const required = new Set(tool.inputSchema?.required ?? []);
   const names = Object.keys(props);
-  if (!names.length) return `<div class="args"><span class="arg">keine Argumente</span></div>`;
-  return `<div class="args">` + names.map((n) => {
+  if (!names.length) return `<div class="a">ohne Argumente</div>`;
+  return `<div class="a">` + names.map((n) => {
     const type = props[n]?.type ?? "any";
-    const isReq = required.has(n);
-    return `<span class="arg" title="${esc(props[n]?.description ?? "")}">
-<b>${esc(n)}</b>${isReq ? `<span class="req">*</span>` : ""}: ${esc(type)}</span>`;
-  }).join("") + `</div>`;
+    return `<b>${esc(n)}</b>${required.has(n) ? `<span class="req">*</span>` : ""}:&nbsp;${esc(type)}`;
+  }).join(" &nbsp;\xB7&nbsp; ") + `</div>`;
 }
 function toolBlock(tool) {
-  const kind = tool.annotations?.readOnlyHint ? `<span class="chip ok">lesend</span>` : `<span class="chip">schreibend</span>`;
   const hay = `${tool.name} ${tool.title ?? ""} ${tool.description}`.toLowerCase();
   return `<div class="tool" data-tool="${esc(hay)}">
-<div class="tname"><code class="n">${esc(tool.name)}</code>
-${tool.title ? `<span class="count">${esc(tool.title)}</span>` : ""}${kind}</div>
-<p>${esc(tool.description)}</p>${argChips(tool)}</div>`;
+<div class="row"><span class="n">${esc(tool.name)}</span>
+${tool.title ? `<span class="t">${esc(tool.title)}</span>` : ""}</div>
+<p class="d">${esc(tool.description)}</p>${argLine(tool)}</div>`;
 }
 function serverPage(entry, catalog) {
   const read = catalog.tools.filter((t) => t.annotations?.readOnlyHint);
   const write = catalog.tools.filter((t) => !t.annotations?.readOnlyHint);
-  const body = catalog.ok ? `<input id="q" class="search" placeholder="Tools durchsuchen \u2014 Name oder Beschreibung">
-<h2>Lesend <span class="count">${read.length} Tools \xB7 k\xF6nnen nichts ver\xE4ndern</span></h2>
-<div class="card" style="padding:6px 22px">${read.map(toolBlock).join("")}</div>
-<h2>Schreibend <span class="count">${write.length} Tools \xB7 legen an, \xE4ndern und l\xF6schen nichts</span></h2>
-<div class="card" style="padding:6px 22px">${write.map(toolBlock).join("")}</div>` : catalog.retired ? `<div class="note">Dieser Server ist abgeschaltet. Sein Endpoint antwortet auf jeden
-Aufruf mit <b>HTTP 410 Gone</b> und nennt den Nachfolger \u2014 es gibt deshalb keine Tool-Liste mehr.</div>` : `<div class="note">Der Server antwortet gerade nicht (${esc(catalog.error)}).
-Die Tool-Liste wird live geholt und kann deshalb hier fehlen, w\xE4hrend der Server neu startet.</div>`;
+  const tools = catalog.ok ? `<div class="toolbar rise d4"><span class="glass"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.6"/><path d="M10.6 10.6 L14 14" stroke-linecap="round"/></svg></span>
+<input id="q" class="search" placeholder="Tools durchsuchen" autocomplete="off">
+</div>
+<div id="none" class="empty" hidden>Kein Tool passt zu dieser Suche.</div>
+<section class="group"><div class="head"><h2>Lesend</h2><span class="count" data-total="${read.length}">${read.length} Tools</span></div>
+<p class="hint">Fragen ab. K\xF6nnen nichts ver\xE4ndern.</p>
+${read.map(toolBlock).join("")}</section>
+<section class="group"><div class="head"><h2>Schreibend</h2><span class="count" data-total="${write.length}">${write.length} Tools</span></div>
+<p class="hint">Legen Neues an. \xC4ndern und l\xF6schen nichts Bestehendes.</p>
+${write.map(toolBlock).join("")}</section>` : catalog.retired ? `<div class="note" style="margin-top:34px">Dieser Server ist abgeschaltet. Sein Endpoint
+antwortet auf jeden Aufruf mit <b>HTTP 410</b> und nennt den Nachfolger.</div>` : `<div class="note" style="margin-top:34px">Der Server antwortet gerade nicht
+(${esc(catalog.error)}). Die Tool-Liste wird live geholt und fehlt deshalb, w\xE4hrend der Server
+neu startet.</div>`;
+  const facts = [
+    catalog.ok ? `${catalog.tools.length} Tools` : null,
+    entry.auth === "oauth" ? "OAuth 2.1 mit PKCE" : "ohne Authentifizierung",
+    catalog.serverVersion ? `v${catalog.serverVersion}` : null
+  ].filter(Boolean).join(' <span style="opacity:.45">\xB7</span> ');
   return shell(
     `${entry.name} \u2014 MCP-Server`,
-    `<a class="back" href="/">\u2190 Alle Server</a>
-<div class="head" style="margin-bottom:14px">
-<div class="ico" style="background:${esc(entry.accent)};width:52px;height:52px;font-size:23px">${esc(entry.icon)}</div>
-<div><h1 style="margin:0;font-size:27px">${esc(entry.name)}</h1>
-<div class="sub" style="color:var(--muted)">${esc(entry.tagline)}</div></div></div>
-<p>${esc(entry.description)}</p>
-<div class="chips" style="margin-bottom:16px">${entry.status === "abgeschaltet" ? `<span class="chip warn">abgeschaltet</span>` : authChip(entry)}
-${catalog.ok ? `<span class="chip">${catalog.tools.length} Tools</span>` : ""}
-${catalog.serverVersion ? `<span class="chip">v${esc(catalog.serverVersion)}</span>` : ""}</div>
-${urlBox(entry.mcpUrl)}
-${entry.notes?.length ? `<div class="note" style="margin-top:18px"><ul>${entry.notes.map((n) => `<li>${esc(n)}</li>`).join("")}</ul></div>` : ""}
-${body}
-<div class="foot"><a href="${esc(entry.origin)}">${esc(entry.origin)}</a> \xB7
-Katalog live vom Server geholt</div>`,
+    entry.description,
+    `${header()}
+<div class="wrap">
+<a class="back" href="/"><span class="arrow">\u2190</span> Alle Server</a>
+<div class="detail-head rise">${tile(entry, 52)}
+<div><h1>${esc(entry.name)}</h1><div class="tag">${esc(entry.tagline)}</div></div></div>
+<p class="lede rise d1 detail-body" style="max-width:60ch;font-size:1.08rem">${esc(entry.description)}</p>
+<p class="meta rise d1" style="margin:16px 0 26px">${facts}</p>
+<div class="rise d2 detail-body">${urlbar(entry.mcpUrl)}</div>
+${entry.notes?.length ? `<ul class="notes rise d3 detail-body">${entry.notes.map((n) => `<li>${esc(n)}</li>`).join("")}</ul>` : ""}
+${tools}
+</div>
+${footer}`,
     FILTER_JS
   );
 }
 function notFound() {
   return shell(
     "Nicht gefunden",
-    `<h1>Nicht gefunden</h1><p>Diese Seite gibt es nicht.</p><p><a href="/">\u2190 Alle Server</a></p>`
+    "Diese Seite gibt es nicht.",
+    `${header()}<div class="wrap" style="padding:110px 0 140px">
+<h1 class="display rise" style="font-size:2.4rem">Nicht gefunden</h1>
+<p class="lede rise d1" style="margin-top:16px">Diese Seite gibt es nicht.</p>
+<p class="rise d2" style="margin-top:26px"><a class="go" href="/">Alle Server <span class="arrow">\u2192</span></a></p>
+</div>${footer}`,
+    "",
+    404
   );
 }
 
