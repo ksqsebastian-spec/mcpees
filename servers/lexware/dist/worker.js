@@ -869,6 +869,28 @@ function createWorker(config2) {
   };
 }
 
+// shared/src/marks.ts
+var LEXWARE_MARK = {
+  inner: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><g fill="#ff4554"><polygon points="11.1 8.8 8.7 11.8 10.7 14.3 12 14.3 13.8 14.3 15.5 14.3 11.1 8.8"/><polygon points="15.4 1.7 13.8 1.7 12 1.7 10.7 1.7 8.7 4.2 11.1 7.2 15.5 1.7 15.4 1.7"/><polygon points="7.8 4.8 5.3 1.7 .5 1.7 3 4.8 5.6 8 3 11.2 .5 14.3 5.2 14.3 5.3 14.3 7.8 11.2 10.4 8 7.8 4.8"/></g></svg>',
+  bg: "#ffffff",
+  border: true,
+  accent: "#FF4554",
+  fill: 0.64
+};
+var FILL = 0.56;
+function composeLogo(mark, size = 512) {
+  const vb = /viewBox="([\d.\s-]+)"/.exec(mark.inner)?.[1]?.trim().split(/\s+/).map(Number);
+  const [, , vw, vh] = vb && vb.length === 4 ? vb : [0, 0, 1, 1];
+  const box = size * (mark.fill ?? FILL);
+  const scale = Math.min(box / vw, box / vh);
+  const tx = (size - vw * scale) / 2;
+  const ty = (size - vh * scale) / 2;
+  const body = mark.inner.replace(/^<svg[^>]*>/, "").replace(/<\/svg>\s*$/, "");
+  const radius = Math.round(size * 0.219);
+  const stroke = mark.border ? `<rect x=".5" y=".5" width="${size - 1}" height="${size - 1}" rx="${radius}" fill="none" stroke="#dcdce2" stroke-width="${Math.max(1, size / 170)}"/>` : "";
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" rx="${radius}" fill="${mark.bg}"/>${stroke}<g transform="translate(${tx.toFixed(1)} ${ty.toFixed(1)}) scale(${scale.toFixed(4)})">${body}</g></svg>`;
+}
+
 // servers/lexware/src/client.ts
 var LEXWARE_BASE = "https://api.lexware.io";
 var MIN_INTERVAL_MS = 550;
@@ -1944,17 +1966,14 @@ var writeTools = [
 ];
 
 // servers/lexware/src/index.ts
-var LOGO = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-<rect width="512" height="512" rx="112" fill="#00A03C"/>
-<path fill="#fff" d="M158 126 h66 v202 h130 v58 H158 Z"/>
-<circle cx="330" cy="168" r="26" fill="#fff" opacity=".5"/></svg>`;
+var LOGO = composeLogo(LEXWARE_MARK);
 var tools = [...readTools, ...writeTools];
 var config = {
   brand: {
     name: "Lexware Office MCP",
     system: "Lexware",
     tagline: "Buchhaltung f\xFCr Claude",
-    accent: "#00A03C",
+    accent: LEXWARE_MARK.accent,
     logoSvg: LOGO,
     credentialLabel: "Lexware-API-Key",
     credentialPlaceholder: "Public-API-Key aus Lexware Office",

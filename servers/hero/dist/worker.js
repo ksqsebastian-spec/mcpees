@@ -869,6 +869,26 @@ function createWorker(config2) {
   };
 }
 
+// shared/src/marks.ts
+var HERO_MARK = {
+  inner: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 70.95 64"><path fill="#1a1a1a" d="M66.38,0h-21.58l-1.46,20.75h-13.9L30.9,0h-11.43L0,36.57l4.57,27.43h21.58l1.65-22.22h13.9l-1.65,22.22h11.43l19.47-36.57L66.38,0Z"/></svg>',
+  bg: "#FFC400",
+  accent: "#FFC400"
+};
+var FILL = 0.56;
+function composeLogo(mark, size = 512) {
+  const vb = /viewBox="([\d.\s-]+)"/.exec(mark.inner)?.[1]?.trim().split(/\s+/).map(Number);
+  const [, , vw, vh] = vb && vb.length === 4 ? vb : [0, 0, 1, 1];
+  const box = size * (mark.fill ?? FILL);
+  const scale = Math.min(box / vw, box / vh);
+  const tx = (size - vw * scale) / 2;
+  const ty = (size - vh * scale) / 2;
+  const body = mark.inner.replace(/^<svg[^>]*>/, "").replace(/<\/svg>\s*$/, "");
+  const radius = Math.round(size * 0.219);
+  const stroke = mark.border ? `<rect x=".5" y=".5" width="${size - 1}" height="${size - 1}" rx="${radius}" fill="none" stroke="#dcdce2" stroke-width="${Math.max(1, size / 170)}"/>` : "";
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" rx="${radius}" fill="${mark.bg}"/>${stroke}<g transform="translate(${tx.toFixed(1)} ${ty.toFixed(1)}) scale(${scale.toFixed(4)})">${body}</g></svg>`;
+}
+
 // servers/hero/src/input-fields.generated.ts
 var INPUT_FIELDS = {
   "AddressInput": {
@@ -3205,17 +3225,13 @@ async function leadUpload(ctx, blob, filename, field) {
 var tools = [...readTools, ...writeTools];
 
 // servers/hero/src/index.ts
-var LOGO = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-<rect width="512" height="512" rx="112" fill="#FFC400"/>
-<path fill="#1b1b1b" d="M150 130 L226 130 L226 232 L286 232 L286 130 L362 130 L362 382 L286 382 L286 280 L226 280 L226 382 L150 382 Z"/>
-<path fill="#FFC400" d="M150 130 L150 205 L200 130 Z"/>
-<path fill="#FFC400" d="M362 382 L362 307 L312 382 Z"/></svg>`;
+var LOGO = composeLogo(HERO_MARK);
 var config = {
   brand: {
     name: "HERO MCP",
     system: "HERO",
     tagline: "Handwerkersoftware f\xFCr Claude",
-    accent: "#FFC400",
+    accent: HERO_MARK.accent,
     logoSvg: LOGO,
     credentialLabel: "HERO-API-Key",
     credentialPlaceholder: "Bearer-Token aus HERO \u2192 Einstellungen \u2192 API",

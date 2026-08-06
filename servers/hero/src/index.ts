@@ -4,23 +4,20 @@
  */
 import { createWorker } from "../../../shared/src/worker";
 import type { ServerConfig } from "../../../shared/src/types";
+import { composeLogo, HERO_MARK } from "../../../shared/src/marks";
 import { Hero } from "./hero";
 import { getConfig } from "./tenant";
 import { tools } from "./tools";
 import type { ToolContext } from "./context";
 
-const LOGO = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-<rect width="512" height="512" rx="112" fill="#FFC400"/>
-<path fill="#1b1b1b" d="M150 130 L226 130 L226 232 L286 232 L286 130 L362 130 L362 382 L286 382 L286 280 L226 280 L226 382 L150 382 Z"/>
-<path fill="#FFC400" d="M150 130 L150 205 L200 130 Z"/>
-<path fill="#FFC400" d="M362 382 L362 307 L312 382 Z"/></svg>`;
+const LOGO = composeLogo(HERO_MARK);
 
 const config: ServerConfig<ToolContext> = {
   brand: {
     name: "HERO MCP",
     system: "HERO",
     tagline: "Handwerkersoftware für Claude",
-    accent: "#FFC400",
+    accent: HERO_MARK.accent,
     logoSvg: LOGO,
     credentialLabel: "HERO-API-Key",
     credentialPlaceholder: "Bearer-Token aus HERO → Einstellungen → API",

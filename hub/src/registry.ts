@@ -5,6 +5,8 @@
  * gepflegt, sondern zur Laufzeit vom Server selbst geholt (`catalog`), damit die Übersicht
  * nicht auseinanderläuft, sobald jemand ein Tool ändert.
  */
+import { HERO_MARK, LEXWARE_MARK, type Mark } from "../../shared/src/marks";
+
 export interface ServerEntry {
   id: string;
   name: string;
@@ -16,6 +18,8 @@ export interface ServerEntry {
   mcpUrl: string;
   auth: "oauth" | "none";
   status: "aktiv" | "abgeschaltet";
+  /** Offizielles Herstellerzeichen. Fehlt es, wird der Buchstabe genommen. */
+  mark?: Mark;
   accent: string;
   icon: string;
   /**
@@ -47,7 +51,8 @@ export const REGISTRY: ServerEntry[] = [
     mcpUrl: "https://hero-mcp.ksqsebastian.workers.dev/mcp",
     auth: "oauth",
     status: "aktiv",
-    accent: "#FFC400",
+    mark: HERO_MARK,
+    accent: HERO_MARK.accent,
     icon: "H",
     catalog: "tools.json",
     binding: "HERO",
@@ -68,7 +73,8 @@ export const REGISTRY: ServerEntry[] = [
     mcpUrl: "https://lexware-mcp.ksqsebastian.workers.dev/mcp",
     auth: "oauth",
     status: "aktiv",
-    accent: "#00A03C",
+    mark: LEXWARE_MARK,
+    accent: LEXWARE_MARK.accent,
     icon: "L",
     catalog: "tools.json",
     binding: "LEXWARE",

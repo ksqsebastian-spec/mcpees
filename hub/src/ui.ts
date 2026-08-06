@@ -2,6 +2,7 @@
 import type { ServerEntry } from "./registry";
 import type { Catalog, ToolInfo } from "./catalog";
 import { BASE_CSS, COPY_JS, inkOn } from "../../shared/src/style";
+import { composeLogo } from "../../shared/src/marks";
 
 export function esc(s: unknown): string {
   return String(s ?? "")
@@ -185,7 +186,9 @@ const header = (right = "") => `<header><div class="wrap inner">
 
 const footer = `<footer><div class="wrap">
 Die Tool-Listen werden live von den Servern geholt, nicht hier gepflegt — was hier steht,
-ist das, was der Server wirklich kann. <a href="/registry.json">registry.json</a>
+ist das, was der Server wirklich kann. <a href="/registry.json">registry.json</a><br>
+HERO und Lexware Office sind Marken der jeweiligen Anbieter. Die Logos stehen hier zur
+Kennzeichnung des angebundenen Systems; es sind keine offiziellen Integrationen.
 </div></footer>`;
 
 /**
@@ -200,6 +203,11 @@ aria-label="Server-URL"><button class="copy" data-copy="${esc(url)}">Kopieren</b
 }
 
 function tile(entry: ServerEntry, size = 44): string {
+  if (entry.mark) {
+    const svg = `data:image/svg+xml;base64,${btoa(composeLogo(entry.mark, 128))}`;
+    return `<img class="tile" src="${svg}" alt="" width="${size}" height="${size}"
+style="width:${size}px;height:${size}px">`;
+  }
   return `<span class="tile" style="background:${esc(entry.accent)};color:${inkOn(entry.accent)};
 width:${size}px;height:${size}px;font-size:${Math.round(size * 0.43)}px">${esc(entry.icon)}</span>`;
 }

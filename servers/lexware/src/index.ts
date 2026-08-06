@@ -9,16 +9,14 @@
  */
 import { createWorker } from "../../../shared/src/worker";
 import type { ServerConfig } from "../../../shared/src/types";
+import { composeLogo, LEXWARE_MARK } from "../../../shared/src/marks";
 import { Lexware } from "./client";
 import { serveFile } from "./files";
 import { readTools } from "./tools/read";
 import { writeTools } from "./tools/write";
 import type { ToolContext } from "./context";
 
-const LOGO = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-<rect width="512" height="512" rx="112" fill="#00A03C"/>
-<path fill="#fff" d="M158 126 h66 v202 h130 v58 H158 Z"/>
-<circle cx="330" cy="168" r="26" fill="#fff" opacity=".5"/></svg>`;
+const LOGO = composeLogo(LEXWARE_MARK);
 
 const tools = [...readTools, ...writeTools];
 
@@ -27,7 +25,7 @@ const config: ServerConfig<ToolContext> = {
     name: "Lexware Office MCP",
     system: "Lexware",
     tagline: "Buchhaltung für Claude",
-    accent: "#00A03C",
+    accent: LEXWARE_MARK.accent,
     logoSvg: LOGO,
     credentialLabel: "Lexware-API-Key",
     credentialPlaceholder: "Public-API-Key aus Lexware Office",
