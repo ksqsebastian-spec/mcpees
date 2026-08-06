@@ -1,0 +1,20 @@
+{
+  // Deployment läuft in dieser Umgebung über die Cloudflare-API (siehe scripts/deploy.mjs),
+  // weil kein Wrangler-Token vorliegt. Diese Datei ist die Wahrheit über die Konfiguration
+  // und macht `wrangler deploy` möglich, sobald jemand lokal mit eigenem Token arbeitet.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hero-mcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-01",
+  "workers_dev": true,
+  "observability": { "enabled": true },
+  "kv_namespaces": [
+    {
+      "binding": "OAUTH_KV",
+      "id": "c5d713c697f342d08e21827987e77bf6"
+    }
+  ],
+  "vars": {
+    "HUB_URL": "https://mcp-hub.ksqsebastian.workers.dev"
+  }
+}
