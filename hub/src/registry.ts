@@ -24,6 +24,13 @@ export interface ServerEntry {
    *   "mcp"        — POST {mcpUrl} mit tools/list (nur bei Servern ohne Auth möglich)
    */
   catalog: "tools.json" | "mcp";
+  /**
+   * Name eines Service-Bindings auf denselben Worker. Cloudflare lässt einen Worker nicht
+   * per fetch() an einen anderen Worker derselben Zone (beide auf workers.dev) — solche
+   * Aufrufe scheitern mit Fehler 1042. Das Service-Binding ist der vorgesehene Weg und
+   * spart obendrein den Umweg übers Netz.
+   */
+  binding?: string;
   notes?: string[];
 }
 
@@ -42,6 +49,7 @@ export const REGISTRY: ServerEntry[] = [
     accent: "#FFC400",
     icon: "H",
     catalog: "tools.json",
+    binding: "HERO",
     notes: [
       "OAuth 2.1 mit PKCE — jeder Nutzer hinterlegt beim Verbinden seinen eigenen HERO-API-Key.",
       "Mehrmandantenfähig: dieselbe URL funktioniert für mehrere Betriebe.",

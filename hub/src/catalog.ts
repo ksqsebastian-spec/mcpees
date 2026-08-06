@@ -28,10 +28,20 @@ export interface Catalog {
 
 const CACHE_SECONDS = 300;
 
-export async function fetchCatalog(entry: ServerEntry): Promise<Catalog> {
+export interface HubEnv {
+  [binding: string]: { fetch: (req: Request) => Promise<Response> } | undefined;
+}
+
+export async function fetchCatalog(entry: ServerEntry, env: HubEnv = {}): Promise<Catalog> {
+  // Über ein Service-Binding geht der Aufruf direkt an den anderen Worker, ohne Netz —
+  // per fetch() wäre es ein Worker-zu-Worker-Aufruf auf derselben Zone und damit gesperrt.
+  const service = entry.binding ? env[entry.binding] : undefined;
+  const get = (url: string, init?: RequestInit) =>
+    service ? service.fetch(new Request(url, init)) : fetch(url, init);
+
   try {
     if (entry.catalog === "tools.json") {
-      const res = await fetch(`${entry.origin}/tools.json`, {
+      const res = await get(`${entry.origin}/tools.json`, {
         cf: { cacheTtl: CACHE_SECONDS, cacheEverything: true },
       } as RequestInit);
       if (!res.ok) return { ok: false, tools: [], error: `HTTP ${res.status}` };
@@ -40,7 +50,7 @@ export async function fetchCatalog(entry: ServerEntry): Promise<Catalog> {
     }
 
     // Server ohne eigenen Katalog-Endpoint: direkt per MCP fragen. Geht nur ohne Auth.
-    const res = await fetch(entry.mcpUrl, {
+    const res = await get(entry.mcpUrl, {
       method: "POST",
       headers: { "content-type": "application/json", accept: "application/json, text/event-stream" },
       body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} }),

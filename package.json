@@ -7,6 +7,7 @@
   "scripts": {
     "gen": "node scripts/gen-input-fields.mjs",
     "validate": "node scripts/validate-queries.mjs",
+    "test": "node scripts/test-oauth-flow.mjs",
     "typecheck": "tsc --noEmit -p servers/hero/tsconfig.json && tsc --noEmit -p hub/tsconfig.json",
     "build:hero": "node scripts/bundle.mjs servers/hero/src/index.ts servers/hero/dist/worker.js",
     "build:hub": "node scripts/bundle.mjs hub/src/index.ts hub/dist/worker.js",

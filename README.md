@@ -60,20 +60,25 @@ Client zur Laufzeit die Feldnamen jedes Input-Objekts gegen eine generierte Kart
 (`scripts/gen-input-fields.mjs`) — ein `productId` statt `product_id` fliegt auf, bevor
 ein Request rausgeht.
 
+`npm test` fährt zusätzlich den kompletten OAuth-Flow gegen den gebauten Worker: Code-Tausch,
+PKCE-Verifikation, Einmalgebrauch des Codes, Refresh-Rotation, Widerruf, ein echter
+`tools/call` — und prüft dabei, dass weder HERO-Key noch Access-Token im Klartext in KV landen.
+
 ## Bauen und deployen
 
 ```bash
 npm install
-npm run build                    # generiert, validiert, typisiert, bündelt beide Worker
-node scripts/deploy.mjs --help   # Deployment über die Cloudflare-API
+npm run build     # generiert, validiert, typisiert, bündelt beide Worker
+npm test          # kompletter OAuth-Flow gegen den Bundle, mit KV- und HERO-Attrappe
+
+export CLOUDFLARE_API_TOKEN=… CLOUDFLARE_ACCOUNT_ID=…
+node scripts/deploy.mjs servers/hero/wrangler.jsonc servers/hero/dist/worker.js
+node scripts/deploy.mjs hub/wrangler.jsonc hub/dist/worker.js
 ```
 
-Mit eigenem Cloudflare-Token geht auch der normale Weg:
-
-```bash
-npx wrangler deploy --config servers/hero/wrangler.jsonc
-npx wrangler deploy --config hub/wrangler.jsonc
-```
+Die Bindings liest das Deploy-Skript aus `wrangler.jsonc`, weil die Cloudflare-API bei
+jedem Upload *alle* Bindings ersetzt — ein vergessenes Flag löscht sonst still ein Binding.
+Mit installiertem Wrangler geht auch `npx wrangler deploy --config servers/hero/wrangler.jsonc`.
 
 ## Einen Server aufnehmen
 

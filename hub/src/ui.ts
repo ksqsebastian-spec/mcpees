@@ -43,7 +43,7 @@ p { margin:0 0 16px; color:var(--muted); max-width:66ch; }
 .chip.ok { background:var(--okbg); color:var(--ok); border-color:transparent; }
 .chip.warn { background:var(--warnbg); color:var(--warn); border-color:transparent; }
 .url { display:flex; gap:8px; align-items:stretch; }
-.url input { flex:1; min-width:0; font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;
+.url input { flex:1; min-width:0; font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;
   padding:9px 11px; border-radius:9px; border:1px solid var(--line);
   background:var(--chip); color:var(--fg); }
 .url button { padding:9px 13px; border-radius:9px; border:1px solid var(--line);

@@ -6,17 +6,17 @@
  *   GET /registry.json  Dasselbe maschinenlesbar
  */
 import { REGISTRY, byId } from "./registry";
-import { fetchCatalog } from "./catalog";
+import { fetchCatalog, type HubEnv } from "./catalog";
 import { overviewPage, serverPage, notFound } from "./ui";
 
 export default {
-  async fetch(request: Request): Promise<Response> {
+  async fetch(request: Request, env: HubEnv): Promise<Response> {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, "") || "/";
 
     if (path === "/") {
       const rows = await Promise.all(
-        REGISTRY.map(async (entry) => ({ entry, catalog: await fetchCatalog(entry) })),
+        REGISTRY.map(async (entry) => ({ entry, catalog: await fetchCatalog(entry, env) })),
       );
       return overviewPage(rows);
     }
@@ -24,7 +24,7 @@ export default {
     if (path === "/registry.json") {
       const rows = await Promise.all(
         REGISTRY.map(async (entry) => {
-          const catalog = await fetchCatalog(entry);
+          const catalog = await fetchCatalog(entry, env);
           return {
             id: entry.id,
             name: entry.name,
@@ -55,7 +55,7 @@ export default {
     if (match) {
       const entry = byId.get(match[1]);
       if (!entry) return notFound();
-      return serverPage(entry, await fetchCatalog(entry));
+      return serverPage(entry, await fetchCatalog(entry, env));
     }
 
     return notFound();

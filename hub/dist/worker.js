@@ -12,6 +12,7 @@ var REGISTRY = [
     accent: "#FFC400",
     icon: "H",
     catalog: "tools.json",
+    binding: "HERO",
     notes: [
       "OAuth 2.1 mit PKCE \u2014 jeder Nutzer hinterlegt beim Verbinden seinen eigenen HERO-API-Key.",
       "Mehrmandantenf\xE4hig: dieselbe URL funktioniert f\xFCr mehrere Betriebe.",
@@ -40,17 +41,19 @@ var byId = new Map(REGISTRY.map((s) => [s.id, s]));
 
 // hub/src/catalog.ts
 var CACHE_SECONDS = 300;
-async function fetchCatalog(entry) {
+async function fetchCatalog(entry, env = {}) {
+  const service = entry.binding ? env[entry.binding] : void 0;
+  const get = (url, init) => service ? service.fetch(new Request(url, init)) : fetch(url, init);
   try {
     if (entry.catalog === "tools.json") {
-      const res2 = await fetch(`${entry.origin}/tools.json`, {
+      const res2 = await get(`${entry.origin}/tools.json`, {
         cf: { cacheTtl: CACHE_SECONDS, cacheEverything: true }
       });
       if (!res2.ok) return { ok: false, tools: [], error: `HTTP ${res2.status}` };
       const body2 = await res2.json();
       return { ok: true, tools: body2.tools ?? [], serverVersion: body2.server?.version };
     }
-    const res = await fetch(entry.mcpUrl, {
+    const res = await get(entry.mcpUrl, {
       method: "POST",
       headers: { "content-type": "application/json", accept: "application/json, text/event-stream" },
       body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} })
@@ -103,7 +106,7 @@ p { margin:0 0 16px; color:var(--muted); max-width:66ch; }
 .chip.ok { background:var(--okbg); color:var(--ok); border-color:transparent; }
 .chip.warn { background:var(--warnbg); color:var(--warn); border-color:transparent; }
 .url { display:flex; gap:8px; align-items:stretch; }
-.url input { flex:1; min-width:0; font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;
+.url input { flex:1; min-width:0; font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;
   padding:9px 11px; border-radius:9px; border:1px solid var(--line);
   background:var(--chip); color:var(--fg); }
 .url button { padding:9px 13px; border-radius:9px; border:1px solid var(--line);
@@ -262,19 +265,19 @@ function notFound() {
 
 // hub/src/index.ts
 var index_default = {
-  async fetch(request) {
+  async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, "") || "/";
     if (path === "/") {
       const rows = await Promise.all(
-        REGISTRY.map(async (entry) => ({ entry, catalog: await fetchCatalog(entry) }))
+        REGISTRY.map(async (entry) => ({ entry, catalog: await fetchCatalog(entry, env) }))
       );
       return overviewPage(rows);
     }
     if (path === "/registry.json") {
       const rows = await Promise.all(
         REGISTRY.map(async (entry) => {
-          const catalog = await fetchCatalog(entry);
+          const catalog = await fetchCatalog(entry, env);
           return {
             id: entry.id,
             name: entry.name,
@@ -304,7 +307,7 @@ var index_default = {
     if (match) {
       const entry = byId.get(match[1]);
       if (!entry) return notFound();
-      return serverPage(entry, await fetchCatalog(entry));
+      return serverPage(entry, await fetchCatalog(entry, env));
     }
     return notFound();
   }
