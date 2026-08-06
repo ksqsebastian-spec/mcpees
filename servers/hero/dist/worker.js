@@ -1,4 +1,4 @@
-// servers/hero/src/crypto.ts
+// shared/src/crypto.ts
 var enc = new TextEncoder();
 var dec = new TextDecoder();
 function b64url(bytes) {
@@ -62,6 +62,658 @@ async function openJSON(secret, sealed) {
 async function verifyPkceS256(verifier, challenge) {
   const d = await crypto.subtle.digest("SHA-256", enc.encode(verifier));
   return timingSafeEqual(b64url(new Uint8Array(d)), challenge);
+}
+
+// shared/src/ui.ts
+function esc(s) {
+  return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+var css = (accent) => `
+:root { color-scheme: light dark; }
+* { box-sizing: border-box; }
+body { margin:0; font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  background:#fafafa; color:#1b1b1b; display:flex; align-items:center; justify-content:center;
+  min-height:100vh; padding:32px 20px; }
+.card { background:#fff; max-width:520px; width:100%; border-radius:16px; padding:32px;
+  box-shadow:0 1px 3px rgba(0,0,0,.06), 0 12px 32px rgba(0,0,0,.08); }
+.brand { display:flex; align-items:center; gap:12px; margin-bottom:24px; }
+.brand .logo { width:40px; height:40px; border-radius:10px; flex:0 0 auto; }
+.brand b { font-size:18px; letter-spacing:-.01em; }
+.brand span { display:block; font-size:13px; color:#6b7280; font-weight:400; }
+h1 { font-size:20px; margin:0 0 8px; letter-spacing:-.02em; }
+p { margin:0 0 16px; color:#3f3f46; }
+.muted { color:#6b7280; font-size:14px; }
+label { display:block; font-weight:600; font-size:14px; margin:20px 0 6px; }
+input[type=password], input[type=text] { width:100%; padding:11px 13px; font-size:15px;
+  border:1px solid #d4d4d8; border-radius:9px; background:#fff; color:inherit; font-family:inherit; }
+input:focus { outline:2px solid ${accent}; outline-offset:1px; border-color:transparent; }
+button { width:100%; margin-top:22px; padding:12px 16px; font-size:15px; font-weight:650;
+  border:0; border-radius:9px; background:${accent}; color:#1b1b1b; cursor:pointer; font-family:inherit; }
+button:hover { filter:brightness(.95); }
+.app { background:#f4f4f5; border-radius:10px; padding:14px 16px; margin:20px 0;
+  font-size:14px; border:1px solid #e4e4e7; }
+.app b { display:block; font-size:15px; }
+.err { background:#fef2f2; border:1px solid #fecaca; color:#991b1b; border-radius:10px;
+  padding:12px 14px; margin-bottom:16px; font-size:14px; }
+code { background:#f2f2f3; padding:2px 6px; border-radius:5px; font-size:.9em;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+ul { padding-left:20px; color:#3f3f46; } li { margin:6px 0; }
+a { color:#0b62d0; }
+.foot { margin-top:26px; padding-top:18px; border-top:1px solid #ececed; font-size:13px; color:#6b7280; }
+@media (prefers-color-scheme: dark) {
+  body { background:#111113; color:#ececed; }
+  .card { background:#19191c; box-shadow:0 1px 3px rgba(0,0,0,.5); }
+  input[type=password], input[type=text] { background:#0e0e10; border-color:#2e2e33; color:#ececed; }
+  .app { background:#111113; border-color:#2e2e33; }
+  p, ul { color:#c4c4c8; } .muted,.foot { color:#8b8b93; }
+  code { background:#26262b; } .foot { border-color:#26262b; }
+  .err { background:#2a1416; border-color:#5c2427; color:#fca5a5; }
+}`;
+var dataUri = (svg) => `data:image/svg+xml;base64,${btoa(svg)}`;
+function page(brand, title, body, status = 200) {
+  const logo = dataUri(brand.logoSvg);
+  const html = `<!doctype html><html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(title)}</title>
+<link rel="icon" href="${logo}">
+<style>${css(brand.accent)}</style></head><body><main class="card">
+<div class="brand"><img class="logo" src="${logo}" alt="">
+<div><b>${esc(brand.name)}</b><span>${esc(brand.tagline)}</span></div></div>
+${body}</main></body></html>`;
+  return new Response(html, {
+    status,
+    headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" }
+  });
+}
+function consentPage(opts) {
+  const hidden = Object.entries(opts.params).map(([k, v]) => `<input type="hidden" name="${esc(k)}" value="${esc(v)}">`).join("");
+  return page(
+    opts.brand,
+    `${opts.brand.name} verbinden`,
+    `${opts.error ? `<div class="err">${esc(opts.error)}</div>` : ""}
+<h1>Zugriff erlauben</h1>
+<div class="app"><b>${esc(opts.clientName)}</b>
+<span class="muted">${opts.clientUri ? esc(opts.clientUri) : "m\xF6chte auf deinen Account zugreifen"}</span></div>
+<p>Gib deinen pers\xF6nlichen ${esc(opts.brand.credentialLabel)} ein. Er wird gegen das System gepr\xFCft
+und danach <b>verschl\xFCsselt</b> gespeichert \u2014 entschl\xFCsseln kann ihn nur der Client, der das
+ausgestellte Token h\xE4lt.</p>
+<form method="post">${hidden}
+<label for="key">${esc(opts.brand.credentialLabel)}</label>
+<input id="key" name="credential" type="password" autocomplete="off" spellcheck="false"
+  placeholder="${esc(opts.brand.credentialPlaceholder)}" required autofocus>
+<button type="submit">Pr\xFCfen und verbinden</button></form>
+<div class="foot">${opts.brand.credentialHelp}</div>`
+  );
+}
+function errorPage(brand, title, message, status = 400) {
+  return page(brand, title, `<h1>${esc(title)}</h1><div class="err">${esc(message)}</div>`, status);
+}
+function landingPage(brand, origin, toolCount, hubUrl) {
+  return page(
+    brand,
+    brand.name,
+    `<h1>${esc(brand.name)}</h1>
+<p>${brand.summary} <b>${toolCount} Tools</b>. Gesch\xFCtzt mit OAuth 2.1; jeder Nutzer verbindet
+seinen eigenen Account.</p>
+<label>Server-URL</label>
+<input type="text" readonly value="${esc(origin)}/mcp" onclick="this.select()">
+<p class="muted" style="margin-top:12px">In Claude: <b>Einstellungen \u2192 Connectors \u2192 Connector
+hinzuf\xFCgen</b>, URL einf\xFCgen, dann \xF6ffnet sich die Anmeldung.</p>
+<ul>${brand.bullets.map((b) => `<li>${b}</li>`).join("")}</ul>
+<div class="foot"><a href="${esc(hubUrl)}">Alle MCP-Server im \xDCberblick \u2192</a></div>`
+  );
+}
+
+// shared/src/oauth.ts
+var CODE_TTL = 600;
+var ACCESS_TTL = 60 * 60;
+var REFRESH_TTL = 60 * 60 * 24 * 30;
+var json = (data, status = 200, headers = {}) => new Response(JSON.stringify(data, null, 2), {
+  status,
+  headers: {
+    "content-type": "application/json",
+    "cache-control": "no-store",
+    "access-control-allow-origin": "*",
+    ...headers
+  }
+});
+var oauthError = (error, description, status = 400) => json({ error, error_description: description }, status);
+function authServerMetadata(origin, scopes) {
+  return {
+    issuer: origin,
+    authorization_endpoint: `${origin}/authorize`,
+    token_endpoint: `${origin}/token`,
+    registration_endpoint: `${origin}/register`,
+    revocation_endpoint: `${origin}/revoke`,
+    scopes_supported: scopes.split(" "),
+    response_types_supported: ["code"],
+    response_modes_supported: ["query"],
+    grant_types_supported: ["authorization_code", "refresh_token"],
+    token_endpoint_auth_methods_supported: ["none", "client_secret_post", "client_secret_basic"],
+    code_challenge_methods_supported: ["S256"],
+    service_documentation: `${origin}/`
+  };
+}
+function protectedResourceMetadata(origin, scopes) {
+  return {
+    resource: `${origin}/mcp`,
+    authorization_servers: [origin],
+    scopes_supported: scopes.split(" "),
+    bearer_methods_supported: ["header"],
+    resource_documentation: `${origin}/`
+  };
+}
+function unauthorized(origin, realm, description) {
+  return json(
+    { error: "invalid_token", error_description: description },
+    401,
+    {
+      "www-authenticate": `Bearer realm="${realm}", resource_metadata="${origin}/.well-known/oauth-protected-resource"`
+    }
+  );
+}
+async function handleRegister(req2, env) {
+  let body;
+  try {
+    body = await req2.json();
+  } catch {
+    return oauthError("invalid_client_metadata", "Body ist kein JSON.");
+  }
+  const redirectUris = Array.isArray(body.redirect_uris) ? body.redirect_uris : [];
+  if (!redirectUris.length) {
+    return oauthError("invalid_redirect_uri", "redirect_uris fehlt oder ist leer.");
+  }
+  for (const uri of redirectUris) {
+    let u;
+    try {
+      u = new URL(uri);
+    } catch {
+      return oauthError("invalid_redirect_uri", `'${uri}' ist keine g\xFCltige URL.`);
+    }
+    const isLocal = u.hostname === "localhost" || u.hostname === "127.0.0.1";
+    if (u.protocol !== "https:" && !isLocal && !u.protocol.includes(".")) {
+      return oauthError("invalid_redirect_uri", `'${uri}' muss https, localhost oder ein App-Scheme sein.`);
+    }
+  }
+  const method = body.token_endpoint_auth_method ?? "client_secret_post";
+  const clientId = randomToken("hmcp_c_");
+  const record = {
+    client_id: clientId,
+    client_name: String(body.client_name ?? "Unbenannter MCP-Client").slice(0, 120),
+    client_uri: body.client_uri ? String(body.client_uri).slice(0, 300) : void 0,
+    redirect_uris: redirectUris,
+    token_endpoint_auth_method: method,
+    created: Date.now()
+  };
+  let secret;
+  if (method !== "none") {
+    secret = randomToken("hmcp_cs_");
+    record.client_secret_hash = await sha256hex(secret);
+  }
+  await env.OAUTH_KV.put(`client:${clientId}`, JSON.stringify(record));
+  return json(
+    {
+      client_id: clientId,
+      ...secret ? { client_secret: secret } : {},
+      client_id_issued_at: Math.floor(record.created / 1e3),
+      ...secret ? { client_secret_expires_at: 0 } : {},
+      client_name: record.client_name,
+      redirect_uris: record.redirect_uris,
+      token_endpoint_auth_method: method,
+      grant_types: ["authorization_code", "refresh_token"],
+      response_types: ["code"]
+    },
+    201
+  );
+}
+function readAuthParams(src, defaultScope) {
+  const get = (k) => String(src.get(k) ?? "");
+  const client_id = get("client_id");
+  const redirect_uri = get("redirect_uri");
+  const response_type = get("response_type");
+  const code_challenge = get("code_challenge");
+  const method = get("code_challenge_method");
+  if (!client_id) return { error: "client_id fehlt." };
+  if (!redirect_uri) return { error: "redirect_uri fehlt." };
+  if (response_type !== "code") return { error: "Nur response_type=code wird unterst\xFCtzt." };
+  if (!code_challenge) return { error: "PKCE ist Pflicht: code_challenge fehlt." };
+  if (method !== "S256") return { error: "Nur code_challenge_method=S256 wird unterst\xFCtzt." };
+  return {
+    client_id,
+    redirect_uri,
+    state: get("state"),
+    code_challenge,
+    scope: get("scope") || defaultScope
+  };
+}
+async function loadClient(env, clientId) {
+  return env.OAUTH_KV.get(`client:${clientId}`, "json");
+}
+async function handleAuthorizeGet(url, env, config2) {
+  const parsed = readAuthParams(url.searchParams, config2.scopes);
+  if ("error" in parsed) return errorPage(config2.brand, "Ung\xFCltige Anfrage", parsed.error);
+  const client = await loadClient(env, parsed.client_id);
+  if (!client) return errorPage(config2.brand, "Unbekannter Client", "Diese client_id ist nicht registriert.");
+  if (!client.redirect_uris.includes(parsed.redirect_uri)) {
+    return errorPage(
+      config2.brand,
+      "Ung\xFCltige redirect_uri",
+      "Die redirect_uri geh\xF6rt nicht zu diesem Client. Aus Sicherheitsgr\xFCnden wird nicht weitergeleitet."
+    );
+  }
+  return consentPage({
+    brand: config2.brand,
+    clientName: client.client_name,
+    clientUri: client.client_uri,
+    params: {
+      client_id: parsed.client_id,
+      redirect_uri: parsed.redirect_uri,
+      state: parsed.state,
+      code_challenge: parsed.code_challenge,
+      scope: parsed.scope,
+      response_type: "code",
+      code_challenge_method: "S256"
+    }
+  });
+}
+async function handleAuthorizePost(req2, env, config2) {
+  const form = await req2.formData();
+  const parsed = readAuthParams(form, config2.scopes);
+  if ("error" in parsed) return errorPage(config2.brand, "Ung\xFCltige Anfrage", parsed.error);
+  const client = await loadClient(env, parsed.client_id);
+  if (!client) return errorPage(config2.brand, "Unbekannter Client", "Diese client_id ist nicht registriert.");
+  if (!client.redirect_uris.includes(parsed.redirect_uri)) {
+    return errorPage(config2.brand, "Ung\xFCltige redirect_uri", "Die redirect_uri geh\xF6rt nicht zu diesem Client.");
+  }
+  const credential = String(form.get("credential") ?? "").trim();
+  const retry = (msg) => consentPage({
+    brand: config2.brand,
+    clientName: client.client_name,
+    clientUri: client.client_uri,
+    error: msg,
+    params: {
+      client_id: parsed.client_id,
+      redirect_uri: parsed.redirect_uri,
+      state: parsed.state,
+      code_challenge: parsed.code_challenge,
+      scope: parsed.scope,
+      response_type: "code",
+      code_challenge_method: "S256"
+    }
+  });
+  if (!credential) return retry(`Bitte den ${config2.brand.credentialLabel} eingeben.`);
+  let who;
+  try {
+    who = await config2.validate(credential);
+  } catch (e) {
+    return retry(`${config2.brand.system} hat den Zugang abgelehnt: ${e.message}`);
+  }
+  const grantId = randomToken("hmcp_g_");
+  const grant = {
+    clientId: client.client_id,
+    clientName: client.client_name,
+    account: who.account,
+    user: who.user,
+    created: Date.now()
+  };
+  await env.OAUTH_KV.put(`grant:${grantId}`, JSON.stringify(grant), {
+    expirationTtl: REFRESH_TTL
+  });
+  const code = randomToken("hmcp_ac_");
+  await env.OAUTH_KV.put(
+    `ac:${await sha256hex(code)}`,
+    JSON.stringify({
+      clientId: client.client_id,
+      redirectUri: parsed.redirect_uri,
+      codeChallenge: parsed.code_challenge,
+      grantId,
+      scope: parsed.scope,
+      sealed: await sealJSON(code, { credential })
+    }),
+    { expirationTtl: CODE_TTL }
+  );
+  const to = new URL(parsed.redirect_uri);
+  to.searchParams.set("code", code);
+  if (parsed.state) to.searchParams.set("state", parsed.state);
+  return Response.redirect(to.toString(), 302);
+}
+async function authenticateClient(req2, form, env) {
+  let clientId = String(form.get("client_id") ?? "");
+  let clientSecret = String(form.get("client_secret") ?? "");
+  const basic = req2.headers.get("authorization");
+  if (basic?.toLowerCase().startsWith("basic ")) {
+    try {
+      const [id, secret] = atob(basic.slice(6)).split(":");
+      clientId = clientId || decodeURIComponent(id ?? "");
+      clientSecret = clientSecret || decodeURIComponent(secret ?? "");
+    } catch {
+      return oauthError("invalid_client", "Basic-Auth-Header ist unlesbar.", 401);
+    }
+  }
+  if (!clientId) return oauthError("invalid_client", "client_id fehlt.", 401);
+  const client = await loadClient(env, clientId);
+  if (!client) return oauthError("invalid_client", "Unbekannte client_id.", 401);
+  if (client.client_secret_hash) {
+    if (!clientSecret) return oauthError("invalid_client", "client_secret fehlt.", 401);
+    const given = await sha256hex(clientSecret);
+    if (!timingSafeEqual(given, client.client_secret_hash)) {
+      return oauthError("invalid_client", "client_secret stimmt nicht.", 401);
+    }
+  }
+  return client;
+}
+async function issueTokens(env, grantId, clientId, credential, scope) {
+  const accessToken = randomToken("hmcp_at_");
+  const refreshToken = randomToken("hmcp_rt_");
+  await Promise.all([
+    env.OAUTH_KV.put(
+      `at:${await sha256hex(accessToken)}`,
+      JSON.stringify({ grantId, clientId, sealed: await sealJSON(accessToken, { credential }) }),
+      { expirationTtl: ACCESS_TTL }
+    ),
+    env.OAUTH_KV.put(
+      `rt:${await sha256hex(refreshToken)}`,
+      JSON.stringify({ grantId, clientId, sealed: await sealJSON(refreshToken, { credential }) }),
+      { expirationTtl: REFRESH_TTL }
+    )
+  ]);
+  return {
+    access_token: accessToken,
+    token_type: "Bearer",
+    expires_in: ACCESS_TTL,
+    refresh_token: refreshToken,
+    scope
+  };
+}
+async function handleToken(req2, env, config2) {
+  let form;
+  try {
+    form = await req2.formData();
+  } catch {
+    return oauthError("invalid_request", "Body muss application/x-www-form-urlencoded sein.");
+  }
+  const client = await authenticateClient(req2, form, env);
+  if (client instanceof Response) return client;
+  const grantType = String(form.get("grant_type") ?? "");
+  if (grantType === "authorization_code") {
+    const code = String(form.get("code") ?? "");
+    const verifier = String(form.get("code_verifier") ?? "");
+    const redirectUri = String(form.get("redirect_uri") ?? "");
+    if (!code) return oauthError("invalid_request", "code fehlt.");
+    if (!verifier) return oauthError("invalid_request", "code_verifier fehlt (PKCE ist Pflicht).");
+    const kvKey = `ac:${await sha256hex(code)}`;
+    const rec = await env.OAUTH_KV.get(kvKey, "json");
+    if (!rec) return oauthError("invalid_grant", "Code unbekannt, abgelaufen oder schon benutzt.");
+    await env.OAUTH_KV.delete(kvKey);
+    if (rec.clientId !== client.client_id) {
+      return oauthError("invalid_grant", "Der Code geh\xF6rt zu einem anderen Client.");
+    }
+    if (redirectUri && redirectUri !== rec.redirectUri) {
+      return oauthError("invalid_grant", "redirect_uri stimmt nicht mit der Autorisierung \xFCberein.");
+    }
+    if (!await verifyPkceS256(verifier, rec.codeChallenge)) {
+      return oauthError("invalid_grant", "code_verifier passt nicht zur code_challenge.");
+    }
+    const { credential } = await openJSON(code, rec.sealed);
+    return json(
+      await issueTokens(env, rec.grantId, client.client_id, credential, rec.scope ?? config2.scopes)
+    );
+  }
+  if (grantType === "refresh_token") {
+    const token = String(form.get("refresh_token") ?? "");
+    if (!token) return oauthError("invalid_request", "refresh_token fehlt.");
+    const kvKey = `rt:${await sha256hex(token)}`;
+    const rec = await env.OAUTH_KV.get(kvKey, "json");
+    if (!rec) return oauthError("invalid_grant", "refresh_token unbekannt oder abgelaufen.");
+    if (rec.clientId !== client.client_id) {
+      return oauthError("invalid_grant", "Das Token geh\xF6rt zu einem anderen Client.");
+    }
+    const grant = await env.OAUTH_KV.get(`grant:${rec.grantId}`, "json");
+    if (!grant || grant.revoked) {
+      return oauthError("invalid_grant", "Die Freigabe wurde widerrufen.");
+    }
+    await env.OAUTH_KV.delete(kvKey);
+    const { credential } = await openJSON(token, rec.sealed);
+    return json(await issueTokens(env, rec.grantId, client.client_id, credential, config2.scopes));
+  }
+  return oauthError("unsupported_grant_type", `grant_type '${grantType}' wird nicht unterst\xFCtzt.`);
+}
+async function handleRevoke(req2, env) {
+  let form;
+  try {
+    form = await req2.formData();
+  } catch {
+    return oauthError("invalid_request", "Body muss application/x-www-form-urlencoded sein.");
+  }
+  const token = String(form.get("token") ?? "");
+  if (token) {
+    const hash = await sha256hex(token);
+    const rec = await env.OAUTH_KV.get(`at:${hash}`, "json") ?? await env.OAUTH_KV.get(`rt:${hash}`, "json");
+    await Promise.all([env.OAUTH_KV.delete(`at:${hash}`), env.OAUTH_KV.delete(`rt:${hash}`)]);
+    if (rec?.grantId) {
+      const grant = await env.OAUTH_KV.get(`grant:${rec.grantId}`, "json");
+      if (grant) {
+        await env.OAUTH_KV.put(
+          `grant:${rec.grantId}`,
+          JSON.stringify({ ...grant, revoked: true }),
+          { expirationTtl: REFRESH_TTL }
+        );
+      }
+    }
+  }
+  return json({});
+}
+async function authenticate(req2, env) {
+  const header = req2.headers.get("authorization") ?? "";
+  if (!header.toLowerCase().startsWith("bearer ")) return null;
+  const token = header.slice(7).trim();
+  if (!token) return null;
+  const rec = await env.OAUTH_KV.get(`at:${await sha256hex(token)}`, "json");
+  if (!rec) return null;
+  const grant = await env.OAUTH_KV.get(`grant:${rec.grantId}`, "json");
+  if (!grant || grant.revoked) return null;
+  try {
+    const { credential } = await openJSON(token, rec.sealed);
+    return {
+      credential,
+      grantId: rec.grantId,
+      clientId: rec.clientId,
+      account: grant.account,
+      user: grant.user
+    };
+  } catch {
+    return null;
+  }
+}
+
+// shared/src/mcp.ts
+var PROTOCOL_VERSION = "2025-06-18";
+var SUPPORTED_PROTOCOLS = ["2025-06-18", "2025-03-26", "2024-11-05"];
+var result = (id, res) => ({ jsonrpc: "2.0", id, result: res });
+var rpcError = (id, code, message) => ({
+  jsonrpc: "2.0",
+  id: id ?? null,
+  error: { code, message }
+});
+function publicToolList(tools2) {
+  return tools2.map((t) => ({
+    name: t.name,
+    title: t.title,
+    description: t.description,
+    inputSchema: t.inputSchema,
+    annotations: t.annotations
+  }));
+}
+async function handleRpc(body, session, kv, origin, config2) {
+  if (Array.isArray(body)) {
+    return rpcError(null, -32600, "JSON-RPC-Batches werden von MCP nicht mehr unterst\xFCtzt.");
+  }
+  const req2 = body;
+  if (!req2 || req2.jsonrpc !== "2.0" || typeof req2.method !== "string") {
+    return rpcError(req2?.id, -32600, "Kein g\xFCltiger JSON-RPC-2.0-Request.");
+  }
+  const isNotification = req2.id === void 0 || req2.id === null;
+  switch (req2.method) {
+    case "initialize": {
+      const wanted = req2.params?.protocolVersion;
+      return result(req2.id, {
+        protocolVersion: SUPPORTED_PROTOCOLS.includes(wanted) ? wanted : PROTOCOL_VERSION,
+        capabilities: {
+          tools: { listChanged: false },
+          resources: { subscribe: false, listChanged: false },
+          prompts: { listChanged: false }
+        },
+        serverInfo: {
+          ...config2.serverInfo,
+          icons: [
+            {
+              src: `data:image/svg+xml;base64,${btoa(config2.brand.logoSvg)}`,
+              mimeType: "image/svg+xml",
+              sizes: ["any"]
+            }
+          ]
+        },
+        instructions: config2.instructions
+      });
+    }
+    case "notifications/initialized":
+    case "notifications/cancelled":
+    case "notifications/progress":
+      return null;
+    case "ping":
+      return result(req2.id, {});
+    case "tools/list":
+      return result(req2.id, { tools: publicToolList(config2.tools) });
+    case "resources/list":
+      return result(req2.id, { resources: [] });
+    case "resources/templates/list":
+      return result(req2.id, { resourceTemplates: [] });
+    case "prompts/list":
+      return result(req2.id, { prompts: [] });
+    case "tools/call": {
+      const name = req2.params?.name;
+      const tool = config2.tools.find((t) => t.name === name);
+      if (!tool) return rpcError(req2.id, -32602, `Unbekanntes Tool '${name}'.`);
+      try {
+        const ctx = await config2.context(session.credential, kv, origin);
+        const data = await tool.handler(req2.params?.arguments ?? {}, ctx);
+        return result(req2.id, {
+          content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
+          isError: false
+        });
+      } catch (e) {
+        const err = e;
+        const detail = err.detail ? `
+${JSON.stringify(err.detail).slice(0, 600)}` : "";
+        return result(req2.id, {
+          content: [{ type: "text", text: `Fehler in ${name}: ${err.message}${detail}` }],
+          isError: true
+        });
+      }
+    }
+    default:
+      if (isNotification) return null;
+      return rpcError(req2.id, -32601, `Methode '${req2.method}' wird nicht unterst\xFCtzt.`);
+  }
+}
+
+// shared/src/worker.ts
+var CORS = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "GET, POST, DELETE, OPTIONS",
+  "access-control-allow-headers": "content-type, authorization, mcp-protocol-version, mcp-session-id",
+  "access-control-expose-headers": "www-authenticate, mcp-protocol-version",
+  "access-control-max-age": "86400"
+};
+var json2 = (data, status = 200) => new Response(JSON.stringify(data, null, 2), {
+  status,
+  headers: { "content-type": "application/json", "cache-control": "no-store", ...CORS }
+});
+function createWorker(config2) {
+  return {
+    async fetch(request, env) {
+      const url = new URL(request.url);
+      const origin = `${url.protocol}//${url.host}`;
+      const path = url.pathname.replace(/\/+$/, "") || "/";
+      const hub = env.HUB_URL ?? "https://mcp-hub.ksqsebastian.workers.dev";
+      if (request.method === "OPTIONS") {
+        return new Response(null, { status: 204, headers: CORS });
+      }
+      switch (`${request.method} ${path}`) {
+        case "GET /":
+          return landingPage(config2.brand, origin, config2.tools.length, hub);
+        case "GET /favicon.svg":
+          return new Response(config2.brand.logoSvg, {
+            headers: { "content-type": "image/svg+xml", "cache-control": "public, max-age=86400" }
+          });
+        case "GET /.well-known/oauth-authorization-server":
+        case "GET /.well-known/oauth-authorization-server/mcp":
+          return json2(authServerMetadata(origin, config2.scopes));
+        case "GET /.well-known/oauth-protected-resource":
+        case "GET /.well-known/oauth-protected-resource/mcp":
+          return json2(protectedResourceMetadata(origin, config2.scopes));
+        case "POST /register":
+          return handleRegister(request, env);
+        case "GET /authorize":
+          return handleAuthorizeGet(url, env, config2);
+        case "POST /authorize":
+          return handleAuthorizePost(request, env, config2);
+        case "POST /token":
+          return handleToken(request, env, config2);
+        case "POST /revoke":
+          return handleRevoke(request, env);
+        /** Öffentlicher Katalog — die Übersichtsseite baut sich daraus, ohne Zugangsdaten. */
+        case "GET /tools.json":
+          return json2({
+            server: {
+              name: config2.serverInfo.name,
+              version: config2.serverInfo.version,
+              protocolVersion: PROTOCOL_VERSION
+            },
+            mcpUrl: `${origin}/mcp`,
+            auth: "oauth2",
+            tools: publicToolList(config2.tools)
+          });
+        case "GET /mcp":
+          return json2(
+            { error: "method_not_allowed", error_description: "MCP l\xE4uft hier \xFCber POST /mcp." },
+            405
+          );
+        case "DELETE /mcp":
+          return new Response(null, { status: 204, headers: CORS });
+        case "POST /mcp": {
+          const session = await authenticate(request, env);
+          if (!session) {
+            return unauthorized(
+              origin,
+              config2.serverInfo.name,
+              "G\xFCltiges Bearer-Token erforderlich."
+            );
+          }
+          let body;
+          try {
+            body = await request.json();
+          } catch {
+            return json2(
+              { jsonrpc: "2.0", id: null, error: { code: -32700, message: "Parse error" } },
+              400
+            );
+          }
+          const res = await handleRpc(body, session, env.OAUTH_KV, origin, config2);
+          if (res === null) return new Response(null, { status: 202, headers: CORS });
+          return json2(res);
+        }
+      }
+      const extra = await config2.extraRoutes?.(request, url, env);
+      if (extra) return extra;
+      return errorPage(
+        config2.brand,
+        "Nicht gefunden",
+        `${request.method} ${path} gibt es hier nicht.`,
+        404
+      );
+    }
+  };
 }
 
 // servers/hero/src/input-fields.generated.ts
@@ -694,477 +1346,6 @@ function checkValue(typeName, value, path) {
   }
 }
 
-// servers/hero/src/ui.ts
-var BRAND = "#FFC400";
-function esc(s) {
-  return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-}
-var CSS = `
-:root { color-scheme: light dark; }
-* { box-sizing: border-box; }
-body { margin:0; font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
-  background:#fafafa; color:#1b1b1b; display:flex; align-items:center; justify-content:center;
-  min-height:100vh; padding:32px 20px; }
-.card { background:#fff; max-width:520px; width:100%; border-radius:16px; padding:32px;
-  box-shadow:0 1px 3px rgba(0,0,0,.06), 0 12px 32px rgba(0,0,0,.08); }
-.brand { display:flex; align-items:center; gap:12px; margin-bottom:24px; }
-.brand .logo { width:40px; height:40px; border-radius:10px; flex:0 0 auto; }
-.brand b { font-size:18px; letter-spacing:-.01em; }
-.brand span { display:block; font-size:13px; color:#6b7280; font-weight:400; }
-h1 { font-size:20px; margin:0 0 8px; letter-spacing:-.02em; }
-p { margin:0 0 16px; color:#3f3f46; }
-.muted { color:#6b7280; font-size:14px; }
-label { display:block; font-weight:600; font-size:14px; margin:20px 0 6px; }
-input[type=password], input[type=text] { width:100%; padding:11px 13px; font-size:15px;
-  border:1px solid #d4d4d8; border-radius:9px; background:#fff; color:inherit; font-family:inherit; }
-input:focus { outline:2px solid ${BRAND}; outline-offset:1px; border-color:transparent; }
-button { width:100%; margin-top:22px; padding:12px 16px; font-size:15px; font-weight:650;
-  border:0; border-radius:9px; background:${BRAND}; color:#1b1b1b; cursor:pointer; font-family:inherit; }
-button:hover { filter:brightness(.95); }
-.app { background:#f4f4f5; border-radius:10px; padding:14px 16px; margin:20px 0;
-  font-size:14px; border:1px solid #e4e4e7; }
-.app b { display:block; font-size:15px; }
-.err { background:#fef2f2; border:1px solid #fecaca; color:#991b1b; border-radius:10px;
-  padding:12px 14px; margin-bottom:16px; font-size:14px; }
-code { background:#f4f4f5; padding:2px 6px; border-radius:5px; font-size:.9em;
-  font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
-ul { padding-left:20px; color:#3f3f46; } li { margin:6px 0; }
-a { color:#0b62d0; }
-.foot { margin-top:26px; padding-top:18px; border-top:1px solid #ececed; font-size:13px; color:#6b7280; }
-@media (prefers-color-scheme: dark) {
-  body { background:#111113; color:#ececed; }
-  .card { background:#19191c; box-shadow:0 1px 3px rgba(0,0,0,.5); }
-  input[type=password], input[type=text] { background:#0e0e10; border-color:#2e2e33; color:#ececed; }
-  .app { background:#111113; border-color:#2e2e33; }
-  p, ul { color:#c4c4c8; } .muted,.foot { color:#8b8b93; }
-  code { background:#26262b; } .foot { border-color:#26262b; }
-  .err { background:#2a1416; border-color:#5c2427; color:#fca5a5; }
-}
-`;
-var LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-<rect width="512" height="512" rx="112" fill="${BRAND}"/>
-<path fill="#1b1b1b" d="M150 130 L226 130 L226 232 L286 232 L286 130 L362 130 L362 382 L286 382 L286 280 L226 280 L226 382 L150 382 Z"/>
-<path fill="${BRAND}" d="M150 130 L150 205 L200 130 Z"/>
-<path fill="${BRAND}" d="M362 382 L362 307 L312 382 Z"/></svg>`;
-var LOGO_DATA_URI = `data:image/svg+xml;base64,${btoa(LOGO_SVG)}`;
-function page(title, body, status = 200) {
-  const html = `<!doctype html><html lang="de"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(title)}</title>
-<link rel="icon" href="${LOGO_DATA_URI}">
-<style>${CSS}</style></head><body><main class="card">
-<div class="brand"><img class="logo" src="${LOGO_DATA_URI}" alt="">
-<div><b>HERO MCP</b><span>Handwerkersoftware f\xFCr Claude</span></div></div>
-${body}</main></body></html>`;
-  return new Response(html, {
-    status,
-    headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" }
-  });
-}
-function consentPage(opts) {
-  const hidden = Object.entries(opts.params).map(([k, v]) => `<input type="hidden" name="${esc(k)}" value="${esc(v)}">`).join("");
-  return page(
-    "HERO MCP verbinden",
-    `${opts.error ? `<div class="err">${esc(opts.error)}</div>` : ""}
-<h1>Zugriff erlauben</h1>
-<div class="app"><b>${esc(opts.clientName)}</b>
-<span class="muted">${opts.clientUri ? esc(opts.clientUri) : "m\xF6chte auf deinen HERO-Account zugreifen"}</span></div>
-<p>Gib deinen pers\xF6nlichen HERO-API-Key ein. Er wird gegen HERO gepr\xFCft und danach
-<b>verschl\xFCsselt</b> gespeichert \u2014 entschl\xFCsseln kann ihn nur der Client, der das ausgestellte
-Token h\xE4lt.</p>
-<form method="post">${hidden}
-<label for="key">HERO-API-Key</label>
-<input id="key" name="hero_api_key" type="password" autocomplete="off" spellcheck="false"
-  placeholder="Bearer-Token aus HERO \u2192 Einstellungen \u2192 API" required autofocus>
-<button type="submit">Pr\xFCfen und verbinden</button></form>
-<div class="foot">Den Key findest du in HERO unter <b>Einstellungen \u2192 API</b>.
-Der Zugriff gilt genau f\xFCr diesen Client und l\xE4sst sich jederzeit widerrufen,
-indem du den Key in HERO neu erzeugst.</div>`
-  );
-}
-function errorPage(title, message, status = 400) {
-  return page(title, `<h1>${esc(title)}</h1><div class="err">${esc(message)}</div>`, status);
-}
-function landingPage(origin, toolCount, hubUrl) {
-  return page(
-    "HERO MCP Server",
-    `<h1>HERO MCP Server</h1>
-<p>Model-Context-Protocol-Server f\xFCr die HERO-Handwerkersoftware \u2014
-<b>${toolCount} Tools</b> zum Lesen, Anlegen, Hochladen und Herunterladen.
-Gesch\xFCtzt mit OAuth 2.1; jeder Nutzer verbindet seinen eigenen HERO-Account.</p>
-<label>Server-URL</label>
-<input type="text" readonly value="${esc(origin)}/mcp" onclick="this.select()">
-<p class="muted" style="margin-top:12px">In Claude: <b>Einstellungen \u2192 Connectors \u2192 Connector
-hinzuf\xFCgen</b>, URL einf\xFCgen, dann \xF6ffnet sich die Anmeldung und du hinterlegst deinen HERO-API-Key.</p>
-<ul>
-<li><b>Lesen</b> \u2014 Dashboard, Suche, Projekte, Kunden, Dokumente, Artikel, Lager, Auftr\xE4ge,
-Checklisten, Termine, Zeiten, offene Posten, Zahlungsstatus, Belege, PDF-Links</li>
-<li><b>Schreiben</b> \u2014 Kunden, Projekte, Angebote, Rechnungen, Stundenzettel, Auftr\xE4ge,
-Checklisten, Artikel, Termine, Aufgaben, Zeiten, Logbuch, Zahlungen, Leads, Dateien</li>
-<li><b>Nicht enthalten</b> \u2014 Bearbeiten und L\xF6schen. Nichts kann kaputtgehen.</li>
-</ul>
-<div class="foot"><a href="${esc(hubUrl)}">Alle MCP-Server im \xDCberblick \u2192</a></div>`
-  );
-}
-
-// servers/hero/src/oauth.ts
-var SCOPE = "hero:read hero:write";
-var CODE_TTL = 600;
-var ACCESS_TTL = 60 * 60;
-var REFRESH_TTL = 60 * 60 * 24 * 30;
-var json = (data, status = 200, headers = {}) => new Response(JSON.stringify(data, null, 2), {
-  status,
-  headers: {
-    "content-type": "application/json",
-    "cache-control": "no-store",
-    "access-control-allow-origin": "*",
-    ...headers
-  }
-});
-var oauthError = (error, description, status = 400) => json({ error, error_description: description }, status);
-function authServerMetadata(origin) {
-  return {
-    issuer: origin,
-    authorization_endpoint: `${origin}/authorize`,
-    token_endpoint: `${origin}/token`,
-    registration_endpoint: `${origin}/register`,
-    revocation_endpoint: `${origin}/revoke`,
-    scopes_supported: SCOPE.split(" "),
-    response_types_supported: ["code"],
-    response_modes_supported: ["query"],
-    grant_types_supported: ["authorization_code", "refresh_token"],
-    token_endpoint_auth_methods_supported: ["none", "client_secret_post", "client_secret_basic"],
-    code_challenge_methods_supported: ["S256"],
-    service_documentation: `${origin}/`
-  };
-}
-function protectedResourceMetadata(origin) {
-  return {
-    resource: `${origin}/mcp`,
-    authorization_servers: [origin],
-    scopes_supported: SCOPE.split(" "),
-    bearer_methods_supported: ["header"],
-    resource_documentation: `${origin}/`
-  };
-}
-function unauthorized(origin, description) {
-  return json(
-    { error: "invalid_token", error_description: description },
-    401,
-    {
-      "www-authenticate": `Bearer realm="hero-mcp", resource_metadata="${origin}/.well-known/oauth-protected-resource"`
-    }
-  );
-}
-async function handleRegister(req2, env) {
-  let body;
-  try {
-    body = await req2.json();
-  } catch {
-    return oauthError("invalid_client_metadata", "Body ist kein JSON.");
-  }
-  const redirectUris = Array.isArray(body.redirect_uris) ? body.redirect_uris : [];
-  if (!redirectUris.length) {
-    return oauthError("invalid_redirect_uri", "redirect_uris fehlt oder ist leer.");
-  }
-  for (const uri of redirectUris) {
-    let u;
-    try {
-      u = new URL(uri);
-    } catch {
-      return oauthError("invalid_redirect_uri", `'${uri}' ist keine g\xFCltige URL.`);
-    }
-    const isLocal = u.hostname === "localhost" || u.hostname === "127.0.0.1";
-    if (u.protocol !== "https:" && !isLocal && !u.protocol.includes(".")) {
-      return oauthError("invalid_redirect_uri", `'${uri}' muss https, localhost oder ein App-Scheme sein.`);
-    }
-  }
-  const method = body.token_endpoint_auth_method ?? "client_secret_post";
-  const clientId = randomToken("hmcp_c_");
-  const record = {
-    client_id: clientId,
-    client_name: String(body.client_name ?? "Unbenannter MCP-Client").slice(0, 120),
-    client_uri: body.client_uri ? String(body.client_uri).slice(0, 300) : void 0,
-    redirect_uris: redirectUris,
-    token_endpoint_auth_method: method,
-    created: Date.now()
-  };
-  let secret;
-  if (method !== "none") {
-    secret = randomToken("hmcp_cs_");
-    record.client_secret_hash = await sha256hex(secret);
-  }
-  await env.OAUTH_KV.put(`client:${clientId}`, JSON.stringify(record));
-  return json(
-    {
-      client_id: clientId,
-      ...secret ? { client_secret: secret } : {},
-      client_id_issued_at: Math.floor(record.created / 1e3),
-      ...secret ? { client_secret_expires_at: 0 } : {},
-      client_name: record.client_name,
-      redirect_uris: record.redirect_uris,
-      token_endpoint_auth_method: method,
-      grant_types: ["authorization_code", "refresh_token"],
-      response_types: ["code"]
-    },
-    201
-  );
-}
-function readAuthParams(src) {
-  const get = (k) => String(src.get(k) ?? "");
-  const client_id = get("client_id");
-  const redirect_uri = get("redirect_uri");
-  const response_type = get("response_type");
-  const code_challenge = get("code_challenge");
-  const method = get("code_challenge_method");
-  if (!client_id) return { error: "client_id fehlt." };
-  if (!redirect_uri) return { error: "redirect_uri fehlt." };
-  if (response_type !== "code") return { error: "Nur response_type=code wird unterst\xFCtzt." };
-  if (!code_challenge) return { error: "PKCE ist Pflicht: code_challenge fehlt." };
-  if (method !== "S256") return { error: "Nur code_challenge_method=S256 wird unterst\xFCtzt." };
-  return {
-    client_id,
-    redirect_uri,
-    state: get("state"),
-    code_challenge,
-    scope: get("scope") || SCOPE
-  };
-}
-async function loadClient(env, clientId) {
-  return env.OAUTH_KV.get(`client:${clientId}`, "json");
-}
-async function handleAuthorizeGet(url, env) {
-  const parsed = readAuthParams(url.searchParams);
-  if ("error" in parsed) return errorPage("Ung\xFCltige Anfrage", parsed.error);
-  const client = await loadClient(env, parsed.client_id);
-  if (!client) return errorPage("Unbekannter Client", "Diese client_id ist nicht registriert.");
-  if (!client.redirect_uris.includes(parsed.redirect_uri)) {
-    return errorPage(
-      "Ung\xFCltige redirect_uri",
-      "Die redirect_uri geh\xF6rt nicht zu diesem Client. Aus Sicherheitsgr\xFCnden wird nicht weitergeleitet."
-    );
-  }
-  return consentPage({
-    clientName: client.client_name,
-    clientUri: client.client_uri,
-    params: {
-      client_id: parsed.client_id,
-      redirect_uri: parsed.redirect_uri,
-      state: parsed.state,
-      code_challenge: parsed.code_challenge,
-      scope: parsed.scope,
-      response_type: "code",
-      code_challenge_method: "S256"
-    }
-  });
-}
-async function handleAuthorizePost(req2, env) {
-  const form = await req2.formData();
-  const parsed = readAuthParams(form);
-  if ("error" in parsed) return errorPage("Ung\xFCltige Anfrage", parsed.error);
-  const client = await loadClient(env, parsed.client_id);
-  if (!client) return errorPage("Unbekannter Client", "Diese client_id ist nicht registriert.");
-  if (!client.redirect_uris.includes(parsed.redirect_uri)) {
-    return errorPage("Ung\xFCltige redirect_uri", "Die redirect_uri geh\xF6rt nicht zu diesem Client.");
-  }
-  const apiKey = String(form.get("hero_api_key") ?? "").trim();
-  const retry = (msg) => consentPage({
-    clientName: client.client_name,
-    clientUri: client.client_uri,
-    error: msg,
-    params: {
-      client_id: parsed.client_id,
-      redirect_uri: parsed.redirect_uri,
-      state: parsed.state,
-      code_challenge: parsed.code_challenge,
-      scope: parsed.scope,
-      response_type: "code",
-      code_challenge_method: "S256"
-    }
-  });
-  if (!apiKey) return retry("Bitte den HERO-API-Key eingeben.");
-  let who;
-  try {
-    who = await new Hero(apiKey).whoami();
-  } catch (e) {
-    return retry(`HERO hat den Key abgelehnt: ${e.message}`);
-  }
-  const grantId = randomToken("hmcp_g_");
-  const grant = {
-    clientId: client.client_id,
-    clientName: client.client_name,
-    company: who.company,
-    user: who.user,
-    created: Date.now()
-  };
-  await env.OAUTH_KV.put(`grant:${grantId}`, JSON.stringify(grant), {
-    expirationTtl: REFRESH_TTL
-  });
-  const code = randomToken("hmcp_ac_");
-  await env.OAUTH_KV.put(
-    `ac:${await sha256hex(code)}`,
-    JSON.stringify({
-      clientId: client.client_id,
-      redirectUri: parsed.redirect_uri,
-      codeChallenge: parsed.code_challenge,
-      grantId,
-      scope: parsed.scope,
-      sealed: await sealJSON(code, { apiKey })
-    }),
-    { expirationTtl: CODE_TTL }
-  );
-  const to = new URL(parsed.redirect_uri);
-  to.searchParams.set("code", code);
-  if (parsed.state) to.searchParams.set("state", parsed.state);
-  return Response.redirect(to.toString(), 302);
-}
-async function authenticateClient(req2, form, env) {
-  let clientId = String(form.get("client_id") ?? "");
-  let clientSecret = String(form.get("client_secret") ?? "");
-  const basic = req2.headers.get("authorization");
-  if (basic?.toLowerCase().startsWith("basic ")) {
-    try {
-      const [id, secret] = atob(basic.slice(6)).split(":");
-      clientId = clientId || decodeURIComponent(id ?? "");
-      clientSecret = clientSecret || decodeURIComponent(secret ?? "");
-    } catch {
-      return oauthError("invalid_client", "Basic-Auth-Header ist unlesbar.", 401);
-    }
-  }
-  if (!clientId) return oauthError("invalid_client", "client_id fehlt.", 401);
-  const client = await loadClient(env, clientId);
-  if (!client) return oauthError("invalid_client", "Unbekannte client_id.", 401);
-  if (client.client_secret_hash) {
-    if (!clientSecret) return oauthError("invalid_client", "client_secret fehlt.", 401);
-    const given = await sha256hex(clientSecret);
-    if (!timingSafeEqual(given, client.client_secret_hash)) {
-      return oauthError("invalid_client", "client_secret stimmt nicht.", 401);
-    }
-  }
-  return client;
-}
-async function issueTokens(env, grantId, clientId, apiKey, scope) {
-  const accessToken = randomToken("hmcp_at_");
-  const refreshToken = randomToken("hmcp_rt_");
-  await Promise.all([
-    env.OAUTH_KV.put(
-      `at:${await sha256hex(accessToken)}`,
-      JSON.stringify({ grantId, clientId, sealed: await sealJSON(accessToken, { apiKey }) }),
-      { expirationTtl: ACCESS_TTL }
-    ),
-    env.OAUTH_KV.put(
-      `rt:${await sha256hex(refreshToken)}`,
-      JSON.stringify({ grantId, clientId, sealed: await sealJSON(refreshToken, { apiKey }) }),
-      { expirationTtl: REFRESH_TTL }
-    )
-  ]);
-  return {
-    access_token: accessToken,
-    token_type: "Bearer",
-    expires_in: ACCESS_TTL,
-    refresh_token: refreshToken,
-    scope
-  };
-}
-async function handleToken(req2, env) {
-  let form;
-  try {
-    form = await req2.formData();
-  } catch {
-    return oauthError("invalid_request", "Body muss application/x-www-form-urlencoded sein.");
-  }
-  const client = await authenticateClient(req2, form, env);
-  if (client instanceof Response) return client;
-  const grantType = String(form.get("grant_type") ?? "");
-  if (grantType === "authorization_code") {
-    const code = String(form.get("code") ?? "");
-    const verifier = String(form.get("code_verifier") ?? "");
-    const redirectUri = String(form.get("redirect_uri") ?? "");
-    if (!code) return oauthError("invalid_request", "code fehlt.");
-    if (!verifier) return oauthError("invalid_request", "code_verifier fehlt (PKCE ist Pflicht).");
-    const kvKey = `ac:${await sha256hex(code)}`;
-    const rec = await env.OAUTH_KV.get(kvKey, "json");
-    if (!rec) return oauthError("invalid_grant", "Code unbekannt, abgelaufen oder schon benutzt.");
-    await env.OAUTH_KV.delete(kvKey);
-    if (rec.clientId !== client.client_id) {
-      return oauthError("invalid_grant", "Der Code geh\xF6rt zu einem anderen Client.");
-    }
-    if (redirectUri && redirectUri !== rec.redirectUri) {
-      return oauthError("invalid_grant", "redirect_uri stimmt nicht mit der Autorisierung \xFCberein.");
-    }
-    if (!await verifyPkceS256(verifier, rec.codeChallenge)) {
-      return oauthError("invalid_grant", "code_verifier passt nicht zur code_challenge.");
-    }
-    const { apiKey } = await openJSON(code, rec.sealed);
-    return json(await issueTokens(env, rec.grantId, client.client_id, apiKey, rec.scope ?? SCOPE));
-  }
-  if (grantType === "refresh_token") {
-    const token = String(form.get("refresh_token") ?? "");
-    if (!token) return oauthError("invalid_request", "refresh_token fehlt.");
-    const kvKey = `rt:${await sha256hex(token)}`;
-    const rec = await env.OAUTH_KV.get(kvKey, "json");
-    if (!rec) return oauthError("invalid_grant", "refresh_token unbekannt oder abgelaufen.");
-    if (rec.clientId !== client.client_id) {
-      return oauthError("invalid_grant", "Das Token geh\xF6rt zu einem anderen Client.");
-    }
-    const grant = await env.OAUTH_KV.get(`grant:${rec.grantId}`, "json");
-    if (!grant || grant.revoked) {
-      return oauthError("invalid_grant", "Die Freigabe wurde widerrufen.");
-    }
-    await env.OAUTH_KV.delete(kvKey);
-    const { apiKey } = await openJSON(token, rec.sealed);
-    return json(await issueTokens(env, rec.grantId, client.client_id, apiKey, SCOPE));
-  }
-  return oauthError("unsupported_grant_type", `grant_type '${grantType}' wird nicht unterst\xFCtzt.`);
-}
-async function handleRevoke(req2, env) {
-  let form;
-  try {
-    form = await req2.formData();
-  } catch {
-    return oauthError("invalid_request", "Body muss application/x-www-form-urlencoded sein.");
-  }
-  const token = String(form.get("token") ?? "");
-  if (token) {
-    const hash = await sha256hex(token);
-    const rec = await env.OAUTH_KV.get(`at:${hash}`, "json") ?? await env.OAUTH_KV.get(`rt:${hash}`, "json");
-    await Promise.all([env.OAUTH_KV.delete(`at:${hash}`), env.OAUTH_KV.delete(`rt:${hash}`)]);
-    if (rec?.grantId) {
-      const grant = await env.OAUTH_KV.get(`grant:${rec.grantId}`, "json");
-      if (grant) {
-        await env.OAUTH_KV.put(
-          `grant:${rec.grantId}`,
-          JSON.stringify({ ...grant, revoked: true }),
-          { expirationTtl: REFRESH_TTL }
-        );
-      }
-    }
-  }
-  return json({});
-}
-async function authenticate(req2, env) {
-  const header = req2.headers.get("authorization") ?? "";
-  if (!header.toLowerCase().startsWith("bearer ")) return null;
-  const token = header.slice(7).trim();
-  if (!token) return null;
-  const rec = await env.OAUTH_KV.get(`at:${await sha256hex(token)}`, "json");
-  if (!rec) return null;
-  const grant = await env.OAUTH_KV.get(`grant:${rec.grantId}`, "json");
-  if (!grant || grant.revoked) return null;
-  try {
-    const { apiKey } = await openJSON(token, rec.sealed);
-    return {
-      apiKey,
-      grantId: rec.grantId,
-      clientId: rec.clientId,
-      company: grant.company,
-      user: grant.user
-    };
-  } catch {
-    return null;
-  }
-}
-
 // servers/hero/src/tenant.ts
 function norm(s) {
   return (s || "").toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss").replace(/[^a-z0-9]/g, "");
@@ -1258,7 +1439,7 @@ function resolveDocumentType(cfg, wanted) {
   );
 }
 
-// servers/hero/src/tools/types.ts
+// shared/src/types.ts
 var str = (description) => ({ type: "string", description });
 var int = (description) => ({ type: "integer", description });
 var num = (description) => ({ type: "number", description });
@@ -2869,187 +3050,49 @@ async function leadUpload(ctx, blob, filename, field) {
 
 // servers/hero/src/tools/index.ts
 var tools = [...readTools, ...writeTools];
-var toolsByName = new Map(tools.map((t) => [t.name, t]));
-
-// servers/hero/src/mcp.ts
-var PROTOCOL_VERSION = "2025-06-18";
-var SUPPORTED_PROTOCOLS = ["2025-06-18", "2025-03-26", "2024-11-05"];
-var SERVER_VERSION = "2.0.0";
-var INSTRUCTIONS = `HERO Handwerkersoftware \u2014 bringe deinen Betrieb direkt in den Chat. Frage Projekte, Kunden, Termine, Auftr\xE4ge und offene Posten ab, erstelle Angebote, Rechnungen, Abschlags- und Schlussrechnungen, Stundenzettel und Auftr\xE4ge, lade Dateien hoch und hole PDF-Links \u2014 alles im Gespr\xE4ch. 34 Tools (Lesen \xB7 Erstellen \xB7 Upload \xB7 Download), kein Bearbeiten oder L\xF6schen: nichts kann kaputtgehen. Einstieg: \u201Ewas ist heute los?" (dashboard) oder \u201Ewer schuldet uns noch was?" (list_open_invoices). Zeitangaben immer als ISO MIT Offset, Datumsangaben als 'YYYY-MM-DD'.`;
-var result = (id, res) => ({ jsonrpc: "2.0", id, result: res });
-var rpcError = (id, code, message, data) => ({
-  jsonrpc: "2.0",
-  id: id ?? null,
-  error: { code, message, ...data === void 0 ? {} : { data } }
-});
-function serverInfo() {
-  return {
-    name: "hero",
-    title: "HERO Handwerkersoftware",
-    version: SERVER_VERSION,
-    websiteUrl: "https://hero-software.de",
-    icons: [
-      {
-        src: `data:image/svg+xml;base64,${btoa(LOGO_SVG)}`,
-        mimeType: "image/svg+xml",
-        sizes: ["any"]
-      }
-    ]
-  };
-}
-function publicToolList() {
-  return tools.map((t) => ({
-    name: t.name,
-    title: t.title,
-    description: t.description,
-    inputSchema: t.inputSchema,
-    annotations: t.annotations
-  }));
-}
-async function handleRpc(body, session, kv) {
-  if (Array.isArray(body)) {
-    return rpcError(null, -32600, "JSON-RPC-Batches werden von MCP nicht mehr unterst\xFCtzt.");
-  }
-  const req2 = body;
-  if (!req2 || req2.jsonrpc !== "2.0" || typeof req2.method !== "string") {
-    return rpcError(req2?.id, -32600, "Kein g\xFCltiger JSON-RPC-2.0-Request.");
-  }
-  const isNotification = req2.id === void 0 || req2.id === null;
-  switch (req2.method) {
-    case "initialize": {
-      const wanted = req2.params?.protocolVersion;
-      const version = SUPPORTED_PROTOCOLS.includes(wanted) ? wanted : PROTOCOL_VERSION;
-      return result(req2.id, {
-        protocolVersion: version,
-        capabilities: {
-          tools: { listChanged: false },
-          resources: { subscribe: false, listChanged: false },
-          prompts: { listChanged: false }
-        },
-        serverInfo: serverInfo(),
-        instructions: INSTRUCTIONS
-      });
-    }
-    case "notifications/initialized":
-    case "notifications/cancelled":
-    case "notifications/progress":
-      return null;
-    case "ping":
-      return result(req2.id, {});
-    case "tools/list":
-      return result(req2.id, { tools: publicToolList() });
-    case "resources/list":
-      return result(req2.id, { resources: [] });
-    case "resources/templates/list":
-      return result(req2.id, { resourceTemplates: [] });
-    case "prompts/list":
-      return result(req2.id, { prompts: [] });
-    case "tools/call": {
-      const name = req2.params?.name;
-      const tool = toolsByName.get(name);
-      if (!tool) {
-        return rpcError(req2.id, -32602, `Unbekanntes Tool '${name}'.`);
-      }
-      const hero = new Hero(session.apiKey);
-      try {
-        const cfg = await getConfig(kv, hero, session.apiKey);
-        const data = await tool.handler(req2.params?.arguments ?? {}, { hero, cfg, kv });
-        return result(req2.id, {
-          content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
-          isError: false
-        });
-      } catch (e) {
-        const err = e;
-        const detail = err instanceof HeroError && err.detail ? `
-${JSON.stringify(err.detail).slice(0, 600)}` : "";
-        return result(req2.id, {
-          content: [{ type: "text", text: `Fehler in ${name}: ${err.message}${detail}` }],
-          isError: true
-        });
-      }
-    }
-    default:
-      if (isNotification) return null;
-      return rpcError(req2.id, -32601, `Methode '${req2.method}' wird nicht unterst\xFCtzt.`);
-  }
-}
 
 // servers/hero/src/index.ts
-var CORS = {
-  "access-control-allow-origin": "*",
-  "access-control-allow-methods": "GET, POST, DELETE, OPTIONS",
-  "access-control-allow-headers": "content-type, authorization, mcp-protocol-version, mcp-session-id",
-  "access-control-expose-headers": "www-authenticate, mcp-protocol-version",
-  "access-control-max-age": "86400"
-};
-var json2 = (data, status = 200) => new Response(JSON.stringify(data, null, 2), {
-  status,
-  headers: { "content-type": "application/json", "cache-control": "no-store", ...CORS }
-});
-var index_default = {
-  async fetch(request, env) {
-    const url = new URL(request.url);
-    const origin = `${url.protocol}//${url.host}`;
-    const path = url.pathname.replace(/\/+$/, "") || "/";
-    if (request.method === "OPTIONS") {
-      return new Response(null, { status: 204, headers: CORS });
-    }
-    switch (`${request.method} ${path}`) {
-      case "GET /":
-        return landingPage(origin, tools.length, env.HUB_URL ?? "https://mcp-hub.ksqsebastian.workers.dev");
-      case "GET /favicon.svg":
-        return new Response(LOGO_SVG, {
-          headers: { "content-type": "image/svg+xml", "cache-control": "public, max-age=86400" }
-        });
-      case "GET /.well-known/oauth-authorization-server":
-      case "GET /.well-known/oauth-authorization-server/mcp":
-        return json2(authServerMetadata(origin));
-      case "GET /.well-known/oauth-protected-resource":
-      case "GET /.well-known/oauth-protected-resource/mcp":
-        return json2(protectedResourceMetadata(origin));
-      case "POST /register":
-        return handleRegister(request, env);
-      case "GET /authorize":
-        return handleAuthorizeGet(url, env);
-      case "POST /authorize":
-        return handleAuthorizePost(request, env);
-      case "POST /token":
-        return handleToken(request, env);
-      case "POST /revoke":
-        return handleRevoke(request, env);
-      /** Öffentlicher Katalog — die Übersichtsseite baut sich daraus, ohne Zugangsdaten. */
-      case "GET /tools.json":
-        return json2({
-          server: { name: "hero", version: SERVER_VERSION, protocolVersion: PROTOCOL_VERSION },
-          mcpUrl: `${origin}/mcp`,
-          auth: "oauth2",
-          tools: publicToolList()
-        });
-      case "GET /mcp":
-        return json2({ error: "method_not_allowed", error_description: "MCP l\xE4uft hier \xFCber POST /mcp." }, 405);
-      case "DELETE /mcp":
-        return new Response(null, { status: 204, headers: CORS });
-      case "POST /mcp": {
-        const session = await authenticate(request, env);
-        if (!session) {
-          return unauthorized(origin, "G\xFCltiges Bearer-Token erforderlich.");
-        }
-        let body;
-        try {
-          body = await request.json();
-        } catch {
-          return json2({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "Parse error" } }, 400);
-        }
-        const res = await handleRpc(body, session, env.OAUTH_KV);
-        if (res === null) {
-          return new Response(null, { status: 202, headers: CORS });
-        }
-        return json2(res);
-      }
-    }
-    return errorPage("Nicht gefunden", `${request.method} ${path} gibt es hier nicht.`, 404);
+var LOGO = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" rx="112" fill="#FFC400"/>
+<path fill="#1b1b1b" d="M150 130 L226 130 L226 232 L286 232 L286 130 L362 130 L362 382 L286 382 L286 280 L226 280 L226 382 L150 382 Z"/>
+<path fill="#FFC400" d="M150 130 L150 205 L200 130 Z"/>
+<path fill="#FFC400" d="M362 382 L362 307 L312 382 Z"/></svg>`;
+var config = {
+  brand: {
+    name: "HERO MCP",
+    system: "HERO",
+    tagline: "Handwerkersoftware f\xFCr Claude",
+    accent: "#FFC400",
+    logoSvg: LOGO,
+    credentialLabel: "HERO-API-Key",
+    credentialPlaceholder: "Bearer-Token aus HERO \u2192 Einstellungen \u2192 API",
+    credentialHelp: "Den Key findest du in HERO unter <b>Einstellungen \u2192 API</b>. Der Zugriff gilt genau f\xFCr diesen Client und l\xE4sst sich jederzeit widerrufen, indem du den Key in HERO neu erzeugst.",
+    summary: "Model-Context-Protocol-Server f\xFCr die HERO-Handwerkersoftware \u2014",
+    bullets: [
+      "<b>Lesen</b> \u2014 Dashboard, Suche, Projekte, Kunden, Dokumente, Artikel, Lager, Auftr\xE4ge, Checklisten, Termine, Zeiten, offene Posten, Zahlungsstatus, Belege, PDF-Links",
+      "<b>Schreiben</b> \u2014 Kunden, Projekte, Angebote, Rechnungen, Stundenzettel, Auftr\xE4ge, Checklisten, Artikel, Termine, Aufgaben, Zeiten, Logbuch, Zahlungen, Leads, Dateien",
+      "<b>Nicht enthalten</b> \u2014 Bearbeiten und L\xF6schen. Nichts kann kaputtgehen."
+    ]
+  },
+  serverInfo: {
+    name: "hero",
+    title: "HERO Handwerkersoftware",
+    version: "2.1.0",
+    websiteUrl: "https://hero-software.de"
+  },
+  scopes: "hero:read hero:write",
+  instructions: `HERO Handwerkersoftware \u2014 bringe deinen Betrieb direkt in den Chat. Frage Projekte, Kunden, Termine, Auftr\xE4ge und offene Posten ab, erstelle Angebote, Rechnungen, Abschlags- und Schlussrechnungen, Stundenzettel und Auftr\xE4ge, lade Dateien hoch und hole PDF-Links \u2014 alles im Gespr\xE4ch. 34 Tools (Lesen \xB7 Erstellen \xB7 Upload \xB7 Download), kein Bearbeiten oder L\xF6schen: nichts kann kaputtgehen. Einstieg: \u201Ewas ist heute los?" (dashboard) oder \u201Ewer schuldet uns noch was?" (list_open_invoices). Zeitangaben immer als ISO MIT Offset, Datumsangaben als 'YYYY-MM-DD'.`,
+  tools,
+  async validate(credential) {
+    const who = await new Hero(credential).whoami();
+    return { account: who.company, user: who.user };
+  },
+  async context(credential, kv) {
+    const hero = new Hero(credential);
+    return { hero, cfg: await getConfig(kv, hero, credential), kv };
   }
 };
+var index_default = createWorker(config);
 export {
   index_default as default
 };

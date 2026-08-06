@@ -11,7 +11,7 @@
  */
 import { HeroError, sleep } from "../hero";
 import { resolveDocumentType, norm } from "../tenant";
-import { type ToolDef, type ToolContext, str, int, num, req } from "./types";
+import { type HeroTool, type ToolContext, str, int, num, req } from "../context";
 import { resolveProject } from "./read";
 
 /** Geschlossene Liste der Einheiten, die HERO im Dokument akzeptiert. */
@@ -160,7 +160,7 @@ async function createDocument(
   };
 }
 
-export const writeTools: ToolDef[] = [
+export const writeTools: HeroTool[] = [
   {
     name: "create_customer",
     title: "Kontakt anlegen",

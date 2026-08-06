@@ -20,6 +20,27 @@ var REGISTRY = [
     ]
   },
   {
+    id: "lexware",
+    name: "Lexware Office",
+    tagline: "Buchhaltung",
+    description: "Kontakte, Rechnungen, Angebote, Mahnungen, Buchungsbelege und Auswertungen aus Lexware Office. Lesen und Anlegen \u2014 kein \xC4ndern, kein L\xF6schen.",
+    origin: "https://lexware-mcp.ksqsebastian.workers.dev",
+    mcpUrl: "https://lexware-mcp.ksqsebastian.workers.dev/mcp",
+    auth: "oauth",
+    status: "aktiv",
+    accent: "#00A03C",
+    icon: "L",
+    catalog: "tools.json",
+    binding: "LEXWARE",
+    notes: [
+      "OAuth 2.1 mit PKCE \u2014 jeder Nutzer hinterlegt beim Verbinden seinen eigenen Lexware-API-Key.",
+      "Die Public API von Lexware setzt Lexware Office XL voraus; kleinere Tarife antworten mit HTTP 402.",
+      "Lexware erlaubt nur 2 Anfragen pro Sekunde. Der Server h\xE4lt den Abstand selbst ein, gro\xDFe Auswertungen dauern deshalb sp\xFCrbar.",
+      "PDFs bekommen einen zeitlich begrenzten Link von diesem Server \u2014 Lexware selbst kennt keine \xF6ffentlichen Dokumentlinks.",
+      "Der API-Katalog stammt aus github.com/JannikWempe/mcp-lexware-office (MIT)."
+    ]
+  },
+  {
     id: "hero-vercel",
     name: "HERO (alt)",
     tagline: "abgeschaltet",

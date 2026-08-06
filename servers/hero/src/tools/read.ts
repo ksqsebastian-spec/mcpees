@@ -7,7 +7,7 @@
  */
 import { HeroError } from "../hero";
 import { norm, type TenantConfig } from "../tenant";
-import { type ToolDef, type ToolContext, str, int, bool, req } from "./types";
+import { type HeroTool, type ToolContext, str, int, bool, req } from "../context";
 
 const MAX_LIMIT = 200;
 const clamp = (n: unknown, def: number) =>
@@ -62,7 +62,7 @@ async function resolveJobStatus(ctx: ToolContext, wanted: string): Promise<numbe
   );
 }
 
-export const readTools: ToolDef[] = [
+export const readTools: HeroTool[] = [
   {
     name: "dashboard",
     title: "Geschäftsüberblick",

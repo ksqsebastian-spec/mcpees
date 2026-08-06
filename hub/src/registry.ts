@@ -58,6 +58,32 @@ export const REGISTRY: ServerEntry[] = [
     ],
   },
   {
+    id: "lexware",
+    name: "Lexware Office",
+    tagline: "Buchhaltung",
+    description:
+      "Kontakte, Rechnungen, Angebote, Mahnungen, Buchungsbelege und Auswertungen aus " +
+      "Lexware Office. Lesen und Anlegen — kein Ändern, kein Löschen.",
+    origin: "https://lexware-mcp.ksqsebastian.workers.dev",
+    mcpUrl: "https://lexware-mcp.ksqsebastian.workers.dev/mcp",
+    auth: "oauth",
+    status: "aktiv",
+    accent: "#00A03C",
+    icon: "L",
+    catalog: "tools.json",
+    binding: "LEXWARE",
+    notes: [
+      "OAuth 2.1 mit PKCE — jeder Nutzer hinterlegt beim Verbinden seinen eigenen Lexware-API-Key.",
+      "Die Public API von Lexware setzt Lexware Office XL voraus; kleinere Tarife " +
+        "antworten mit HTTP 402.",
+      "Lexware erlaubt nur 2 Anfragen pro Sekunde. Der Server hält den Abstand selbst ein, " +
+        "große Auswertungen dauern deshalb spürbar.",
+      "PDFs bekommen einen zeitlich begrenzten Link von diesem Server — Lexware selbst " +
+        "kennt keine öffentlichen Dokumentlinks.",
+      "Der API-Katalog stammt aus github.com/JannikWempe/mcp-lexware-office (MIT).",
+    ],
+  },
+  {
     id: "hero-vercel",
     name: "HERO (alt)",
     tagline: "abgeschaltet",

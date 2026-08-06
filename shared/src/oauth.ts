@@ -1,6 +1,8 @@
 /**
  * Minimaler, aber vollständiger OAuth-2.1-Authorization-Server für MCP.
  *
+ * Systemunabhängig: was geprüft und gespeichert wird, bestimmt die ServerConfig.
+ *
  * Umgesetzt sind genau die Teile, die die MCP-Auth-Spec verlangt:
  *   - RFC 8414  Authorization Server Metadata
  *   - RFC 9728  Protected Resource Metadata (+ WWW-Authenticate auf 401)
@@ -8,7 +10,7 @@
  *   - RFC 7636  PKCE mit S256 — Pflicht, nicht optional
  *   - Refresh-Token-Rotation
  *
- * Der HERO-API-Key liegt niemals im Klartext in KV: er wird mit einem aus dem jeweiligen
+ * Die Zugangsdaten liegen niemals im Klartext in KV: sie werden mit einem aus dem jeweiligen
  * Token abgeleiteten Schlüssel verschlüsselt (siehe crypto.ts). Wer nur KV lesen kann,
  * bekommt Chiffretext.
  */
@@ -20,18 +22,12 @@ import {
   timingSafeEqual,
   verifyPkceS256,
 } from "./crypto";
-import { Hero } from "./hero";
 import { consentPage, errorPage } from "./ui";
+import type { Brand, Env, ServerConfig } from "./types";
 
-export const SCOPE = "hero:read hero:write";
 const CODE_TTL = 600; // 10 min
 const ACCESS_TTL = 60 * 60; // 1 h
 const REFRESH_TTL = 60 * 60 * 24 * 30; // 30 Tage
-
-export interface Env {
-  OAUTH_KV: KVNamespace;
-  HUB_URL?: string;
-}
 
 interface ClientRecord {
   client_id: string;
@@ -46,18 +42,19 @@ interface ClientRecord {
 interface GrantRecord {
   clientId: string;
   clientName: string;
-  company: string;
+  /** Name des Mandanten/Accounts im Fremdsystem — nur zur Anzeige. */
+  account: string;
   user: string;
   created: number;
   revoked?: boolean;
 }
 
-/** Was hinter einem gültigen Token steht — inklusive des entschlüsselten HERO-Keys. */
+/** Was hinter einem gültigen Token steht — inklusive der entschlüsselten Zugangsdaten. */
 export interface Session {
-  apiKey: string;
+  credential: string;
   grantId: string;
   clientId: string;
-  company: string;
+  account: string;
   user: string;
 }
 
@@ -77,14 +74,14 @@ const oauthError = (error: string, description: string, status = 400) =>
 
 /* ── Metadaten ─────────────────────────────────────────────────────────────── */
 
-export function authServerMetadata(origin: string) {
+export function authServerMetadata(origin: string, scopes: string) {
   return {
     issuer: origin,
     authorization_endpoint: `${origin}/authorize`,
     token_endpoint: `${origin}/token`,
     registration_endpoint: `${origin}/register`,
     revocation_endpoint: `${origin}/revoke`,
-    scopes_supported: SCOPE.split(" "),
+    scopes_supported: scopes.split(" "),
     response_types_supported: ["code"],
     response_modes_supported: ["query"],
     grant_types_supported: ["authorization_code", "refresh_token"],
@@ -94,24 +91,24 @@ export function authServerMetadata(origin: string) {
   };
 }
 
-export function protectedResourceMetadata(origin: string) {
+export function protectedResourceMetadata(origin: string, scopes: string) {
   return {
     resource: `${origin}/mcp`,
     authorization_servers: [origin],
-    scopes_supported: SCOPE.split(" "),
+    scopes_supported: scopes.split(" "),
     bearer_methods_supported: ["header"],
     resource_documentation: `${origin}/`,
   };
 }
 
 /** 401 nach RFC 9728 — der Client erfährt daraus, wo er sich anmelden kann. */
-export function unauthorized(origin: string, description: string): Response {
+export function unauthorized(origin: string, realm: string, description: string): Response {
   return json(
     { error: "invalid_token", error_description: description },
     401,
     {
       "www-authenticate":
-        `Bearer realm="hero-mcp", ` +
+        `Bearer realm="${realm}", ` +
         `resource_metadata="${origin}/.well-known/oauth-protected-resource"`,
     },
   );
@@ -189,7 +186,10 @@ interface AuthParams {
   scope: string;
 }
 
-function readAuthParams(src: URLSearchParams | FormData): AuthParams | { error: string } {
+function readAuthParams(
+  src: URLSearchParams | FormData,
+  defaultScope: string,
+): AuthParams | { error: string } {
   const get = (k: string) => String(src.get(k) ?? "");
   const client_id = get("client_id");
   const redirect_uri = get("redirect_uri");
@@ -208,7 +208,7 @@ function readAuthParams(src: URLSearchParams | FormData): AuthParams | { error: 
     redirect_uri,
     state: get("state"),
     code_challenge,
-    scope: get("scope") || SCOPE,
+    scope: get("scope") || defaultScope,
   };
 }
 
@@ -216,19 +216,25 @@ async function loadClient(env: Env, clientId: string): Promise<ClientRecord | nu
   return env.OAUTH_KV.get<ClientRecord>(`client:${clientId}`, "json");
 }
 
-export async function handleAuthorizeGet(url: URL, env: Env): Promise<Response> {
-  const parsed = readAuthParams(url.searchParams);
-  if ("error" in parsed) return errorPage("Ungültige Anfrage", parsed.error);
+export async function handleAuthorizeGet<C>(
+  url: URL,
+  env: Env,
+  config: ServerConfig<C>,
+): Promise<Response> {
+  const parsed = readAuthParams(url.searchParams, config.scopes);
+  if ("error" in parsed) return errorPage(config.brand, "Ungültige Anfrage", parsed.error);
 
   const client = await loadClient(env, parsed.client_id);
-  if (!client) return errorPage("Unbekannter Client", "Diese client_id ist nicht registriert.");
+  if (!client) return errorPage(config.brand, "Unbekannter Client", "Diese client_id ist nicht registriert.");
   if (!client.redirect_uris.includes(parsed.redirect_uri)) {
     return errorPage(
+      config.brand,
       "Ungültige redirect_uri",
       "Die redirect_uri gehört nicht zu diesem Client. Aus Sicherheitsgründen wird nicht weitergeleitet.",
     );
   }
   return consentPage({
+    brand: config.brand,
     clientName: client.client_name,
     clientUri: client.client_uri,
     params: {
@@ -243,20 +249,25 @@ export async function handleAuthorizeGet(url: URL, env: Env): Promise<Response> 
   });
 }
 
-export async function handleAuthorizePost(req: Request, env: Env): Promise<Response> {
+export async function handleAuthorizePost<C>(
+  req: Request,
+  env: Env,
+  config: ServerConfig<C>,
+): Promise<Response> {
   const form = await req.formData();
-  const parsed = readAuthParams(form);
-  if ("error" in parsed) return errorPage("Ungültige Anfrage", parsed.error);
+  const parsed = readAuthParams(form, config.scopes);
+  if ("error" in parsed) return errorPage(config.brand, "Ungültige Anfrage", parsed.error);
 
   const client = await loadClient(env, parsed.client_id);
-  if (!client) return errorPage("Unbekannter Client", "Diese client_id ist nicht registriert.");
+  if (!client) return errorPage(config.brand, "Unbekannter Client", "Diese client_id ist nicht registriert.");
   if (!client.redirect_uris.includes(parsed.redirect_uri)) {
-    return errorPage("Ungültige redirect_uri", "Die redirect_uri gehört nicht zu diesem Client.");
+    return errorPage(config.brand, "Ungültige redirect_uri", "Die redirect_uri gehört nicht zu diesem Client.");
   }
 
-  const apiKey = String(form.get("hero_api_key") ?? "").trim();
+  const credential = String(form.get("credential") ?? "").trim();
   const retry = (msg: string) =>
     consentPage({
+      brand: config.brand,
       clientName: client.client_name,
       clientUri: client.client_uri,
       error: msg,
@@ -271,21 +282,21 @@ export async function handleAuthorizePost(req: Request, env: Env): Promise<Respo
       },
     });
 
-  if (!apiKey) return retry("Bitte den HERO-API-Key eingeben.");
+  if (!credential) return retry(`Bitte den ${config.brand.credentialLabel} eingeben.`);
 
-  // Key gegen HERO prüfen, bevor irgendetwas ausgestellt wird.
-  let who: { company: string; user: string };
+  // Zugangsdaten gegen das Fremdsystem prüfen, BEVOR irgendetwas ausgestellt wird.
+  let who: { account: string; user: string };
   try {
-    who = await new Hero(apiKey).whoami();
+    who = await config.validate(credential);
   } catch (e) {
-    return retry(`HERO hat den Key abgelehnt: ${(e as Error).message}`);
+    return retry(`${config.brand.system} hat den Zugang abgelehnt: ${(e as Error).message}`);
   }
 
   const grantId = randomToken("hmcp_g_");
   const grant: GrantRecord = {
     clientId: client.client_id,
     clientName: client.client_name,
-    company: who.company,
+    account: who.account,
     user: who.user,
     created: Date.now(),
   };
@@ -302,7 +313,7 @@ export async function handleAuthorizePost(req: Request, env: Env): Promise<Respo
       codeChallenge: parsed.code_challenge,
       grantId,
       scope: parsed.scope,
-      sealed: await sealJSON(code, { apiKey }),
+      sealed: await sealJSON(code, { credential }),
     }),
     { expirationTtl: CODE_TTL },
   );
@@ -349,18 +360,24 @@ async function authenticateClient(
 }
 
 /** Access- und Refresh-Token frisch ausstellen; der HERO-Key wird pro Token neu versiegelt. */
-async function issueTokens(env: Env, grantId: string, clientId: string, apiKey: string, scope: string) {
+async function issueTokens(
+  env: Env,
+  grantId: string,
+  clientId: string,
+  credential: string,
+  scope: string,
+) {
   const accessToken = randomToken("hmcp_at_");
   const refreshToken = randomToken("hmcp_rt_");
   await Promise.all([
     env.OAUTH_KV.put(
       `at:${await sha256hex(accessToken)}`,
-      JSON.stringify({ grantId, clientId, sealed: await sealJSON(accessToken, { apiKey }) }),
+      JSON.stringify({ grantId, clientId, sealed: await sealJSON(accessToken, { credential }) }),
       { expirationTtl: ACCESS_TTL },
     ),
     env.OAUTH_KV.put(
       `rt:${await sha256hex(refreshToken)}`,
-      JSON.stringify({ grantId, clientId, sealed: await sealJSON(refreshToken, { apiKey }) }),
+      JSON.stringify({ grantId, clientId, sealed: await sealJSON(refreshToken, { credential }) }),
       { expirationTtl: REFRESH_TTL },
     ),
   ]);
@@ -373,7 +390,11 @@ async function issueTokens(env: Env, grantId: string, clientId: string, apiKey: 
   };
 }
 
-export async function handleToken(req: Request, env: Env): Promise<Response> {
+export async function handleToken<C>(
+  req: Request,
+  env: Env,
+  config: ServerConfig<C>,
+): Promise<Response> {
   let form: FormData;
   try {
     form = await req.formData();
@@ -409,8 +430,10 @@ export async function handleToken(req: Request, env: Env): Promise<Response> {
       return oauthError("invalid_grant", "code_verifier passt nicht zur code_challenge.");
     }
 
-    const { apiKey } = await openJSON<{ apiKey: string }>(code, rec.sealed);
-    return json(await issueTokens(env, rec.grantId, client.client_id, apiKey, rec.scope ?? SCOPE));
+    const { credential } = await openJSON<{ credential: string }>(code, rec.sealed);
+    return json(
+      await issueTokens(env, rec.grantId, client.client_id, credential, rec.scope ?? config.scopes),
+    );
   }
 
   if (grantType === "refresh_token") {
@@ -429,8 +452,8 @@ export async function handleToken(req: Request, env: Env): Promise<Response> {
     }
     // Rotation: das alte Refresh-Token gilt ab jetzt nicht mehr.
     await env.OAUTH_KV.delete(kvKey);
-    const { apiKey } = await openJSON<{ apiKey: string }>(token, rec.sealed);
-    return json(await issueTokens(env, rec.grantId, client.client_id, apiKey, SCOPE));
+    const { credential } = await openJSON<{ credential: string }>(token, rec.sealed);
+    return json(await issueTokens(env, rec.grantId, client.client_id, credential, config.scopes));
   }
 
   return oauthError("unsupported_grant_type", `grant_type '${grantType}' wird nicht unterstützt.`);
@@ -482,12 +505,12 @@ export async function authenticate(req: Request, env: Env): Promise<Session | nu
   if (!grant || grant.revoked) return null;
 
   try {
-    const { apiKey } = await openJSON<{ apiKey: string }>(token, rec.sealed);
+    const { credential } = await openJSON<{ credential: string }>(token, rec.sealed);
     return {
-      apiKey,
+      credential,
       grantId: rec.grantId,
       clientId: rec.clientId,
-      company: grant.company,
+      account: grant.account,
       user: grant.user,
     };
   } catch {

@@ -6,6 +6,7 @@ OAuth-geschützte MCP-Server auf Cloudflare Workers — plus die Übersichtsseit
 |---|---|
 | Übersicht aller Server | https://mcp-hub.ksqsebastian.workers.dev |
 | HERO MCP (Endpoint für Claude) | https://hero-mcp.ksqsebastian.workers.dev/mcp |
+| Lexware Office MCP | https://lexware-mcp.ksqsebastian.workers.dev/mcp |
 
 Der Vorgänger auf Vercel (`hero-mcp.vercel.app`) ist am 06.08.2026 abgeschaltet worden und
 antwortet auf jeden Aufruf mit HTTP 410 samt Verweis auf den neuen Endpoint. Die alten
@@ -14,10 +15,16 @@ Deployments liegen weiter im Vercel-Projekt, ein Instant Rollback ist also mögl
 ## Was hier drin ist
 
 ```
-servers/hero/     HERO-Handwerkersoftware als MCP-Server, 34 Tools, OAuth 2.1
+shared/           OAuth-Server, MCP-Protokoll, Seiten — von allen Servern benutzt
+servers/hero/     HERO-Handwerkersoftware, 34 Tools
+servers/lexware/  Lexware Office, 17 Tools
 hub/              Übersichtsseite: alle Server, alle Tools, live vom Server geholt
-scripts/          Build, Schema-Validierung, Deployment
+scripts/          Build, Schema-Validierung, Tests, Deployment
 ```
+
+Ein neuer Server besteht aus drei Dingen: Tools schreiben, Zugangsdaten prüfen, Kontext
+bauen. OAuth, MCP-Protokoll, Anmeldeseite und Routing kommen aus `shared` — siehe
+`shared/src/types.ts` für den Vertrag und `servers/lexware/src/index.ts` als kürzestes Beispiel.
 
 ## HERO MCP
 
@@ -43,6 +50,36 @@ Vollständiger Authorization Server im Worker, ohne Fremdbibliothek:
 - RFC 7636 PKCE mit S256 — Pflicht, nicht optional
 - Refresh-Token-Rotation, Einmal-Auth-Codes, RFC 7009 Revocation
 
+## Lexware Office MCP
+
+17 Tools für [Lexware Office](https://www.lexware.de/lexware-office/): Kontakte, Belege aller
+Art, Auswertungen, Buchungsbelege, Dateien. Wie bei HERO nur Lesen und Anlegen — Lexware
+sperrt Änderungen optimistisch über ein `version`-Feld, und wer das falsch mitschickt,
+überschreibt fremde Änderungen.
+
+Auth ist auch hier ein eigener API-Key pro Nutzer: Lexwares OAuth2 gibt es nur im
+Partner-Programm mit bilateraler Qualifizierung, die Public API kennt nur Bearer-Keys.
+Sie setzt **Lexware Office XL** voraus; kleinere Tarife antworten mit HTTP 402.
+
+Drei Eigenheiten prägen die Umsetzung:
+
+- **2 Anfragen pro Sekunde.** Härter, als es klingt: darüber kommt 429, und der
+  Authorization-Server sperrt zeitweise. Der Client hält den Abstand selbst ein — die Drossel
+  liegt auf Modulebene und pro API-Key, nicht am Client-Objekt, sonst würde sie bei jedem
+  Tool-Aufruf zurückgesetzt.
+- **Falscher Belegstatus = leere Liste.** `voucherStatus` ist je Belegart eine andere
+  geschlossene Liste. Lexware meldet einen ungültigen Wert nicht, es kommt einfach nichts
+  zurück — also eine falsche Antwort, die wie eine richtige aussieht. Der Server prüft vorher.
+- **Keine öffentlichen Dokumentlinks.** PDFs gibt es nur gegen den API-Key. Statt Base64 ins
+  Gespräch zu legen, erzeugt der Server einen eigenen, kurzlebigen Link und liefert die Datei
+  selbst aus; der Key dahinter ist mit dem Link-Token verschlüsselt.
+
+Der API-Katalog — welche Endpunkte es gibt, welche Statuswerte gelten, wo die Fallen liegen —
+stammt aus [JannikWempe/mcp-lexware-office](https://github.com/JannikWempe/mcp-lexware-office)
+(MIT, © Jannik Wempe) und der offiziellen Doku. Dessen Server ist ein stdio-Prozess mit
+QuickJS-Sandbox und zwei generischen Tools (`search`, `execute`); hier sind es benannte Tools
+hinter OAuth, damit er als Remote-Connector zum Rest dieses Repos passt.
+
 ## Korrektheit ohne Live-Zugang
 
 Die HERO-API meldet bei mehreren Operationen Erfolg und verwirft dabei still Daten. Der
@@ -64,9 +101,18 @@ Client zur Laufzeit die Feldnamen jedes Input-Objekts gegen eine generierte Kart
 (`scripts/gen-input-fields.mjs`) — ein `productId` statt `product_id` fliegt auf, bevor
 ein Request rausgeht.
 
-`npm test` fährt zusätzlich den kompletten OAuth-Flow gegen den gebauten Worker: Code-Tausch,
-PKCE-Verifikation, Einmalgebrauch des Codes, Refresh-Rotation, Widerruf, ein echter
-`tools/call` — und prüft dabei, dass weder HERO-Key noch Access-Token im Klartext in KV landen.
+`npm test` fährt beide Server gegen Attrappen von KV und Fremdsystem:
+
+- **19 Prüfungen HERO** — kompletter OAuth-Flow: Code-Tausch, PKCE, Einmalgebrauch des Codes,
+  Refresh-Rotation, Widerruf, ein echter `tools/call`, und dass weder Key noch Token im
+  Klartext in KV landen.
+- **30 Prüfungen Lexware** — dazu die Rechenlogik (Umsatz gestellt/bezahlt, offene Posten,
+  Überfälligkeit), die Statusprüfung, die Paginierung über mehrere Seiten, der eingehaltene
+  Mindestabstand von 2 Anfragen/Sekunde und der Download-Link samt Ablauf.
+
+Der Ratenbegrenzungs-Test hat dabei einen echten Fehler gefunden: die Drossel lag anfangs am
+Client-Objekt und startete bei jedem Tool-Aufruf neu, sodass zwei Tools nacheinander ihre
+Requests im Abstand von 4 ms abgefeuert hätten.
 
 ## Bauen und deployen
 

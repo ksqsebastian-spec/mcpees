@@ -7,5 +7,8 @@
   "observability": { "enabled": true },
   // Direkter Draht zum HERO-Worker. Ohne dieses Binding wäre der Aufruf ein
   // Worker-zu-Worker-fetch auf derselben workers.dev-Zone — das lehnt Cloudflare ab (1042).
-  "services": [{ "binding": "HERO", "service": "hero-mcp" }]
+  "services": [
+    { "binding": "HERO", "service": "hero-mcp" },
+    { "binding": "LEXWARE", "service": "lexware-mcp" }
+  ]
 }

@@ -1,6 +1,5 @@
-/** HTML für Login-, Landing- und Fehlerseiten. Kein Framework, kein externes Asset. */
-
-export const BRAND = "#FFC400";
+/** Anmelde-, Start- und Fehlerseiten. Kein Framework, kein externes Asset, kein Tracking. */
+import type { Brand } from "./types";
 
 export function esc(s: unknown): string {
   return String(s ?? "")
@@ -11,7 +10,7 @@ export function esc(s: unknown): string {
     .replace(/'/g, "&#39;");
 }
 
-const CSS = `
+const css = (accent: string) => `
 :root { color-scheme: light dark; }
 * { box-sizing: border-box; }
 body { margin:0; font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
@@ -29,16 +28,16 @@ p { margin:0 0 16px; color:#3f3f46; }
 label { display:block; font-weight:600; font-size:14px; margin:20px 0 6px; }
 input[type=password], input[type=text] { width:100%; padding:11px 13px; font-size:15px;
   border:1px solid #d4d4d8; border-radius:9px; background:#fff; color:inherit; font-family:inherit; }
-input:focus { outline:2px solid ${BRAND}; outline-offset:1px; border-color:transparent; }
+input:focus { outline:2px solid ${accent}; outline-offset:1px; border-color:transparent; }
 button { width:100%; margin-top:22px; padding:12px 16px; font-size:15px; font-weight:650;
-  border:0; border-radius:9px; background:${BRAND}; color:#1b1b1b; cursor:pointer; font-family:inherit; }
+  border:0; border-radius:9px; background:${accent}; color:#1b1b1b; cursor:pointer; font-family:inherit; }
 button:hover { filter:brightness(.95); }
 .app { background:#f4f4f5; border-radius:10px; padding:14px 16px; margin:20px 0;
   font-size:14px; border:1px solid #e4e4e7; }
 .app b { display:block; font-size:15px; }
 .err { background:#fef2f2; border:1px solid #fecaca; color:#991b1b; border-radius:10px;
   padding:12px 14px; margin-bottom:16px; font-size:14px; }
-code { background:#f4f4f5; padding:2px 6px; border-radius:5px; font-size:.9em;
+code { background:#f2f2f3; padding:2px 6px; border-radius:5px; font-size:.9em;
   font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
 ul { padding-left:20px; color:#3f3f46; } li { margin:6px 0; }
 a { color:#0b62d0; }
@@ -51,25 +50,19 @@ a { color:#0b62d0; }
   p, ul { color:#c4c4c8; } .muted,.foot { color:#8b8b93; }
   code { background:#26262b; } .foot { border-color:#26262b; }
   .err { background:#2a1416; border-color:#5c2427; color:#fca5a5; }
-}
-`;
+}`;
 
-export const LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-<rect width="512" height="512" rx="112" fill="${BRAND}"/>
-<path fill="#1b1b1b" d="M150 130 L226 130 L226 232 L286 232 L286 130 L362 130 L362 382 L286 382 L286 280 L226 280 L226 382 L150 382 Z"/>
-<path fill="${BRAND}" d="M150 130 L150 205 L200 130 Z"/>
-<path fill="${BRAND}" d="M362 382 L362 307 L312 382 Z"/></svg>`;
+const dataUri = (svg: string) => `data:image/svg+xml;base64,${btoa(svg)}`;
 
-const LOGO_DATA_URI = `data:image/svg+xml;base64,${btoa(LOGO_SVG)}`;
-
-export function page(title: string, body: string, status = 200): Response {
+export function page(brand: Brand, title: string, body: string, status = 200): Response {
+  const logo = dataUri(brand.logoSvg);
   const html = `<!doctype html><html lang="de"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)}</title>
-<link rel="icon" href="${LOGO_DATA_URI}">
-<style>${CSS}</style></head><body><main class="card">
-<div class="brand"><img class="logo" src="${LOGO_DATA_URI}" alt="">
-<div><b>HERO MCP</b><span>Handwerkersoftware für Claude</span></div></div>
+<link rel="icon" href="${logo}">
+<style>${css(brand.accent)}</style></head><body><main class="card">
+<div class="brand"><img class="logo" src="${logo}" alt="">
+<div><b>${esc(brand.name)}</b><span>${esc(brand.tagline)}</span></div></div>
 ${body}</main></body></html>`;
   return new Response(html, {
     status,
@@ -78,6 +71,7 @@ ${body}</main></body></html>`;
 }
 
 export function consentPage(opts: {
+  brand: Brand;
   clientName: string;
   clientUri?: string;
   params: Record<string, string>;
@@ -87,47 +81,45 @@ export function consentPage(opts: {
     .map(([k, v]) => `<input type="hidden" name="${esc(k)}" value="${esc(v)}">`)
     .join("");
   return page(
-    "HERO MCP verbinden",
+    opts.brand,
+    `${opts.brand.name} verbinden`,
     `${opts.error ? `<div class="err">${esc(opts.error)}</div>` : ""}
 <h1>Zugriff erlauben</h1>
 <div class="app"><b>${esc(opts.clientName)}</b>
-<span class="muted">${opts.clientUri ? esc(opts.clientUri) : "möchte auf deinen HERO-Account zugreifen"}</span></div>
-<p>Gib deinen persönlichen HERO-API-Key ein. Er wird gegen HERO geprüft und danach
-<b>verschlüsselt</b> gespeichert — entschlüsseln kann ihn nur der Client, der das ausgestellte
-Token hält.</p>
+<span class="muted">${opts.clientUri ? esc(opts.clientUri) : "möchte auf deinen Account zugreifen"}</span></div>
+<p>Gib deinen persönlichen ${esc(opts.brand.credentialLabel)} ein. Er wird gegen das System geprüft
+und danach <b>verschlüsselt</b> gespeichert — entschlüsseln kann ihn nur der Client, der das
+ausgestellte Token hält.</p>
 <form method="post">${hidden}
-<label for="key">HERO-API-Key</label>
-<input id="key" name="hero_api_key" type="password" autocomplete="off" spellcheck="false"
-  placeholder="Bearer-Token aus HERO → Einstellungen → API" required autofocus>
+<label for="key">${esc(opts.brand.credentialLabel)}</label>
+<input id="key" name="credential" type="password" autocomplete="off" spellcheck="false"
+  placeholder="${esc(opts.brand.credentialPlaceholder)}" required autofocus>
 <button type="submit">Prüfen und verbinden</button></form>
-<div class="foot">Den Key findest du in HERO unter <b>Einstellungen → API</b>.
-Der Zugriff gilt genau für diesen Client und lässt sich jederzeit widerrufen,
-indem du den Key in HERO neu erzeugst.</div>`,
+<div class="foot">${opts.brand.credentialHelp}</div>`,
   );
 }
 
-export function errorPage(title: string, message: string, status = 400): Response {
-  return page(title, `<h1>${esc(title)}</h1><div class="err">${esc(message)}</div>`, status);
+export function errorPage(brand: Brand, title: string, message: string, status = 400): Response {
+  return page(brand, title, `<h1>${esc(title)}</h1><div class="err">${esc(message)}</div>`, status);
 }
 
-export function landingPage(origin: string, toolCount: number, hubUrl: string): Response {
+export function landingPage(
+  brand: Brand,
+  origin: string,
+  toolCount: number,
+  hubUrl: string,
+): Response {
   return page(
-    "HERO MCP Server",
-    `<h1>HERO MCP Server</h1>
-<p>Model-Context-Protocol-Server für die HERO-Handwerkersoftware —
-<b>${toolCount} Tools</b> zum Lesen, Anlegen, Hochladen und Herunterladen.
-Geschützt mit OAuth 2.1; jeder Nutzer verbindet seinen eigenen HERO-Account.</p>
+    brand,
+    brand.name,
+    `<h1>${esc(brand.name)}</h1>
+<p>${brand.summary} <b>${toolCount} Tools</b>. Geschützt mit OAuth 2.1; jeder Nutzer verbindet
+seinen eigenen Account.</p>
 <label>Server-URL</label>
 <input type="text" readonly value="${esc(origin)}/mcp" onclick="this.select()">
 <p class="muted" style="margin-top:12px">In Claude: <b>Einstellungen → Connectors → Connector
-hinzufügen</b>, URL einfügen, dann öffnet sich die Anmeldung und du hinterlegst deinen HERO-API-Key.</p>
-<ul>
-<li><b>Lesen</b> — Dashboard, Suche, Projekte, Kunden, Dokumente, Artikel, Lager, Aufträge,
-Checklisten, Termine, Zeiten, offene Posten, Zahlungsstatus, Belege, PDF-Links</li>
-<li><b>Schreiben</b> — Kunden, Projekte, Angebote, Rechnungen, Stundenzettel, Aufträge,
-Checklisten, Artikel, Termine, Aufgaben, Zeiten, Logbuch, Zahlungen, Leads, Dateien</li>
-<li><b>Nicht enthalten</b> — Bearbeiten und Löschen. Nichts kann kaputtgehen.</li>
-</ul>
+hinzufügen</b>, URL einfügen, dann öffnet sich die Anmeldung.</p>
+<ul>${brand.bullets.map((b) => `<li>${b}</li>`).join("")}</ul>
 <div class="foot"><a href="${esc(hubUrl)}">Alle MCP-Server im Überblick →</a></div>`,
   );
 }

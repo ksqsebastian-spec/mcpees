@@ -8,7 +8,7 @@
  * zwischengespeichert.
  */
 import { Hero, HeroError } from "./hero";
-import { sha256hex } from "./crypto";
+import { sha256hex } from "../../../shared/src/crypto";
 
 export interface TenantConfig {
   companyId: number | null;
