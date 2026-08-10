@@ -8,6 +8,7 @@ OAuth-geschützte MCP-Server auf Cloudflare Workers — plus die Übersichtsseit
 | HERO MCP (Endpoint für Claude) | https://hero-mcp.ksqsebastian.workers.dev/mcp |
 | sevdesk MCP | https://sevdesk-mcp.ksqsebastian.workers.dev/mcp |
 | Tarifcheck MCP | https://tarifcheck.ksqsebastian.workers.dev/mcp |
+| Mikdaten MCP | https://mikdaten.ksqsebastian.workers.dev/mcp |
 
 Der Vorgänger auf Vercel (`hero-mcp.vercel.app`) ist am 06.08.2026 abgeschaltet worden und
 antwortet auf jeden Aufruf mit HTTP 410 samt Verweis auf den neuen Endpoint. Aus der Übersicht
@@ -210,8 +211,10 @@ Service-Binding eintragen. Die Tool-Liste wird nicht in der Registry gepflegt, s
 Laufzeit vom Server geholt (`/tools.json` oder `tools/list`), damit die Übersicht nicht
 auseinanderläuft.
 
-Der Server muss nicht aus diesem Repo kommen — **Tarifcheck** liegt in einem eigenen Repo
-und wird nur eingetragen. Nötig ist von ihm nur ein `/tools.json` im bekannten Format;
+Der Server muss nicht aus diesem Repo kommen — **Tarifcheck** und **Mikdaten** liegen in
+eigenen Repos und werden nur eingetragen. Bei Mikdaten steckt der MCP-Server sogar im
+Worker der Anwendung selbst, nicht in einem eigenen Dienst; für den Hub macht das keinen
+Unterschied. Nötig ist von ihm nur ein `/tools.json` im bekannten Format;
 `auth` und `mcpUrl` darin sind optional, der Hub nutzt sie nicht.
 
 Trägt ein Server nur lesende oder nur schreibende Tools, fällt der jeweils leere Abschnitt

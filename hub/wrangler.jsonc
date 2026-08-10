@@ -5,11 +5,12 @@
   "compatibility_date": "2026-08-01",
   "workers_dev": true,
   "observability": { "enabled": true },
-  // Direkter Draht zum HERO-Worker. Ohne dieses Binding wäre der Aufruf ein
+  // Direkter Draht zu den angebundenen Workern. Ohne diese Bindings wäre der Aufruf ein
   // Worker-zu-Worker-fetch auf derselben workers.dev-Zone — das lehnt Cloudflare ab (1042).
   "services": [
     { "binding": "HERO", "service": "hero-mcp" },
     { "binding": "SEVDESK", "service": "sevdesk-mcp" },
-    { "binding": "TARIFCHECK", "service": "tarifcheck" }
+    { "binding": "TARIFCHECK", "service": "tarifcheck" },
+    { "binding": "MIKDATEN", "service": "mikdaten" }
   ]
 }

@@ -31,6 +31,12 @@ var TARIF_MARK = {
   accent: "#1F7A5C",
   fill: 0.62
 };
+var MIKDATEN_MARK = {
+  inner: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 10" shape-rendering="crispEdges"><g fill="#ffffff"><rect x="2" y="0" width="2" height="1"/><rect x="8" y="0" width="2" height="1"/><rect x="1" y="1" width="4" height="1"/><rect x="7" y="1" width="4" height="1"/><rect x="0" y="2" width="12" height="1"/><rect x="0" y="3" width="12" height="1"/><rect x="2" y="5" width="2" height="1"/><rect x="8" y="5" width="2" height="1"/><rect x="2" y="6" width="2" height="1"/><rect x="8" y="6" width="2" height="1"/><rect x="5" y="8" width="2" height="1"/><rect x="5" y="9" width="2" height="1"/></g><g fill="#FF4A1C"><rect x="0" y="4" width="12" height="1"/><rect x="0" y="5" width="2" height="1"/><rect x="4" y="5" width="4" height="1"/><rect x="10" y="5" width="2" height="1"/><rect x="0" y="6" width="2" height="1"/><rect x="4" y="6" width="4" height="1"/><rect x="10" y="6" width="2" height="1"/><rect x="0" y="7" width="12" height="1"/><rect x="0" y="8" width="5" height="1"/><rect x="7" y="8" width="5" height="1"/><rect x="0" y="9" width="5" height="1"/><rect x="7" y="9" width="5" height="1"/></g></svg>',
+  bg: "#0A0A0A",
+  accent: "#FF4A1C",
+  fill: 0.6
+};
 var REGISTRY = [
   {
     id: "hero",
@@ -96,6 +102,29 @@ var REGISTRY = [
       "Ausschlie\xDFlich lesend. Hochladen und Quellen \xE4ndern geht nur \xFCber die Seite selbst.",
       "Jede Antwort f\xFChrt mit, von wann die Fassung ist und ob sie allgemeinverbindlich ist. Beim Maler-Rahmentarifvertrag kursieren \xE4ltere Fassungen \u2014 ohne diesen Vorbehalt w\xE4re eine Zahl daraus wertlos.",
       "F\xFCr das Tischlerhandwerk gibt es keine Allgemeinverbindlicherkl\xE4rung und damit keine \xF6ffentliche Volltextquelle. \xDCberwacht wird dort nur die Downloadseite; der Vertragstext wird von Hand hochgeladen."
+    ]
+  },
+  {
+    id: "mikdaten",
+    name: "Mikdaten",
+    tagline: "Immobilienverwaltung",
+    description: "Kanban-Board, Objektakten, Kontakte, Termine und Dokumente der Immobilienverwaltung. Lesen, Neues anlegen und Aufgaben durchs Board bewegen.",
+    origin: "https://mikdaten.ksqsebastian.workers.dev",
+    mcpUrl: "https://mikdaten.ksqsebastian.workers.dev/mcp",
+    auth: "oauth",
+    status: "aktiv",
+    mark: MIKDATEN_MARK,
+    accent: MIKDATEN_MARK.accent,
+    icon: "M",
+    catalog: "tools.json",
+    binding: "MIKDATEN",
+    notes: [
+      "Eigene Anmeldung mit Benutzername und Passwort \u2014 dieselbe wie auf der Seite. Kein externer Anbieter dahinter.",
+      "Der Server l\xE4uft im Worker der Anwendung selbst, nicht als eigener Dienst. Er sieht dieselben Daten, ohne Kopie und ohne Zwischenschicht.",
+      "Jede Anfrage l\xE4uft mit den Rechten der angemeldeten Person; Kommentare erscheinen unter deren Namen.",
+      "Anlegen und Fortschreiben ist erlaubt: Aufgaben verschieben, erledigen, kommentieren, Checklisten abhaken, Objektdaten fortschreiben. Gel\xF6scht wird nichts.",
+      "Personen und Objekte d\xFCrfen als Name, Benutzername oder Objektnummer angegeben werden, nicht nur als ID.",
+      "Verbundene Anwendungen stehen in Mikdaten unter Einstellungen \u2192 KI-Anbindung und lassen sich dort einzeln trennen."
     ]
   }
 ];

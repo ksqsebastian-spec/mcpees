@@ -59,6 +59,36 @@ const TARIF_MARK: Mark = {
   fill: 0.62,
 };
 
+/**
+ * Mikdaten ist ein eigener Dienst. Das Zeichen ist die Bildmarke der Anwendung selbst:
+ * zwei Giebel mit Fenstern und Tor, die zusammen ein M ergeben — dasselbe 12x10-Raster
+ * wie in der Anwendung. Dort nimmt das Dach die Textfarbe an; auf der Kachel ist es fest
+ * weiß, weil ein Data-URI die Variablen der Seite nicht kennt.
+ */
+const MIKDATEN_MARK: Mark = {
+  inner:
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 10" shape-rendering="crispEdges">' +
+    '<g fill="#ffffff">' +
+    '<rect x="2" y="0" width="2" height="1"/><rect x="8" y="0" width="2" height="1"/>' +
+    '<rect x="1" y="1" width="4" height="1"/><rect x="7" y="1" width="4" height="1"/>' +
+    '<rect x="0" y="2" width="12" height="1"/><rect x="0" y="3" width="12" height="1"/>' +
+    '<rect x="2" y="5" width="2" height="1"/><rect x="8" y="5" width="2" height="1"/>' +
+    '<rect x="2" y="6" width="2" height="1"/><rect x="8" y="6" width="2" height="1"/>' +
+    '<rect x="5" y="8" width="2" height="1"/><rect x="5" y="9" width="2" height="1"/></g>' +
+    '<g fill="#FF4A1C">' +
+    '<rect x="0" y="4" width="12" height="1"/>' +
+    '<rect x="0" y="5" width="2" height="1"/><rect x="4" y="5" width="4" height="1"/>' +
+    '<rect x="10" y="5" width="2" height="1"/>' +
+    '<rect x="0" y="6" width="2" height="1"/><rect x="4" y="6" width="4" height="1"/>' +
+    '<rect x="10" y="6" width="2" height="1"/>' +
+    '<rect x="0" y="7" width="12" height="1"/>' +
+    '<rect x="0" y="8" width="5" height="1"/><rect x="7" y="8" width="5" height="1"/>' +
+    '<rect x="0" y="9" width="5" height="1"/><rect x="7" y="9" width="5" height="1"/></g></svg>',
+  bg: "#0A0A0A",
+  accent: "#FF4A1C",
+  fill: 0.6,
+};
+
 export const REGISTRY: ServerEntry[] = [
   {
     id: "hero",
@@ -141,6 +171,37 @@ export const REGISTRY: ServerEntry[] = [
       "Für das Tischlerhandwerk gibt es keine Allgemeinverbindlicherklärung und damit " +
         "keine öffentliche Volltextquelle. Überwacht wird dort nur die Downloadseite; " +
         "der Vertragstext wird von Hand hochgeladen.",
+    ],
+  },
+  {
+    id: "mikdaten",
+    name: "Mikdaten",
+    tagline: "Immobilienverwaltung",
+    description:
+      "Kanban-Board, Objektakten, Kontakte, Termine und Dokumente der Immobilienverwaltung. " +
+      "Lesen, Neues anlegen und Aufgaben durchs Board bewegen.",
+    origin: "https://mikdaten.ksqsebastian.workers.dev",
+    mcpUrl: "https://mikdaten.ksqsebastian.workers.dev/mcp",
+    auth: "oauth",
+    status: "aktiv",
+    mark: MIKDATEN_MARK,
+    accent: MIKDATEN_MARK.accent,
+    icon: "M",
+    catalog: "tools.json",
+    binding: "MIKDATEN",
+    notes: [
+      "Eigene Anmeldung mit Benutzername und Passwort — dieselbe wie auf der Seite. " +
+        "Kein externer Anbieter dahinter.",
+      "Der Server läuft im Worker der Anwendung selbst, nicht als eigener Dienst. Er sieht " +
+        "dieselben Daten, ohne Kopie und ohne Zwischenschicht.",
+      "Jede Anfrage läuft mit den Rechten der angemeldeten Person; Kommentare erscheinen " +
+        "unter deren Namen.",
+      "Anlegen und Fortschreiben ist erlaubt: Aufgaben verschieben, erledigen, " +
+        "kommentieren, Checklisten abhaken, Objektdaten fortschreiben. Gelöscht wird nichts.",
+      "Personen und Objekte dürfen als Name, Benutzername oder Objektnummer angegeben " +
+        "werden, nicht nur als ID.",
+      "Verbundene Anwendungen stehen in Mikdaten unter Einstellungen → KI-Anbindung und " +
+        "lassen sich dort einzeln trennen.",
     ],
   },
 ];
