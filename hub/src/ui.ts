@@ -191,8 +191,12 @@ const header = (right = "") => `<header><div class="wrap inner">
  */
 function footer(): string {
   const fremd = REGISTRY.filter((e) => e.thirdPartyBrand).map((e) => e.name);
+  // Aufzählung mit Komma und einem „und" am Ende — bei drei Namen liest sich
+  // „A und B und C" wie ein Fehler.
+  const namen =
+    fremd.length > 1 ? `${fremd.slice(0, -1).join(", ")} und ${fremd[fremd.length - 1]}` : fremd[0];
   const hinweis = fremd.length
-    ? `<br>${esc(fremd.join(" und "))} ${fremd.length > 1 ? "sind Marken" : "ist eine Marke"} der
+    ? `<br>${esc(namen)} ${fremd.length > 1 ? "sind Marken" : "ist eine Marke"} der
 jeweiligen Anbieter. Die Logos stehen hier zur Kennzeichnung des angebundenen Systems;
 es sind keine offiziellen Integrationen.`
     : "";

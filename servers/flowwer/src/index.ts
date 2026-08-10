@@ -12,26 +12,10 @@
  */
 import { createWorker } from "../../../shared/src/worker";
 import type { ServerConfig } from "../../../shared/src/types";
-import { composeLogo, type Mark } from "../../../shared/src/marks";
+import { composeLogo, FLOWWER_MARK } from "../../../shared/src/marks";
 import { Flowwer, normalizeAccount } from "./client";
 import { tools } from "./tools";
 import type { ToolContext } from "./context";
-
-/**
- * FLOWWER ist eine fremde Marke; ein Nachbau ihres Zeichens wäre die schlechteste
- * Variante. Ein öffentlich als frei verwendbar ausgewiesenes Logo liegt nicht vor,
- * deshalb steht hier ein neutrales Zeichen: ein Blatt mit Haken — freigegebener Beleg.
- */
-const FLOWWER_MARK: Mark = {
-  inner:
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">' +
-    '<path fill="#ffffff" d="M16 6h20l12 12v40a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4V10a4 4 0 0 1 4-4Z" opacity=".28"/>' +
-    '<path fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" ' +
-    'd="M21 34.5 29 42.5 44 24"/></svg>',
-  bg: "#0E5FD8",
-  accent: "#0E5FD8",
-  fill: 0.6,
-};
 
 const config: ServerConfig<ToolContext> = {
   brand: {

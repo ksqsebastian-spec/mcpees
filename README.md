@@ -182,13 +182,19 @@ Originalfarben, direkt von den Anbietern:
 |---|---|
 | HERO | `hero-software.de/assets/img/static/logos/hero-logomark-dark.svg` |
 | Lexware | `app.lexware.de/favicon.svg` |
+| FLOWWER | `www.flowwer.de/…/Flowwer-Logo.svg` — nur das Zeichen, ohne Schriftzug |
 
 Vorher standen dort Nachbauten. Das ist die schlechteste Variante: es sieht aus wie die
 Marke, ist aber keine. Entweder das echte Zeichen oder ein neutrales.
 
 `composeLogo()` setzt ein Zeichen mittig auf eine abgerundete Fläche — dasselbe Bild dient
-als Favicon und als Kachel. HERO steht auf seinem Gelb, Lexware auf Weiß mit Haarlinie, so
-wie die Anbieter es selbst zeigen. Nebenbefund: Lexware ist rot (#FF4554), nicht grün —
+als Favicon und als Kachel. HERO steht auf seinem Gelb, Lexware auf Weiß mit Haarlinie,
+FLOWWER weiß auf seinem Blau, so wie die Anbieter es selbst zeigen.
+
+Bei FLOWWER liegen die Formen im Logo blau auf weiß, im App-Icon aber umgekehrt und mit
+anderer Deckkraft. Die drei Werte (0,70 / 0,41 / 0,32) sind aus dem offiziellen Favicon
+ausgemessen statt aus dem Logo übernommen — sonst hätte die Kachel anders ausgesehen als
+das, was FLOWWER selbst zeigt. Nebenbefund: Lexware ist rot (#FF4554), nicht grün —
 das Grün war altes lexoffice-Branding.
 
 Die Logos kennzeichnen das angebundene System, mehr nicht. Der Fuß jeder Seite sagt, dass

@@ -5,7 +5,7 @@
  * gepflegt, sondern zur Laufzeit vom Server selbst geholt (`catalog`), damit die Übersicht
  * nicht auseinanderläuft, sobald jemand ein Tool ändert.
  */
-import { HERO_MARK, LEXWARE_MARK, type Mark } from "../../shared/src/marks";
+import { HERO_MARK, LEXWARE_MARK, FLOWWER_MARK, type Mark } from "../../shared/src/marks";
 
 export interface ServerEntry {
   id: string;
@@ -57,21 +57,6 @@ const TARIF_MARK: Mark = {
   bg: "#1F7A5C",
   accent: "#1F7A5C",
   fill: 0.62,
-};
-
-/**
- * FLOWWER ist eine fremde Marke, für die kein frei verwendbares Zeichen vorliegt.
- * Statt eines Nachbaus steht hier ein neutrales: ein Blatt mit Haken — freigegebener Beleg.
- */
-const FLOWWER_MARK: Mark = {
-  inner:
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">' +
-    '<path fill="#ffffff" d="M16 6h20l12 12v40a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4V10a4 4 0 0 1 4-4Z" opacity=".28"/>' +
-    '<path fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" ' +
-    'd="M21 34.5 29 42.5 44 24"/></svg>',
-  bg: "#0E5FD8",
-  accent: "#0E5FD8",
-  fill: 0.6,
 };
 
 export const REGISTRY: ServerEntry[] = [
@@ -166,6 +151,7 @@ export const REGISTRY: ServerEntry[] = [
     auth: "oauth",
     status: "aktiv",
     mark: FLOWWER_MARK,
+    thirdPartyBrand: true,
     accent: FLOWWER_MARK.accent,
     icon: "F",
     catalog: "tools.json",
