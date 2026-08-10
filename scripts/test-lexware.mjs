@@ -151,14 +151,14 @@ const authBody = {
 const badLogin = await call("/authorize", {
   method: "POST",
   headers: { "content-type": "application/x-www-form-urlencoded" },
-  body: new URLSearchParams({ ...authBody, credential: "falsch" }).toString(),
+  body: new URLSearchParams({ ...authBody, apiKey: "falsch" }).toString(),
 });
 check("Falscher API-Key wird an der Anmeldung abgewiesen", (await badLogin.text()).includes("abgelehnt"));
 
 const ok = await call("/authorize", {
   method: "POST",
   headers: { "content-type": "application/x-www-form-urlencoded" },
-  body: new URLSearchParams({ ...authBody, credential: KEY }).toString(),
+  body: new URLSearchParams({ ...authBody, apiKey: KEY }).toString(),
 });
 const code = new URL(ok.headers.get("location")).searchParams.get("code");
 const tok = await (

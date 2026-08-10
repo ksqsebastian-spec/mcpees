@@ -280,16 +280,18 @@ function consentPage(opts) {
     `${opts.brand.name} verbinden`,
     `${opts.error ? `<div class="err" style="margin-bottom:20px">${esc(opts.error)}</div>` : ""}
 <h1>Zugriff erlauben</h1>
-<p class="body">Gib deinen ${esc(opts.brand.credentialLabel)} ein. Er wird gegen
-${esc(opts.brand.system)} gepr\xFCft und dann verschl\xFCsselt gespeichert \u2014 lesen kann ihn nur der
-Client, der das ausgestellte Token h\xE4lt.</p>
+<p class="body">${opts.brand.fields.length > 1 ? "Gib deine Zugangsdaten ein. Sie werden" : `Gib deinen ${esc(opts.brand.fields[0].label)} ein. Er wird`} gegen ${esc(opts.brand.system)} gepr\xFCft und dann verschl\xFCsselt gespeichert \u2014 lesen kann
+${opts.brand.fields.length > 1 ? "sie" : "ihn"} nur der Client, der das ausgestellte Token h\xE4lt.</p>
 <div class="client"><span class="dot"></span>
 <div><div class="who">${esc(opts.clientName)}</div>
 ${opts.clientUri ? `<div class="uri">${esc(opts.clientUri)}</div>` : ""}</div></div>
 <form method="post">${hidden}
-<label for="key">${esc(opts.brand.credentialLabel)}</label>
-<input id="key" class="field" name="credential" type="password" autocomplete="off"
-  spellcheck="false" placeholder="${esc(opts.brand.credentialPlaceholder)}" required autofocus>
+${opts.brand.fields.map(
+      (f, i) => `<label for="f_${esc(f.name)}">${esc(f.label)}</label>
+<input id="f_${esc(f.name)}" class="field" name="${esc(f.name)}"
+  type="${f.secret === false ? "text" : "password"}" autocomplete="off" spellcheck="false"
+  placeholder="${esc(f.placeholder ?? "")}" required${i === 0 ? " autofocus" : ""}>`
+    ).join("")}
 <button class="btn" style="margin-top:20px" type="submit">Verbinden</button></form>
 <div class="foot">${opts.brand.credentialHelp}</div>`
   );
@@ -478,7 +480,13 @@ async function handleAuthorizePost(req2, env, config2) {
   if (!client.redirect_uris.includes(parsed.redirect_uri)) {
     return errorPage(config2.brand, "Ung\xFCltige redirect_uri", "Die redirect_uri geh\xF6rt nicht zu diesem Client.");
   }
-  const credential = String(form.get("credential") ?? "").trim();
+  const credentials = {};
+  let fehlend = "";
+  for (const f of config2.brand.fields) {
+    const v = String(form.get(f.name) ?? "").trim();
+    if (!v) fehlend = fehlend || f.label;
+    credentials[f.name] = v;
+  }
   const retry = (msg) => consentPage({
     brand: config2.brand,
     clientName: client.client_name,
@@ -494,10 +502,10 @@ async function handleAuthorizePost(req2, env, config2) {
       code_challenge_method: "S256"
     }
   });
-  if (!credential) return retry(`Bitte den ${config2.brand.credentialLabel} eingeben.`);
+  if (fehlend) return retry(`Bitte ${fehlend} eingeben.`);
   let who;
   try {
-    who = await config2.validate(credential);
+    who = await config2.validate(credentials);
   } catch (e) {
     return retry(`${config2.brand.system} hat den Zugang abgelehnt: ${e.message}`);
   }
@@ -521,7 +529,7 @@ async function handleAuthorizePost(req2, env, config2) {
       codeChallenge: parsed.code_challenge,
       grantId,
       scope: parsed.scope,
-      sealed: await sealJSON(code, { credential })
+      sealed: await sealJSON(code, { credentials })
     }),
     { expirationTtl: CODE_TTL }
   );
@@ -555,18 +563,18 @@ async function authenticateClient(req2, form, env) {
   }
   return client;
 }
-async function issueTokens(env, grantId, clientId, credential, scope) {
+async function issueTokens(env, grantId, clientId, credentials, scope) {
   const accessToken = randomToken("hmcp_at_");
   const refreshToken = randomToken("hmcp_rt_");
   await Promise.all([
     env.OAUTH_KV.put(
       `at:${await sha256hex(accessToken)}`,
-      JSON.stringify({ grantId, clientId, sealed: await sealJSON(accessToken, { credential }) }),
+      JSON.stringify({ grantId, clientId, sealed: await sealJSON(accessToken, { credentials }) }),
       { expirationTtl: ACCESS_TTL }
     ),
     env.OAUTH_KV.put(
       `rt:${await sha256hex(refreshToken)}`,
-      JSON.stringify({ grantId, clientId, sealed: await sealJSON(refreshToken, { credential }) }),
+      JSON.stringify({ grantId, clientId, sealed: await sealJSON(refreshToken, { credentials }) }),
       { expirationTtl: REFRESH_TTL }
     )
   ]);
@@ -607,9 +615,9 @@ async function handleToken(req2, env, config2) {
     if (!await verifyPkceS256(verifier, rec.codeChallenge)) {
       return oauthError("invalid_grant", "code_verifier passt nicht zur code_challenge.");
     }
-    const { credential } = await openJSON(code, rec.sealed);
+    const { credentials } = await openJSON(code, rec.sealed);
     return json(
-      await issueTokens(env, rec.grantId, client.client_id, credential, rec.scope ?? config2.scopes)
+      await issueTokens(env, rec.grantId, client.client_id, credentials, rec.scope ?? config2.scopes)
     );
   }
   if (grantType === "refresh_token") {
@@ -626,8 +634,8 @@ async function handleToken(req2, env, config2) {
       return oauthError("invalid_grant", "Die Freigabe wurde widerrufen.");
     }
     await env.OAUTH_KV.delete(kvKey);
-    const { credential } = await openJSON(token, rec.sealed);
-    return json(await issueTokens(env, rec.grantId, client.client_id, credential, config2.scopes));
+    const { credentials } = await openJSON(token, rec.sealed);
+    return json(await issueTokens(env, rec.grantId, client.client_id, credentials, config2.scopes));
   }
   return oauthError("unsupported_grant_type", `grant_type '${grantType}' wird nicht unterst\xFCtzt.`);
 }
@@ -666,9 +674,9 @@ async function authenticate(req2, env) {
   const grant = await env.OAUTH_KV.get(`grant:${rec.grantId}`, "json");
   if (!grant || grant.revoked) return null;
   try {
-    const { credential } = await openJSON(token, rec.sealed);
+    const { credentials } = await openJSON(token, rec.sealed);
     return {
-      credential,
+      credentials,
       grantId: rec.grantId,
       clientId: rec.clientId,
       account: grant.account,
@@ -748,7 +756,7 @@ async function handleRpc(body, session, kv, origin, config2) {
       const tool = config2.tools.find((t) => t.name === name);
       if (!tool) return rpcError(req2.id, -32602, `Unbekanntes Tool '${name}'.`);
       try {
-        const ctx = await config2.context(session.credential, kv, origin);
+        const ctx = await config2.context(session.credentials, kv, origin);
         const data = await tool.handler(req2.params?.arguments ?? {}, ctx);
         return result(req2.id, {
           content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
@@ -3233,8 +3241,13 @@ var config = {
     tagline: "Handwerkersoftware f\xFCr Claude",
     accent: HERO_MARK.accent,
     logoSvg: LOGO,
-    credentialLabel: "HERO-API-Key",
-    credentialPlaceholder: "Bearer-Token aus HERO \u2192 Einstellungen \u2192 API",
+    fields: [
+      {
+        name: "apiKey",
+        label: "HERO-API-Key",
+        placeholder: "Bearer-Token aus HERO \u2192 Einstellungen \u2192 API"
+      }
+    ],
     credentialHelp: "Den Key findest du in HERO unter <b>Einstellungen \u2192 API</b>. Der Zugriff gilt genau f\xFCr diesen Client und l\xE4sst sich jederzeit widerrufen, indem du den Key in HERO neu erzeugst.",
     summary: "Model-Context-Protocol-Server f\xFCr die HERO-Handwerkersoftware \u2014",
     bullets: [
@@ -3252,13 +3265,13 @@ var config = {
   scopes: "hero:read hero:write",
   instructions: `HERO Handwerkersoftware \u2014 bringe deinen Betrieb direkt in den Chat. Frage Projekte, Kunden, Termine, Auftr\xE4ge und offene Posten ab, erstelle Angebote, Rechnungen, Abschlags- und Schlussrechnungen, Stundenzettel und Auftr\xE4ge, lade Dateien hoch und hole PDF-Links \u2014 alles im Gespr\xE4ch. 34 Tools (Lesen \xB7 Erstellen \xB7 Upload \xB7 Download), kein Bearbeiten oder L\xF6schen: nichts kann kaputtgehen. Einstieg: \u201Ewas ist heute los?" (dashboard) oder \u201Ewer schuldet uns noch was?" (list_open_invoices). Zeitangaben immer als ISO MIT Offset, Datumsangaben als 'YYYY-MM-DD'.`,
   tools,
-  async validate(credential) {
-    const who = await new Hero(credential).whoami();
+  async validate({ apiKey }) {
+    const who = await new Hero(apiKey).whoami();
     return { account: who.company, user: who.user };
   },
-  async context(credential, kv) {
-    const hero = new Hero(credential);
-    return { hero, cfg: await getConfig(kv, hero, credential), kv };
+  async context({ apiKey }, kv) {
+    const hero = new Hero(apiKey);
+    return { hero, cfg: await getConfig(kv, hero, apiKey), kv };
   }
 };
 var index_default = createWorker(config);

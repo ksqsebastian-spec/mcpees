@@ -7,12 +7,13 @@
   "scripts": {
     "gen": "node scripts/gen-input-fields.mjs",
     "validate": "node scripts/validate-queries.mjs",
-    "test": "node scripts/test-oauth-flow.mjs && node scripts/test-lexware.mjs",
-    "typecheck": "tsc --noEmit -p servers/hero/tsconfig.json && tsc --noEmit -p servers/lexware/tsconfig.json && tsc --noEmit -p hub/tsconfig.json",
+    "test": "node scripts/test-oauth-flow.mjs && node scripts/test-lexware.mjs && node scripts/test-flowwer.mjs",
+    "typecheck": "tsc --noEmit -p servers/hero/tsconfig.json && tsc --noEmit -p servers/lexware/tsconfig.json && tsc --noEmit -p servers/flowwer/tsconfig.json && tsc --noEmit -p hub/tsconfig.json",
     "build:hero": "node scripts/bundle.mjs servers/hero/src/index.ts servers/hero/dist/worker.js",
     "build:hub": "node scripts/bundle.mjs hub/src/index.ts hub/dist/worker.js",
-    "build": "npm run gen && npm run validate && npm run typecheck && npm run build:hero && npm run build:lexware && npm run build:hub",
-    "build:lexware": "node scripts/bundle.mjs servers/lexware/src/index.ts servers/lexware/dist/worker.js"
+    "build": "npm run gen && npm run validate && npm run typecheck && npm run build:hero && npm run build:lexware && npm run build:flowwer && npm run build:hub",
+    "build:lexware": "node scripts/bundle.mjs servers/lexware/src/index.ts servers/lexware/dist/worker.js",
+    "build:flowwer": "node scripts/bundle.mjs servers/flowwer/src/index.ts servers/flowwer/dist/worker.js"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250109.0",

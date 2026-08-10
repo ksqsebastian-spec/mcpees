@@ -51,7 +51,7 @@ interface GrantRecord {
 
 /** Was hinter einem gültigen Token steht — inklusive der entschlüsselten Zugangsdaten. */
 export interface Session {
-  credential: string;
+  credentials: Record<string, string>;
   grantId: string;
   clientId: string;
   account: string;
@@ -264,7 +264,14 @@ export async function handleAuthorizePost<C>(
     return errorPage(config.brand, "Ungültige redirect_uri", "Die redirect_uri gehört nicht zu diesem Client.");
   }
 
-  const credential = String(form.get("credential") ?? "").trim();
+  // Alle deklarierten Felder einsammeln; keins darf leer bleiben.
+  const credentials: Record<string, string> = {};
+  let fehlend = "";
+  for (const f of config.brand.fields) {
+    const v = String(form.get(f.name) ?? "").trim();
+    if (!v) fehlend = fehlend || f.label;
+    credentials[f.name] = v;
+  }
   const retry = (msg: string) =>
     consentPage({
       brand: config.brand,
@@ -282,12 +289,12 @@ export async function handleAuthorizePost<C>(
       },
     });
 
-  if (!credential) return retry(`Bitte den ${config.brand.credentialLabel} eingeben.`);
+  if (fehlend) return retry(`Bitte ${fehlend} eingeben.`);
 
   // Zugangsdaten gegen das Fremdsystem prüfen, BEVOR irgendetwas ausgestellt wird.
   let who: { account: string; user: string };
   try {
-    who = await config.validate(credential);
+    who = await config.validate(credentials);
   } catch (e) {
     return retry(`${config.brand.system} hat den Zugang abgelehnt: ${(e as Error).message}`);
   }
@@ -313,7 +320,7 @@ export async function handleAuthorizePost<C>(
       codeChallenge: parsed.code_challenge,
       grantId,
       scope: parsed.scope,
-      sealed: await sealJSON(code, { credential }),
+      sealed: await sealJSON(code, { credentials }),
     }),
     { expirationTtl: CODE_TTL },
   );
@@ -364,7 +371,7 @@ async function issueTokens(
   env: Env,
   grantId: string,
   clientId: string,
-  credential: string,
+  credentials: Record<string, string>,
   scope: string,
 ) {
   const accessToken = randomToken("hmcp_at_");
@@ -372,12 +379,12 @@ async function issueTokens(
   await Promise.all([
     env.OAUTH_KV.put(
       `at:${await sha256hex(accessToken)}`,
-      JSON.stringify({ grantId, clientId, sealed: await sealJSON(accessToken, { credential }) }),
+      JSON.stringify({ grantId, clientId, sealed: await sealJSON(accessToken, { credentials }) }),
       { expirationTtl: ACCESS_TTL },
     ),
     env.OAUTH_KV.put(
       `rt:${await sha256hex(refreshToken)}`,
-      JSON.stringify({ grantId, clientId, sealed: await sealJSON(refreshToken, { credential }) }),
+      JSON.stringify({ grantId, clientId, sealed: await sealJSON(refreshToken, { credentials }) }),
       { expirationTtl: REFRESH_TTL },
     ),
   ]);
@@ -430,9 +437,9 @@ export async function handleToken<C>(
       return oauthError("invalid_grant", "code_verifier passt nicht zur code_challenge.");
     }
 
-    const { credential } = await openJSON<{ credential: string }>(code, rec.sealed);
+    const { credentials } = await openJSON<{ credentials: Record<string, string> }>(code, rec.sealed);
     return json(
-      await issueTokens(env, rec.grantId, client.client_id, credential, rec.scope ?? config.scopes),
+      await issueTokens(env, rec.grantId, client.client_id, credentials, rec.scope ?? config.scopes),
     );
   }
 
@@ -452,8 +459,8 @@ export async function handleToken<C>(
     }
     // Rotation: das alte Refresh-Token gilt ab jetzt nicht mehr.
     await env.OAUTH_KV.delete(kvKey);
-    const { credential } = await openJSON<{ credential: string }>(token, rec.sealed);
-    return json(await issueTokens(env, rec.grantId, client.client_id, credential, config.scopes));
+    const { credentials } = await openJSON<{ credentials: Record<string, string> }>(token, rec.sealed);
+    return json(await issueTokens(env, rec.grantId, client.client_id, credentials, config.scopes));
   }
 
   return oauthError("unsupported_grant_type", `grant_type '${grantType}' wird nicht unterstützt.`);
@@ -505,9 +512,9 @@ export async function authenticate(req: Request, env: Env): Promise<Session | nu
   if (!grant || grant.revoked) return null;
 
   try {
-    const { credential } = await openJSON<{ credential: string }>(token, rec.sealed);
+    const { credentials } = await openJSON<{ credentials: Record<string, string> }>(token, rec.sealed);
     return {
-      credential,
+      credentials,
       grantId: rec.grantId,
       clientId: rec.clientId,
       account: grant.account,

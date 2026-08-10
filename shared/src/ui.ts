@@ -71,16 +71,24 @@ export function consentPage(opts: {
     `${opts.brand.name} verbinden`,
     `${opts.error ? `<div class="err" style="margin-bottom:20px">${esc(opts.error)}</div>` : ""}
 <h1>Zugriff erlauben</h1>
-<p class="body">Gib deinen ${esc(opts.brand.credentialLabel)} ein. Er wird gegen
-${esc(opts.brand.system)} geprüft und dann verschlüsselt gespeichert — lesen kann ihn nur der
-Client, der das ausgestellte Token hält.</p>
+<p class="body">${
+      opts.brand.fields.length > 1
+        ? "Gib deine Zugangsdaten ein. Sie werden"
+        : `Gib deinen ${esc(opts.brand.fields[0].label)} ein. Er wird`
+    } gegen ${esc(opts.brand.system)} geprüft und dann verschlüsselt gespeichert — lesen kann
+${opts.brand.fields.length > 1 ? "sie" : "ihn"} nur der Client, der das ausgestellte Token hält.</p>
 <div class="client"><span class="dot"></span>
 <div><div class="who">${esc(opts.clientName)}</div>
 ${opts.clientUri ? `<div class="uri">${esc(opts.clientUri)}</div>` : ""}</div></div>
 <form method="post">${hidden}
-<label for="key">${esc(opts.brand.credentialLabel)}</label>
-<input id="key" class="field" name="credential" type="password" autocomplete="off"
-  spellcheck="false" placeholder="${esc(opts.brand.credentialPlaceholder)}" required autofocus>
+${opts.brand.fields
+  .map(
+    (f, i) => `<label for="f_${esc(f.name)}">${esc(f.label)}</label>
+<input id="f_${esc(f.name)}" class="field" name="${esc(f.name)}"
+  type="${f.secret === false ? "text" : "password"}" autocomplete="off" spellcheck="false"
+  placeholder="${esc(f.placeholder ?? "")}" required${i === 0 ? " autofocus" : ""}>`,
+  )
+  .join("")}
 <button class="btn" style="margin-top:20px" type="submit">Verbinden</button></form>
 <div class="foot">${opts.brand.credentialHelp}</div>`,
   );

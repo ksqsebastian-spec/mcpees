@@ -8,6 +8,7 @@ OAuth-geschützte MCP-Server auf Cloudflare Workers — plus die Übersichtsseit
 | HERO MCP (Endpoint für Claude) | https://hero-mcp.ksqsebastian.workers.dev/mcp |
 | Lexware Office MCP | https://lexware-mcp.ksqsebastian.workers.dev/mcp |
 | Tarifcheck MCP | https://tarifcheck.ksqsebastian.workers.dev/mcp |
+| FLOWWER MCP | gebaut und getestet, **noch nicht deployt** (siehe unten) |
 
 Der Vorgänger auf Vercel (`hero-mcp.vercel.app`) ist am 06.08.2026 abgeschaltet worden und
 antwortet auf jeden Aufruf mit HTTP 410 samt Verweis auf den neuen Endpoint. Aus der Übersicht
@@ -19,6 +20,7 @@ ist er entfernt; der 410-Stub bleibt für alle, die noch die alte URL eingetrage
 shared/           OAuth-Server, MCP-Protokoll, Gestaltung — von allen Servern benutzt
 servers/hero/     HERO-Handwerkersoftware, 34 Tools
 servers/lexware/  Lexware Office, 17 Tools
+servers/flowwer/  FLOWWER Rechnungsfreigabe, 6 Tools
 hub/              Übersichtsseite: alle Server, alle Tools, live vom Server geholt
 scripts/          Build, Schema-Validierung, Tests, Deployment
 ```
@@ -81,6 +83,42 @@ stammt aus [JannikWempe/mcp-lexware-office](https://github.com/JannikWempe/mcp-l
 QuickJS-Sandbox und zwei generischen Tools (`search`, `execute`); hier sind es benannte Tools
 hinter OAuth, damit er als Remote-Connector zum Rest dieses Repos passt.
 
+## FLOWWER MCP
+
+6 Tools für [FLOWWER](https://www.flowwer.de) (Rechnungsfreigabe): Dokumente suchen,
+Belegaufteilungen, Auswertungen, Feld- und Endpunktübersicht, Upload. Kein Ändern, kein
+Löschen — auch das von der API angebotene Ersetzen von Belegaufteilungen bleibt draußen.
+
+Zwei Dinge unterscheiden ihn von den anderen:
+
+- **Die Basis-URL gehört dem Mandanten** (`https://<kontokennung>.flowwer.de`). Die
+  Anmeldung fragt deshalb zwei Felder ab statt einem. Dafür nimmt `Brand.fields` jetzt
+  eine Liste von Eingabefeldern; HERO und Lexware deklarieren dort schlicht eines.
+- **Die Feldliste ist nicht öffentlich dokumentiert.** Sie steht im `$metadata` des Kontos
+  und wird zur Laufzeit gelesen und zwischengespeichert — wie bei HERO die Mandanten-IDs.
+  Ein Filter auf ein Feld, das es nicht gibt, wird damit abgefangen, bevor er rausgeht;
+  OData beantwortet so etwas sonst mit einem 400er, aus dem niemand schlau wird.
+
+Was FLOWWER öffentlich dokumentiert, ist wenig: der Header `X-FLOWWER-ApiKey`,
+`POST /api/v1/upload`, `GET|PUT /api/v1/documents/{id}/receiptsplits` und das
+OData-Reporting. Find-API und Archiv-Import stehen nur im Swagger des jeweiligen Kontos.
+Dieser Server rät deren Pfade nicht, sondern liest die OpenAPI-Beschreibung des Mandanten
+(`api_erkunden`) — ein geratener Pfad, der still 404t, wäre schlimmer als kein Tool.
+
+**Noch nicht deployt.** Der Cloudflare-Deploy-Token ist am 08.08.2026 abgelaufen. Der
+KV-Namespace liegt bereits an (`89d122cbf13c4b919b4e4830d81fad4d`, in der wrangler.jsonc
+eingetragen), es fehlt nur:
+
+```bash
+export CLOUDFLARE_API_TOKEN=… CLOUDFLARE_ACCOUNT_ID=…
+node scripts/deploy.mjs servers/flowwer/wrangler.jsonc servers/flowwer/dist/worker.js
+```
+
+Danach in den Hub aufnehmen: Eintrag in `hub/src/registry.ts` und
+`{ "binding": "FLOWWER", "service": "flowwer-mcp" }` in `hub/wrangler.jsonc`. Beides
+bewusst noch nicht eingetragen — ein Service-Binding auf einen Worker, den es nicht gibt,
+lässt das Deployment des Hubs scheitern.
+
 ## Korrektheit ohne Live-Zugang
 
 Die HERO-API meldet bei mehreren Operationen Erfolg und verwirft dabei still Daten. Der
@@ -107,6 +145,10 @@ ein Request rausgeht.
 - **19 Prüfungen HERO** — kompletter OAuth-Flow: Code-Tausch, PKCE, Einmalgebrauch des Codes,
   Refresh-Rotation, Widerruf, ein echter `tools/call`, und dass weder Key noch Token im
   Klartext in KV landen.
+- **29 Prüfungen FLOWWER** — Kontokennung-Normalisierung, Lesen der Feldbeschreibung aus
+  EDMX, Ablehnung unbekannter Felder und Operatoren, Maskierung von Apostrophen im
+  `$filter`, Datumsliterale ohne Anführungszeichen, Gruppierung und die Warnung bei
+  unvollständig geladenen Zeilen.
 - **30 Prüfungen Lexware** — dazu die Rechenlogik (Umsatz gestellt/bezahlt, offene Posten,
   Überfälligkeit), die Statusprüfung, die Paginierung über mehrere Seiten, der eingehaltene
   Mindestabstand von 2 Anfragen/Sekunde und der Download-Link samt Ablauf.

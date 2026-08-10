@@ -19,8 +19,13 @@ const config: ServerConfig<ToolContext> = {
     tagline: "Handwerkersoftware für Claude",
     accent: HERO_MARK.accent,
     logoSvg: LOGO,
-    credentialLabel: "HERO-API-Key",
-    credentialPlaceholder: "Bearer-Token aus HERO → Einstellungen → API",
+    fields: [
+      {
+        name: "apiKey",
+        label: "HERO-API-Key",
+        placeholder: "Bearer-Token aus HERO → Einstellungen → API",
+      },
+    ],
     credentialHelp:
       "Den Key findest du in HERO unter <b>Einstellungen → API</b>. Der Zugriff gilt genau für " +
       "diesen Client und lässt sich jederzeit widerrufen, indem du den Key in HERO neu erzeugst.",
@@ -51,14 +56,14 @@ const config: ServerConfig<ToolContext> = {
     "'YYYY-MM-DD'.",
   tools,
 
-  async validate(credential) {
-    const who = await new Hero(credential).whoami();
+  async validate({ apiKey }) {
+    const who = await new Hero(apiKey).whoami();
     return { account: who.company, user: who.user };
   },
 
-  async context(credential, kv) {
-    const hero = new Hero(credential);
-    return { hero, cfg: await getConfig(kv, hero, credential), kv };
+  async context({ apiKey }, kv) {
+    const hero = new Hero(apiKey);
+    return { hero, cfg: await getConfig(kv, hero, apiKey), kv };
   },
 };
 

@@ -27,8 +27,13 @@ const config: ServerConfig<ToolContext> = {
     tagline: "Buchhaltung für Claude",
     accent: LEXWARE_MARK.accent,
     logoSvg: LOGO,
-    credentialLabel: "Lexware-API-Key",
-    credentialPlaceholder: "Public-API-Key aus Lexware Office",
+    fields: [
+      {
+        name: "apiKey",
+        label: "Lexware-API-Key",
+        placeholder: "Public-API-Key aus Lexware Office",
+      },
+    ],
     credentialHelp:
       'Den Key erzeugst du in Lexware Office unter <b>Einstellungen → Public API</b> ' +
       '(<a href="https://app.lexware.de/addons/public-api">app.lexware.de/addons/public-api</a>). ' +
@@ -63,13 +68,13 @@ const config: ServerConfig<ToolContext> = {
     "Datumsangaben immer als 'YYYY-MM-DD'.",
   tools,
 
-  async validate(credential) {
-    const who = await new Lexware(credential).whoami();
+  async validate({ apiKey }) {
+    const who = await new Lexware(apiKey).whoami();
     return { account: who.company, user: who.user };
   },
 
-  async context(credential, kv, origin) {
-    return { lex: new Lexware(credential), credential, kv, origin };
+  async context({ apiKey }, kv, origin) {
+    return { lex: new Lexware(apiKey), credential: apiKey, kv, origin };
   },
 
   extraRoutes: serveFile,

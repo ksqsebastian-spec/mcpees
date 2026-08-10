@@ -100,7 +100,7 @@ export async function handleRpc<C>(
       const tool = config.tools.find((t) => t.name === name);
       if (!tool) return rpcError(req.id, -32602, `Unbekanntes Tool '${name}'.`);
       try {
-        const ctx = await config.context(session.credential, kv, origin);
+        const ctx = await config.context(session.credentials, kv, origin);
         const data = await tool.handler(req.params?.arguments ?? {}, ctx);
         return result(req.id, {
           content: [{ type: "text", text: JSON.stringify(data, null, 2) }],

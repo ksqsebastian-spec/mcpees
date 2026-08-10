@@ -36,6 +36,19 @@ export interface ToolDef<Ctx> {
   handler: (args: Record<string, any>, ctx: Ctx) => Promise<unknown>;
 }
 
+/** Ein Eingabefeld auf der Anmeldeseite. */
+export interface CredentialField {
+  /** Formularfeldname und Schlüssel in den gespeicherten Zugangsdaten. */
+  name: string;
+  label: string;
+  placeholder?: string;
+  /**
+   * Geheim (Passwortfeld). Nicht jedes Feld ist es — eine Kontokennung steht in der
+   * URL und als Punktereihe hilft sie niemandem beim Tippen.
+   */
+  secret?: boolean;
+}
+
 /** Aussehen und Wortlaut der Anmeldeseite. */
 export interface Brand {
   name: string;
@@ -45,10 +58,8 @@ export interface Brand {
   accent: string;
   /** Inline-SVG, quadratisch. Wird als Favicon und Logo benutzt. */
   logoSvg: string;
-  /** Beschriftung des Eingabefelds, z. B. "HERO-API-Key". */
-  credentialLabel: string;
-  /** Platzhalter im Eingabefeld. */
-  credentialPlaceholder: string;
+  /** Was beim Verbinden abgefragt wird. Meist ein Feld, manchmal mehrere. */
+  fields: CredentialField[];
   /** Erklärtext unter dem Formular — wo man den Schlüssel herbekommt. */
   credentialHelp: string;
   /** Kurzbeschreibung für die Startseite. */
@@ -68,13 +79,13 @@ export interface ServerConfig<Ctx> {
    * die Meldung landet sichtbar auf der Anmeldeseite. Es wird NIE ein Token ausgestellt,
    * bevor das hier durchgelaufen ist.
    */
-  validate(credential: string): Promise<{ account: string; user: string }>;
+  validate(credentials: Record<string, string>): Promise<{ account: string; user: string }>;
   /**
    * Baut den Kontext, den die Tool-Handler bekommen. Läuft pro Request.
    * `origin` ist die öffentliche Basis-URL dieses Workers — nötig, wenn ein Tool Links
    * auf sich selbst erzeugt (z. B. Datei-Downloads).
    */
-  context(credential: string, kv: KVNamespace, origin: string): Promise<Ctx>;
+  context(credentials: Record<string, string>, kv: KVNamespace, origin: string): Promise<Ctx>;
   /** Zusätzliche Routen (z. B. Datei-Auslieferung). null = nicht zuständig. */
   extraRoutes?: (request: Request, url: URL, env: Env) => Promise<Response | null>;
 }

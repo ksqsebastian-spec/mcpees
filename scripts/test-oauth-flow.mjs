@@ -107,7 +107,7 @@ const authBody = {
 const bad = await call("/authorize", {
   method: "POST",
   headers: { "content-type": "application/x-www-form-urlencoded" },
-  body: form({ ...authBody, credential: "falsch" }).toString(),
+  body: form({ ...authBody, apiKey: "falsch" }).toString(),
 });
 check("Falscher HERO-Key liefert kein Redirect", bad.status === 200 && (await bad.text()).includes("abgelehnt"));
 
@@ -115,7 +115,7 @@ check("Falscher HERO-Key liefert kein Redirect", bad.status === 200 && (await ba
 const ok = await call("/authorize", {
   method: "POST",
   headers: { "content-type": "application/x-www-form-urlencoded" },
-  body: form({ ...authBody, credential: FAKE_KEY }).toString(),
+  body: form({ ...authBody, apiKey: FAKE_KEY }).toString(),
 });
 const location = ok.headers.get("location") ?? "";
 const code = new URL(location || "https://x/?").searchParams.get("code");
@@ -146,7 +146,7 @@ check("Code ist nach einem Versuch verbraucht", reuse.error === "invalid_grant",
 const ok2 = await call("/authorize", {
   method: "POST",
   headers: { "content-type": "application/x-www-form-urlencoded" },
-  body: form({ ...authBody, credential: FAKE_KEY }).toString(),
+  body: form({ ...authBody, apiKey: FAKE_KEY }).toString(),
 });
 const code2 = new URL(ok2.headers.get("location")).searchParams.get("code");
 const tok = await (
