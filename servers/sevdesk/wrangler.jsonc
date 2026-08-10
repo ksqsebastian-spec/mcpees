@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "lexware-mcp",
+  "name": "sevdesk-mcp",
   "main": "src/index.ts",
   "compatibility_date": "2026-08-01",
   "workers_dev": true,
@@ -8,7 +8,7 @@
   "kv_namespaces": [
     {
       "binding": "OAUTH_KV",
-      "id": "b08d7b74448549bbbdb8099352c4c76a"
+      "id": "8397ef0b430947d4b5019a0870630ee2"
     }
   ],
   "vars": {

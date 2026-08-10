@@ -5,7 +5,7 @@
  * gepflegt, sondern zur Laufzeit vom Server selbst geholt (`catalog`), damit die Übersicht
  * nicht auseinanderläuft, sobald jemand ein Tool ändert.
  */
-import { HERO_MARK, LEXWARE_MARK, type Mark } from "../../shared/src/marks";
+import { HERO_MARK, SEVDESK_MARK, type Mark } from "../../shared/src/marks";
 
 export interface ServerEntry {
   id: string;
@@ -84,31 +84,35 @@ export const REGISTRY: ServerEntry[] = [
     ],
   },
   {
-    id: "lexware",
-    name: "Lexware Office",
+    id: "sevdesk",
+    name: "sevdesk",
     tagline: "Buchhaltung",
     description:
-      "Kontakte, Rechnungen, Angebote, Mahnungen, Buchungsbelege und Auswertungen aus " +
-      "Lexware Office. Lesen und Anlegen — kein Ändern, kein Löschen.",
-    origin: "https://lexware-mcp.ksqsebastian.workers.dev",
-    mcpUrl: "https://lexware-mcp.ksqsebastian.workers.dev/mcp",
+      "Kontakte, Ausgangsrechnungen, Eingangsbelege, Angebote, Artikel, Bankumsätze und " +
+      "Auswertungen aus sevdesk. Lesen und Anlegen — kein Ändern, kein Löschen, kein Buchen.",
+    origin: "https://sevdesk-mcp.ksqsebastian.workers.dev",
+    mcpUrl: "https://sevdesk-mcp.ksqsebastian.workers.dev/mcp",
     auth: "oauth",
     status: "aktiv",
-    mark: LEXWARE_MARK,
+    mark: SEVDESK_MARK,
     thirdPartyBrand: true,
-    accent: LEXWARE_MARK.accent,
-    icon: "L",
+    accent: SEVDESK_MARK.accent,
+    icon: "S",
     catalog: "tools.json",
-    binding: "LEXWARE",
+    binding: "SEVDESK",
     notes: [
-      "OAuth 2.1 mit PKCE — jeder Nutzer hinterlegt beim Verbinden seinen eigenen Lexware-API-Key.",
-      "Die Public API von Lexware setzt Lexware Office XL voraus; kleinere Tarife " +
-        "antworten mit HTTP 402.",
-      "Lexware erlaubt nur 2 Anfragen pro Sekunde. Der Server hält den Abstand selbst ein, " +
-        "große Auswertungen dauern deshalb spürbar.",
-      "PDFs bekommen einen zeitlich begrenzten Link von diesem Server — Lexware selbst " +
-        "kennt keine öffentlichen Dokumentlinks.",
-      "Der API-Katalog stammt aus github.com/JannikWempe/mcp-lexware-office (MIT).",
+      "OAuth 2.1 mit PKCE — jeder Nutzer hinterlegt beim Verbinden seinen eigenen " +
+        "sevdesk-API-Token (32 Hexzeichen, aus Einstellungen → Benutzer).",
+      "Der Token erbt die Rechte seines Benutzers. Wer nur lesen lassen will, legt in " +
+        "sevdesk einen eigenen Benutzer mit Leserechten an.",
+      "Jeder Aufruf wird vor dem Absenden gegen die offizielle API-Beschreibung geprüft. " +
+        "sevdesk lehnt unbekannte Filter nämlich nicht ab, sondern ignoriert sie — die " +
+        "Antwort wäre sonst ungefiltert und sähe richtig aus.",
+      "Seit dem sevdesk-Update 2.0 heißt die Steuerregel taxRule statt taxType. Der Server " +
+        "fragt die Version des Kontos ab und schickt die passende Angabe.",
+      "PDFs bekommen einen zeitlich begrenzten Link von diesem Server — sevdesk liefert sie " +
+        "nur als base64 gegen den Token aus.",
+      "Die eingefrorene API-Beschreibung stammt aus github.com/nikolausm/mcp-sevdesk (MIT).",
     ],
   },
   {

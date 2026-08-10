@@ -9,7 +9,7 @@
   // Worker-zu-Worker-fetch auf derselben workers.dev-Zone — das lehnt Cloudflare ab (1042).
   "services": [
     { "binding": "HERO", "service": "hero-mcp" },
-    { "binding": "LEXWARE", "service": "lexware-mcp" },
+    { "binding": "SEVDESK", "service": "sevdesk-mcp" },
     { "binding": "TARIFCHECK", "service": "tarifcheck" }
   ]
 }

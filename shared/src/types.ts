@@ -52,7 +52,7 @@ export interface CredentialField {
 /** Aussehen und Wortlaut der Anmeldeseite. */
 export interface Brand {
   name: string;
-  /** Name des Fremdsystems, wie er in Meldungen vorkommt — "HERO", "Lexware Office". */
+  /** Name des Fremdsystems, wie er in Meldungen vorkommt — "HERO", "sevdesk". */
   system: string;
   tagline: string;
   accent: string;

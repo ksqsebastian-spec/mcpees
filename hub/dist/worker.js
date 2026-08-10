@@ -4,21 +4,20 @@ var HERO_MARK = {
   bg: "#FFC400",
   accent: "#FFC400"
 };
-var LEXWARE_MARK = {
-  inner: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><g fill="#ff4554"><polygon points="11.1 8.8 8.7 11.8 10.7 14.3 12 14.3 13.8 14.3 15.5 14.3 11.1 8.8"/><polygon points="15.4 1.7 13.8 1.7 12 1.7 10.7 1.7 8.7 4.2 11.1 7.2 15.5 1.7 15.4 1.7"/><polygon points="7.8 4.8 5.3 1.7 .5 1.7 3 4.8 5.6 8 3 11.2 .5 14.3 5.2 14.3 5.3 14.3 7.8 11.2 10.4 8 7.8 4.8"/></g></svg>',
-  bg: "#ffffff",
-  border: true,
-  accent: "#FF4554",
-  fill: 0.64
+var SEVDESK_MARK = {
+  inner: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="7.8889 7.5556 16.2222 15.7778"><path fill="#ffffff" fill-rule="evenodd" clip-rule="evenodd" d="M22.4444 7.55556C21.524 7.55556 20.7778 8.30175 20.7778 9.22222V21.6667C20.7778 22.5871 21.524 23.3333 22.4444 23.3333C23.3649 23.3333 24.1111 22.5871 24.1111 21.6667V9.22222C24.1111 8.30175 23.3649 7.55556 22.4444 7.55556ZM14.3333 13.8889C14.3333 12.9684 15.0795 12.2222 16 12.2222C16.9205 12.2222 17.6667 12.9684 17.6667 13.8889V21.6667C17.6667 22.5871 16.9205 23.3333 16 23.3333C15.0795 23.3333 14.3333 22.5871 14.3333 21.6667V13.8889ZM7.88889 17.8889C7.88889 16.9684 8.63508 16.2222 9.55556 16.2222C10.476 16.2222 11.2222 16.9684 11.2222 17.8889V21.6667C11.2222 22.5871 10.476 23.3333 9.55556 23.3333C8.63508 23.3333 7.88889 22.5871 7.88889 21.6667V17.8889Z"/></svg>',
+  bg: "#FB523B",
+  accent: "#FB523B",
+  fill: 0.507
 };
 var FILL = 0.56;
 function composeLogo(mark, size = 512) {
   const vb = /viewBox="([\d.\s-]+)"/.exec(mark.inner)?.[1]?.trim().split(/\s+/).map(Number);
-  const [, , vw, vh] = vb && vb.length === 4 ? vb : [0, 0, 1, 1];
+  const [minX, minY, vw, vh] = vb && vb.length === 4 ? vb : [0, 0, 1, 1];
   const box = size * (mark.fill ?? FILL);
   const scale = Math.min(box / vw, box / vh);
-  const tx = (size - vw * scale) / 2;
-  const ty = (size - vh * scale) / 2;
+  const tx = (size - vw * scale) / 2 - minX * scale;
+  const ty = (size - vh * scale) / 2 - minY * scale;
   const body = mark.inner.replace(/^<svg[^>]*>/, "").replace(/<\/svg>\s*$/, "");
   const radius = Math.round(size * 0.219);
   const stroke = mark.border ? `<rect x=".5" y=".5" width="${size - 1}" height="${size - 1}" rx="${radius}" fill="none" stroke="#dcdce2" stroke-width="${Math.max(1, size / 170)}"/>` : "";
@@ -55,26 +54,27 @@ var REGISTRY = [
     ]
   },
   {
-    id: "lexware",
-    name: "Lexware Office",
+    id: "sevdesk",
+    name: "sevdesk",
     tagline: "Buchhaltung",
-    description: "Kontakte, Rechnungen, Angebote, Mahnungen, Buchungsbelege und Auswertungen aus Lexware Office. Lesen und Anlegen \u2014 kein \xC4ndern, kein L\xF6schen.",
-    origin: "https://lexware-mcp.ksqsebastian.workers.dev",
-    mcpUrl: "https://lexware-mcp.ksqsebastian.workers.dev/mcp",
+    description: "Kontakte, Ausgangsrechnungen, Eingangsbelege, Angebote, Artikel, Bankums\xE4tze und Auswertungen aus sevdesk. Lesen und Anlegen \u2014 kein \xC4ndern, kein L\xF6schen, kein Buchen.",
+    origin: "https://sevdesk-mcp.ksqsebastian.workers.dev",
+    mcpUrl: "https://sevdesk-mcp.ksqsebastian.workers.dev/mcp",
     auth: "oauth",
     status: "aktiv",
-    mark: LEXWARE_MARK,
+    mark: SEVDESK_MARK,
     thirdPartyBrand: true,
-    accent: LEXWARE_MARK.accent,
-    icon: "L",
+    accent: SEVDESK_MARK.accent,
+    icon: "S",
     catalog: "tools.json",
-    binding: "LEXWARE",
+    binding: "SEVDESK",
     notes: [
-      "OAuth 2.1 mit PKCE \u2014 jeder Nutzer hinterlegt beim Verbinden seinen eigenen Lexware-API-Key.",
-      "Die Public API von Lexware setzt Lexware Office XL voraus; kleinere Tarife antworten mit HTTP 402.",
-      "Lexware erlaubt nur 2 Anfragen pro Sekunde. Der Server h\xE4lt den Abstand selbst ein, gro\xDFe Auswertungen dauern deshalb sp\xFCrbar.",
-      "PDFs bekommen einen zeitlich begrenzten Link von diesem Server \u2014 Lexware selbst kennt keine \xF6ffentlichen Dokumentlinks.",
-      "Der API-Katalog stammt aus github.com/JannikWempe/mcp-lexware-office (MIT)."
+      "OAuth 2.1 mit PKCE \u2014 jeder Nutzer hinterlegt beim Verbinden seinen eigenen sevdesk-API-Token (32 Hexzeichen, aus Einstellungen \u2192 Benutzer).",
+      "Der Token erbt die Rechte seines Benutzers. Wer nur lesen lassen will, legt in sevdesk einen eigenen Benutzer mit Leserechten an.",
+      "Jeder Aufruf wird vor dem Absenden gegen die offizielle API-Beschreibung gepr\xFCft. sevdesk lehnt unbekannte Filter n\xE4mlich nicht ab, sondern ignoriert sie \u2014 die Antwort w\xE4re sonst ungefiltert und s\xE4he richtig aus.",
+      "Seit dem sevdesk-Update 2.0 hei\xDFt die Steuerregel taxRule statt taxType. Der Server fragt die Version des Kontos ab und schickt die passende Angabe.",
+      "PDFs bekommen einen zeitlich begrenzten Link von diesem Server \u2014 sevdesk liefert sie nur als base64 gegen den Token aus.",
+      "Die eingefrorene API-Beschreibung stammt aus github.com/nikolausm/mcp-sevdesk (MIT)."
     ]
   },
   {

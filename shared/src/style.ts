@@ -6,7 +6,7 @@
  * bedeutet — Eintreten von Inhalt, Anheben bei Hover, Quittung beim Kopieren.
  * Nichts blinkt, nichts pulsiert, nichts bewegt sich von allein weiter.
  *
- * Die Akzentfarbe gehört dem jeweiligen System (HERO gelb, Lexware grün) und kommt
+ * Die Akzentfarbe gehört dem jeweiligen System (HERO gelb, sevdesk rot) und kommt
  * ausschließlich in kleinen Flächen vor. Die Seite selbst bleibt schwarzweiß.
  */
 

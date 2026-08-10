@@ -886,11 +886,11 @@ var HERO_MARK = {
 var FILL = 0.56;
 function composeLogo(mark, size = 512) {
   const vb = /viewBox="([\d.\s-]+)"/.exec(mark.inner)?.[1]?.trim().split(/\s+/).map(Number);
-  const [, , vw, vh] = vb && vb.length === 4 ? vb : [0, 0, 1, 1];
+  const [minX, minY, vw, vh] = vb && vb.length === 4 ? vb : [0, 0, 1, 1];
   const box = size * (mark.fill ?? FILL);
   const scale = Math.min(box / vw, box / vh);
-  const tx = (size - vw * scale) / 2;
-  const ty = (size - vh * scale) / 2;
+  const tx = (size - vw * scale) / 2 - minX * scale;
+  const ty = (size - vh * scale) / 2 - minY * scale;
   const body = mark.inner.replace(/^<svg[^>]*>/, "").replace(/<\/svg>\s*$/, "");
   const radius = Math.round(size * 0.219);
   const stroke = mark.border ? `<rect x=".5" y=".5" width="${size - 1}" height="${size - 1}" rx="${radius}" fill="none" stroke="#dcdce2" stroke-width="${Math.max(1, size / 170)}"/>` : "";

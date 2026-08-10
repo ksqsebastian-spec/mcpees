@@ -6,7 +6,7 @@ OAuth-geschützte MCP-Server auf Cloudflare Workers — plus die Übersichtsseit
 |---|---|
 | Übersicht aller Server | https://mcp-hub.ksqsebastian.workers.dev |
 | HERO MCP (Endpoint für Claude) | https://hero-mcp.ksqsebastian.workers.dev/mcp |
-| Lexware Office MCP | https://lexware-mcp.ksqsebastian.workers.dev/mcp |
+| sevdesk MCP | https://sevdesk-mcp.ksqsebastian.workers.dev/mcp |
 | Tarifcheck MCP | https://tarifcheck.ksqsebastian.workers.dev/mcp |
 
 Der Vorgänger auf Vercel (`hero-mcp.vercel.app`) ist am 06.08.2026 abgeschaltet worden und
@@ -18,14 +18,14 @@ ist er entfernt; der 410-Stub bleibt für alle, die noch die alte URL eingetrage
 ```
 shared/           OAuth-Server, MCP-Protokoll, Gestaltung — von allen Servern benutzt
 servers/hero/     HERO-Handwerkersoftware, 34 Tools
-servers/lexware/  Lexware Office, 17 Tools
+servers/sevdesk/  sevdesk-Buchhaltung, 21 Tools
 hub/              Übersichtsseite: alle Server, alle Tools, live vom Server geholt
 scripts/          Build, Schema-Validierung, Tests, Deployment
 ```
 
 Ein neuer Server besteht aus drei Dingen: Tools schreiben, Zugangsdaten prüfen, Kontext
 bauen. OAuth, MCP-Protokoll, Anmeldeseite und Routing kommen aus `shared` — siehe
-`shared/src/types.ts` für den Vertrag und `servers/lexware/src/index.ts` als kürzestes Beispiel.
+`shared/src/types.ts` für den Vertrag und `servers/sevdesk/src/index.ts` als Beispiel.
 
 ## HERO MCP
 
@@ -51,41 +51,61 @@ Vollständiger Authorization Server im Worker, ohne Fremdbibliothek:
 - RFC 7636 PKCE mit S256 — Pflicht, nicht optional
 - Refresh-Token-Rotation, Einmal-Auth-Codes, RFC 7009 Revocation
 
-## Lexware Office MCP
+## sevdesk MCP
 
-17 Tools für [Lexware Office](https://www.lexware.de/lexware-office/): Kontakte, Belege aller
-Art, Auswertungen, Buchungsbelege, Dateien. Wie bei HERO nur Lesen und Anlegen — Lexware
-sperrt Änderungen optimistisch über ein `version`-Feld, und wer das falsch mitschickt,
-überschreibt fremde Änderungen.
+21 Tools für [sevdesk](https://sevdesk.de): Kontakte, Ausgangsrechnungen, Eingangsbelege,
+Angebote und Aufträge, Artikel, Bankkonten und Umsätze, Umsatzauswertung, offene Posten,
+erlaubte Buchungskonten, PDF-Links. Angelegt werden Kontakte, Artikel, Rechnungsentwürfe,
+Eingangsbelege und Belegdateien.
 
-Auth ist auch hier ein eigener API-Key pro Nutzer: Lexwares OAuth2 gibt es nur im
-Partner-Programm mit bilateraler Qualifizierung, die Public API kennt nur Bearer-Keys.
-Sie setzt **Lexware Office XL** voraus; kleinere Tarife antworten mit HTTP 402.
+Nicht enthalten sind Ändern und Löschen — und darüber hinaus alles, was den Zustand eines
+bestehenden Belegs verschiebt: buchen, versenden, stornieren, zurücksetzen, festschreiben.
+Festschreiben ist bei sevdesk laut eigener Doku aus rechtlichen Gründen unwiderruflich; so
+etwas gehört nicht in einen Chatverlauf.
 
-Drei Eigenheiten prägen die Umsetzung:
+Auth ist ein eigener API-Token pro Nutzer: 32 Hexzeichen aus *Einstellungen → Benutzer*.
+Der Token hängt am Benutzer und erbt dessen Rechte — wer nur lesen lassen will, legt in
+sevdesk einen Benutzer mit Leserechten an und nimmt dessen Token.
 
-- **2 Anfragen pro Sekunde.** Härter, als es klingt: darüber kommt 429, und der
-  Authorization-Server sperrt zeitweise. Der Client hält den Abstand selbst ein — die Drossel
-  liegt auf Modulebene und pro API-Key, nicht am Client-Objekt, sonst würde sie bei jedem
-  Tool-Aufruf zurückgesetzt.
-- **Falscher Belegstatus = leere Liste.** `voucherStatus` ist je Belegart eine andere
-  geschlossene Liste. Lexware meldet einen ungültigen Wert nicht, es kommt einfach nichts
-  zurück — also eine falsche Antwort, die wie eine richtige aussieht. Der Server prüft vorher.
-- **Keine öffentlichen Dokumentlinks.** PDFs gibt es nur gegen den API-Key. Statt Base64 ins
-  Gespräch zu legen, erzeugt der Server einen eigenen, kurzlebigen Link und liefert die Datei
-  selbst aus; der Key dahinter ist mit dem Link-Token verschlüsselt.
+Vier Eigenheiten prägen die Umsetzung:
 
-Der API-Katalog — welche Endpunkte es gibt, welche Statuswerte gelten, wo die Fallen liegen —
-stammt aus [JannikWempe/mcp-lexware-office](https://github.com/JannikWempe/mcp-lexware-office)
-(MIT, © Jannik Wempe) und der offiziellen Doku. Dessen Server ist ein stdio-Prozess mit
-QuickJS-Sandbox und zwei generischen Tools (`search`, `execute`); hier sind es benannte Tools
-hinter OAuth, damit er als Remote-Connector zum Rest dieses Repos passt.
+- **Unbekannte Filter werden ignoriert, nicht abgelehnt.** Ein Tippfehler in einem
+  Query-Parameter kostet bei sevdesk keine Fehlermeldung, sondern die Filterwirkung: die
+  Antwort kommt ungefiltert zurück und sieht völlig richtig aus. Deshalb prüft der Client
+  jeden Aufruf gegen die eingefrorene API-Beschreibung, bevor er rausgeht — Pfad, Methode,
+  Parametername und erlaubte Werte.
+- **Filter auf Fremdobjekte brauchen zwei Parameter.** `contact[id]=17` allein filtert
+  nichts; ohne `contact[objectName]=Contact` liefert sevdesk die ganze Liste. Dieselbe
+  Falle, dieselbe Wirkung. `refQuery()` setzt grundsätzlich beide.
+- **Datumsfilter sind Zeitstempel.** Bei Rechnungen, Belegen und Aufträgen heißen sie
+  `startDate`/`endDate` und wollen Unix-Sekunden. Ein durchgereichtes `YYYY-MM-DD` ergibt
+  keine Fehlermeldung, sondern eine unbrauchbare Liste.
+- **taxRule oder taxType, je nach Konto.** Mit dem sevdesk-Update 2.0 hat `taxRule` das
+  alte `taxType` abgelöst. Welche Welt gilt, sagt `/Tools/bookkeepingSystemVersion`; der
+  Server fragt das ab und schickt die passende Angabe. Die falsche bedeutet 422 — oder
+  einen Beleg mit falscher Steuerregel.
 
-Ein FLOWWER-Server (Rechnungsfreigabe) lag hier ebenfalls, ist aber am 10.08.2026 wieder
-entfernt worden — samt Worker und KV-Namensraum. Die eine Sache, die davon bleibt:
-`Brand.fields` nimmt seither eine *Liste* von Eingabefeldern statt eines einzelnen, weil
-FLOWWERs Basis-URL dem Mandanten gehörte und die Anmeldung zwei Felder brauchte. HERO und
-Lexware deklarieren dort schlicht eines.
+Dazu eine Lücke, die man nicht wegdiskutieren kann: sevdesk verlangt beim Anlegen
+`contactPerson` (ein SevUser), `unity` (eine Einheit) und `addressCountry` (ein Land), hat
+aber **für keines dieser drei Objekte einen Endpunkt zum Nachschlagen**. Es gibt kein
+`/SevUser`, kein `/Unity`, kein `/StaticCountry`. Statt undokumentierte Pfade zu raten,
+liest `servers/sevdesk/src/defaults.ts` die IDs mit `embed` aus dem neuesten vorhandenen
+Beleg des Kontos und legt sie 12 Stunden ab — wie bei HERO die Mandanten-IDs. In einem
+frischen Konto ohne jeden Beleg fehlt die Grundlage; dann sagt der Server das, statt eine
+ID zu erfinden.
+
+Die eingefrorene API-Beschreibung (`servers/sevdesk/schema/sevdesk-api.json`, 151
+Operationen) stammt aus der offiziellen OpenAPI-Datei im Repo
+[nikolausm/mcp-sevdesk](https://github.com/nikolausm/mcp-sevdesk) (MIT, © Michael
+Nikolaus), auf Pfade, Methoden und Parameter eingedampft. Dessen Server ist ein
+stdio-Prozess mit generiertem Client und Tools zum Ändern, Buchen und Löschen; hier ist es
+ein remote erreichbarer Worker mit OAuth 2.1, und geschrieben wird ausschließlich Neues.
+
+Vorher stand an dieser Stelle ein Server für **Lexware Office** (17 Tools). Er ist am
+10.08.2026 abgelöst und samt Worker und KV-Namensraum gelöscht worden. Ein
+**FLOWWER**-Server (Rechnungsfreigabe) lag hier ebenfalls und ist am selben Tag entfernt
+worden. Was von FLOWWER bleibt: `Brand.fields` nimmt seither eine *Liste* von
+Eingabefeldern statt eines einzelnen.
 
 ## Korrektheit ohne Live-Zugang
 
@@ -113,19 +133,29 @@ ein Request rausgeht.
 - **19 Prüfungen HERO** — kompletter OAuth-Flow: Code-Tausch, PKCE, Einmalgebrauch des Codes,
   Refresh-Rotation, Widerruf, ein echter `tools/call`, und dass weder Key noch Token im
   Klartext in KV landen.
-- **30 Prüfungen Lexware** — dazu die Rechenlogik (Umsatz gestellt/bezahlt, offene Posten,
-  Überfälligkeit), die Statusprüfung, die Paginierung über mehrere Seiten, der eingehaltene
-  Mindestabstand von 2 Anfragen/Sekunde und der Download-Link samt Ablauf.
+- **76 Prüfungen sevdesk** — dazu die Rechenlogik (Umsatz gestellt/bezahlt, offene Posten
+  mit Teilzahlung, Überfälligkeit), die vier Fallen von oben, die Paginierung über mehrere
+  Seiten, der Download-Link samt base64-Dekodierung, das Zurücklesen nach dem Anlegen und
+  ein zweites Konto, das keinerlei Belege hat.
 
-Der Ratenbegrenzungs-Test hat dabei einen echten Fehler gefunden: die Drossel lag anfangs am
-Client-Objekt und startete bei jedem Tool-Aufruf neu, sodass zwei Tools nacheinander ihre
-Requests im Abstand von 4 ms abgefeuert hätten.
+Zwei Dinge daran sind mehr als Zierde. Erstens prüft eine Zusicherung, dass **jedes** Tool
+mindestens einmal wirklich läuft — weil der Client jeden Aufruf gegen die API-Beschreibung
+prüft, fliegt ein falsch geschriebener Pfad oder Parameter damit im Test auf und nicht beim
+Nutzer. Zweitens hat genau diese Prüfung beim ersten Lauf einen echten Fund gemacht:
+`/ContactAddress` hat in der offiziellen Beschreibung **überhaupt keine** Query-Parameter,
+der Filter nach Kontakt ist also nirgends dokumentiert. Er ist jetzt einzeln freigegeben —
+und `get_contact` prüft zusätzlich selbst nach, ob jede zurückgegebene Adresse wirklich zu
+dem Kontakt gehört.
+
+Ein früherer Ratenbegrenzungs-Test hat einen anderen echten Fehler gefunden: die Drossel lag
+am Client-Objekt und startete bei jedem Tool-Aufruf neu, sodass zwei Tools nacheinander ihre
+Requests im Abstand von 4 ms abgefeuert hätten. Sie liegt seither auf Modulebene, pro Token.
 
 ## Bauen und deployen
 
 ```bash
 npm install
-npm run build     # generiert, validiert, typisiert, bündelt beide Worker
+npm run build     # generiert, validiert, typisiert, bündelt alle Worker
 npm test          # kompletter OAuth-Flow gegen den Bundle, mit KV- und HERO-Attrappe
 
 export CLOUDFLARE_API_TOKEN=… CLOUDFLARE_ACCOUNT_ID=…
@@ -145,15 +175,16 @@ Originalfarben, direkt von den Anbietern:
 | | Quelle |
 |---|---|
 | HERO | `hero-software.de/assets/img/static/logos/hero-logomark-dark.svg` |
-| Lexware | `app.lexware.de/favicon.svg` |
+| sevdesk | `my.sevdesk.de/images/logo.svg` — nur das Zeichen, ohne Schriftzug |
 
 Vorher standen dort Nachbauten. Das ist die schlechteste Variante: es sieht aus wie die
 Marke, ist aber keine. Entweder das echte Zeichen oder ein neutrales.
 
 `composeLogo()` setzt ein Zeichen mittig auf eine abgerundete Fläche — dasselbe Bild dient
-als Favicon und als Kachel. HERO steht auf seinem Gelb, Lexware auf Weiß mit Haarlinie —
-so, wie die Anbieter es selbst zeigen. Nebenbefund beim Nachschlagen: Lexware ist rot
-(#FF4554), nicht grün — das Grün war altes lexoffice-Branding.
+als Favicon und als Kachel. HERO steht auf seinem Gelb, sevdesk weiß auf seinem Rot
+(#FB523B) — so, wie die Anbieter es selbst zeigen. Bei sevdesk sind Ausschnitt und Größe
+aus der Originaldatei abgemessen, damit die Kachel dieselben Proportionen hat wie das
+App-Icon; dafür beachtet `composeLogo()` jetzt auch einen viewBox-Ursprung ungleich null.
 
 Die Logos kennzeichnen das angebundene System, mehr nicht. Der Fuß jeder Seite sagt, dass
 es fremde Marken sind und dass dies keine offiziellen Integrationen der Anbieter sind.
@@ -162,7 +193,7 @@ es fremde Marken sind und dass dies keine offiziellen Integrationen der Anbieter
 
 Ein Stylesheet für alles: `shared/src/style.ts`. Viel Weiß, wenige Farben, harte Kontraste
 bei der Schrift, Haarlinien statt Schatten. Die Akzentfarbe gehört dem jeweiligen System
-(HERO gelb, Lexware rot) und kommt nur in kleinen Flächen vor — die Seiten selbst bleiben
+(HERO gelb, sevdesk rot) und kommt nur in kleinen Flächen vor — die Seiten selbst bleiben
 schwarzweiß.
 
 Bewegung gibt es nur dort, wo sie etwas bedeutet: Inhalt tritt beim Laden gestaffelt ein,

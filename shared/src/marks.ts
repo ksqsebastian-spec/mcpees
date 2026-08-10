@@ -3,7 +3,7 @@
  *
  * Die Pfade stammen unverändert von den Anbietern selbst:
  *   HERO    — hero-software.de/assets/img/static/logos/hero-logomark-dark.svg
- *   Lexware — app.lexware.de/favicon.svg
+ *   sevdesk — my.sevdesk.de/images/logo.svg (nur das Zeichen, ohne Schriftzug)
  *
  * Bewusst unverändert: Farben und Formen bleiben, wie der Anbieter sie ausliefert.
  * Ein nachgezeichnetes Logo ist die schlechteste Variante — es sieht aus wie die Marke,
@@ -39,17 +39,28 @@ export const HERO_MARK: Mark = {
   accent: "#FFC400",
 };
 
-export const LEXWARE_MARK: Mark = {
+/**
+ * sevdesk liefert Zeichen und Schriftzug in einer Datei. Übernommen sind nur die drei
+ * weißen Balken — sie stehen im Original auf einer abgerundeten Fläche in #FB523B, also
+ * genau dem, was composeLogo hier ohnehin baut. Der Ausschnitt (viewBox ab 7.89/7.56) und
+ * fill = 16.22/32 sind aus dem Original abgemessen, damit die Kachel dieselben Proportionen
+ * hat wie das App-Icon von sevdesk und nicht nur so ähnlich aussieht.
+ */
+export const SEVDESK_MARK: Mark = {
   inner:
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><g fill="#ff4554">' +
-    '<polygon points="11.1 8.8 8.7 11.8 10.7 14.3 12 14.3 13.8 14.3 15.5 14.3 11.1 8.8"/>' +
-    '<polygon points="15.4 1.7 13.8 1.7 12 1.7 10.7 1.7 8.7 4.2 11.1 7.2 15.5 1.7 15.4 1.7"/>' +
-    '<polygon points="7.8 4.8 5.3 1.7 .5 1.7 3 4.8 5.6 8 3 11.2 .5 14.3 5.2 14.3 5.3 14.3 7.8 11.2 10.4 8 7.8 4.8"/>' +
-    "</g></svg>",
-  bg: "#ffffff",
-  border: true,
-  accent: "#FF4554",
-  fill: 0.64,
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="7.8889 7.5556 16.2222 15.7778">' +
+    '<path fill="#ffffff" fill-rule="evenodd" clip-rule="evenodd" d="M22.4444 7.55556C21.524 ' +
+    "7.55556 20.7778 8.30175 20.7778 9.22222V21.6667C20.7778 22.5871 21.524 23.3333 22.4444 " +
+    "23.3333C23.3649 23.3333 24.1111 22.5871 24.1111 21.6667V9.22222C24.1111 8.30175 23.3649 " +
+    "7.55556 22.4444 7.55556ZM14.3333 13.8889C14.3333 12.9684 15.0795 12.2222 16 12.2222C16.9205 " +
+    "12.2222 17.6667 12.9684 17.6667 13.8889V21.6667C17.6667 22.5871 16.9205 23.3333 16 " +
+    "23.3333C15.0795 23.3333 14.3333 22.5871 14.3333 21.6667V13.8889ZM7.88889 17.8889C7.88889 " +
+    "16.9684 8.63508 16.2222 9.55556 16.2222C10.476 16.2222 11.2222 16.9684 11.2222 " +
+    "17.8889V21.6667C11.2222 22.5871 10.476 23.3333 9.55556 23.3333C8.63508 23.3333 7.88889 " +
+    '22.5871 7.88889 21.6667V17.8889Z"/></svg>',
+  bg: "#FB523B",
+  accent: "#FB523B",
+  fill: 0.507,
 };
 
 /** Voreinstellung; einzelne Marken weichen ab (siehe Mark.fill). */
@@ -61,12 +72,14 @@ const FILL = 0.56;
  */
 export function composeLogo(mark: Mark, size = 512): string {
   const vb = /viewBox="([\d.\s-]+)"/.exec(mark.inner)?.[1]?.trim().split(/\s+/).map(Number);
-  const [, , vw, vh] = vb && vb.length === 4 ? vb : [0, 0, 1, 1];
+  // minX/minY sind nicht immer 0: wer ein Zeichen aus einem größeren Logo herausschneidet,
+  // verschiebt damit den Ausschnitt, statt die Pfadkoordinaten anzufassen.
+  const [minX, minY, vw, vh] = vb && vb.length === 4 ? vb : [0, 0, 1, 1];
 
   const box = size * (mark.fill ?? FILL);
   const scale = Math.min(box / vw, box / vh);
-  const tx = (size - vw * scale) / 2;
-  const ty = (size - vh * scale) / 2;
+  const tx = (size - vw * scale) / 2 - minX * scale;
+  const ty = (size - vh * scale) / 2 - minY * scale;
 
   // Nur den Inhalt des inneren SVG übernehmen, nicht das <svg>-Element selbst.
   const body = mark.inner.replace(/^<svg[^>]*>/, "").replace(/<\/svg>\s*$/, "");

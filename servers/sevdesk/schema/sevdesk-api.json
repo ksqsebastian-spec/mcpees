@@ -1,0 +1,1658 @@
+{
+ "_source": {
+  "api": "sevdesk API v1 (OpenAPI 2.0.0)",
+  "upstream": "github.com/nikolausm/mcp-sevdesk, openapi/sevdesk-openapi.yaml",
+  "commit": "e6769c878ffe8591e2509ccb66837cc0e1b2890e",
+  "md5": "48c95756f3b286b33819ef801d3ba628",
+  "frozen": "2026-08-10",
+  "kept": "Pfad, Methode, operationId, summary, Pfadparameter, Query-Parameter mit Typ und enum",
+  "dropped": "Request- und Response-Schemata, Beispiele, Prosa — die stehen in der Doku, hier zaehlt nur, was pruefbar ist",
+  "note": "limit, offset, countAll und embed sind global gueltig, aber nicht pro Operation dokumentiert; sie stehen deshalb nicht hier, sondern als GLOBAL_QUERY im Client."
+ },
+ "operations": {
+  "GET /Tools/bookkeepingSystemVersion": {
+   "operationId": "bookkeepingSystemVersion",
+   "summary": "Retrieve bookkeeping system version",
+   "pathParams": [],
+   "query": {}
+  },
+  "GET /CheckAccount": {
+   "operationId": "getCheckAccounts",
+   "summary": "Retrieve check accounts",
+   "pathParams": [],
+   "query": {}
+  },
+  "POST /CheckAccount/Factory/fileImportAccount": {
+   "operationId": "createFileImportAccount",
+   "summary": "Create a new file import account",
+   "pathParams": [],
+   "query": {}
+  },
+  "POST /CheckAccount/Factory/clearingAccount": {
+   "operationId": "createClearingAccount",
+   "summary": "Create a new clearing account",
+   "pathParams": [],
+   "query": {}
+  },
+  "GET /CheckAccount/{checkAccountId}": {
+   "operationId": "getCheckAccountById",
+   "summary": "Find check account by ID",
+   "pathParams": [
+    "checkAccountId"
+   ],
+   "query": {}
+  },
+  "PUT /CheckAccount/{checkAccountId}": {
+   "operationId": "updateCheckAccount",
+   "summary": "Update an existing check account",
+   "pathParams": [
+    "checkAccountId"
+   ],
+   "query": {}
+  },
+  "DELETE /CheckAccount/{checkAccountId}": {
+   "operationId": "deleteCheckAccount",
+   "summary": "Deletes a check account",
+   "pathParams": [
+    "checkAccountId"
+   ],
+   "query": {}
+  },
+  "GET /CheckAccount/{checkAccountId}/getBalanceAtDate": {
+   "operationId": "getBalanceAtDate",
+   "summary": "Get the balance at a given date",
+   "pathParams": [
+    "checkAccountId"
+   ],
+   "query": {
+    "date": {
+     "type": "string",
+     "required": true
+    }
+   }
+  },
+  "GET /CheckAccountTransaction": {
+   "operationId": "getTransactions",
+   "summary": "Retrieve transactions",
+   "pathParams": [],
+   "query": {
+    "checkAccount[id]": {
+     "type": "integer"
+    },
+    "checkAccount[objectName]": {
+     "type": "string"
+    },
+    "isBooked": {
+     "type": "boolean"
+    },
+    "paymtPurpose": {
+     "type": "string"
+    },
+    "startDate": {
+     "type": "string"
+    },
+    "endDate": {
+     "type": "string"
+    },
+    "payeePayerName": {
+     "type": "string"
+    },
+    "onlyCredit": {
+     "type": "boolean"
+    },
+    "onlyDebit": {
+     "type": "boolean"
+    }
+   }
+  },
+  "POST /CheckAccountTransaction": {
+   "operationId": "createTransaction",
+   "summary": "Create a new transaction",
+   "pathParams": [],
+   "query": {}
+  },
+  "GET /CheckAccountTransaction/{checkAccountTransactionId}": {
+   "operationId": "getCheckAccountTransactionById",
+   "summary": "Find check account transaction by ID",
+   "pathParams": [
+    "checkAccountTransactionId"
+   ],
+   "query": {}
+  },
+  "PUT /CheckAccountTransaction/{checkAccountTransactionId}": {
+   "operationId": "updateCheckAccountTransaction",
+   "summary": "Update an existing check account transaction",
+   "pathParams": [
+    "checkAccountTransactionId"
+   ],
+   "query": {}
+  },
+  "DELETE /CheckAccountTransaction/{checkAccountTransactionId}": {
+   "operationId": "deleteCheckAccountTransaction",
+   "summary": "Deletes a check account transaction",
+   "pathParams": [
+    "checkAccountTransactionId"
+   ],
+   "query": {}
+  },
+  "PUT /CheckAccountTransaction/{checkAccountTransactionId}/enshrine": {
+   "operationId": "checkAccountTransactionEnshrine",
+   "summary": "Enshrine",
+   "pathParams": [
+    "checkAccountTransactionId"
+   ],
+   "query": {}
+  },
+  "GET /Contact/Factory/getNextCustomerNumber": {
+   "operationId": "getNextCustomerNumber",
+   "summary": "Get next free customer number",
+   "pathParams": [],
+   "query": {}
+  },
+  "GET /Contact/Factory/findContactsByCustomFieldValue": {
+   "operationId": "findContactsByCustomFieldValue",
+   "summary": "Find contacts by custom field value",
+   "pathParams": [],
+   "query": {
+    "value": {
+     "type": "string",
+     "required": true
+    },
+    "customFieldSetting[id]": {
+     "type": "string"
+    },
+    "customFieldSetting[objectName]": {
+     "type": "string"
+    },
+    "customFieldName": {
+     "type": "string",
+     "required": true
+    }
+   }
+  },
+  "GET /Contact/Mapper/checkCustomerNumberAvailability": {
+   "operationId": "contactCustomerNumberAvailabilityCheck",
+   "summary": "Check if a customer number is available",
+   "pathParams": [],
+   "query": {
+    "customerNumber": {
+     "type": "string"
+    }
+   }
+  },
+  "GET /Contact": {
+   "operationId": "getContacts",
+   "summary": "Retrieve contacts",
+   "pathParams": [],
+   "query": {
+    "depth": {
+     "type": "string",
+     "enum": [
+      "0",
+      "1"
+     ]
+    },
+    "customerNumber": {
+     "type": "string"
+    }
+   }
+  },
+  "POST /Contact": {
+   "operationId": "createContact",
+   "summary": "Create a new contact",
+   "pathParams": [],
+   "query": {}
+  },
+  "GET /Contact/{contactId}": {
+   "operationId": "getContactById",
+   "summary": "Find contact by ID",
+   "pathParams": [
+    "contactId"
+   ],
+   "query": {}
+  },
+  "PUT /Contact/{contactId}": {
+   "operationId": "updateContact",
+   "summary": "Update a existing contact",
+   "pathParams": [
+    "contactId"
+   ],
+   "query": {}
+  },
+  "DELETE /Contact/{contactId}": {
+   "operationId": "deleteContact",
+   "summary": "Deletes a contact",
+   "pathParams": [
+    "contactId"
+   ],
+   "query": {}
+  },
+  "GET /Contact/{contactId}/getTabsItemCount": {
+   "operationId": "getContactTabsItemCountById",
+   "summary": "Get number of all items",
+   "pathParams": [
+    "contactId"
+   ],
+   "query": {}
+  },
+  "POST /ContactAddress": {
+   "operationId": "createContactAddress",
+   "summary": "Create a new contact address",
+   "pathParams": [],
+   "query": {}
+  },
+  "GET /ContactAddress": {
+   "operationId": "getContactAddresses",
+   "summary": "Retrieve contact addresses",
+   "pathParams": [],
+   "query": {}
+  },
+  "GET /ContactAddress/{contactAddressId}": {
+   "operationId": "contactAddressId",
+   "summary": "Find contact address by ID",
+   "pathParams": [
+    "contactAddressId"
+   ],
+   "query": {}
+  },
+  "PUT /ContactAddress/{contactAddressId}": {
+   "operationId": "updateContactAddress",
+   "summary": "update a existing contact address",
+   "pathParams": [
+    "contactAddressId"
+   ],
+   "query": {}
+  },
+  "DELETE /ContactAddress/{contactAddressId}": {
+   "operationId": "deleteContactAddress",
+   "summary": "Deletes a contact address",
+   "pathParams": [
+    "contactAddressId"
+   ],
+   "query": {}
+  },
+  "GET /CommunicationWay": {
+   "operationId": "getCommunicationWays",
+   "summary": "Retrieve communication ways",
+   "pathParams": [],
+   "query": {
+    "contact[id]": {
+     "type": "string"
+    },
+    "contact[objectName]": {
+     "type": "string"
+    },
+    "type": {
+     "type": "string",
+     "enum": [
+      "PHONE",
+      "EMAIL",
+      "WEB",
+      "MOBILE"
+     ]
+    },
+    "main": {
+     "type": "string",
+     "enum": [
+      "0",
+      "1"
+     ]
+    }
+   }
+  },
+  "POST /CommunicationWay": {
+   "operationId": "createCommunicationWay",
+   "summary": "Create a new contact communication way",
+   "pathParams": [],
+   "query": {}
+  },
+  "GET /CommunicationWay/{communicationWayId}": {
+   "operationId": "getCommunicationWayById",
+   "summary": "Find communication way by ID",
+   "pathParams": [
+    "communicationWayId"
+   ],
+   "query": {}
+  },
+  "DELETE /CommunicationWay/{communicationWayId}": {
+   "operationId": "deleteCommunicationWay",
+   "summary": "Deletes a communication way",
+   "pathParams": [
+    "communicationWayId"
+   ],
+   "query": {}
+  },
+  "PUT /CommunicationWay/{communicationWayId}": {
+   "operationId": "UpdateCommunicationWay",
+   "summary": "Update a existing communication way",
+   "pathParams": [
+    "communicationWayId"
+   ],
+   "query": {}
+  },
+  "GET /CommunicationWayKey": {
+   "operationId": "getCommunicationWayKeys",
+   "summary": "Retrieve communication way keys",
+   "pathParams": [],
+   "query": {}
+  },
+  "GET /AccountingContact": {
+   "operationId": "getAccountingContact",
+   "summary": "Retrieve accounting contact",
+   "pathParams": [],
+   "query": {
+    "contact[id]": {
+     "type": "string"
+    },
+    "contact[objectName]": {
+     "type": "string"
+    }
+   }
+  },
+  "POST /AccountingContact": {
+   "operationId": "createAccountingContact",
+   "summary": "Create a new accounting contact",
+   "pathParams": [],
+   "query": {}
+  },
+  "GET /AccountingContact/{accountingContactId}": {
+   "operationId": "getAccountingContactById",
+   "summary": "Find accounting contact by ID",
+   "pathParams": [
+    "accountingContactId"
+   ],
+   "query": {}
+  },
+  "PUT /AccountingContact/{accountingContactId}": {
+   "operationId": "updateAccountingContact",
+   "summary": "Update an existing accounting contact",
+   "pathParams": [
+    "accountingContactId"
+   ],
+   "query": {}
+  },
+  "DELETE /AccountingContact/{accountingContactId}": {
+   "operationId": "deleteAccountingContact",
+   "summary": "Deletes an accounting contact",
+   "pathParams": [
+    "accountingContactId"
+   ],
+   "query": {}
+  },
+  "GET /Textparser/fetchDictionaryEntriesByType": {
+   "operationId": "getPlaceholder",
+   "summary": "Retrieve Placeholders",
+   "pathParams": [],
+   "query": {
+    "objectName": {
+     "type": "string",
+     "enum": [
+      "Invoice",
+      "CreditNote",
+      "Order",
+      "Contact",
+      "Letter",
+      "Email"
+     ],
+     "required": true
+    },
+    "subObjectName": {
+     "type": "string",
+     "enum": [
+      "Invoice",
+      "CreditNote",
+      "Order",
+      "Contact",
+      "Letter"
+     ]
+    }
+   }
+  },
+  "GET /ContactCustomField": {
+   "operationId": "getContactFields",
+   "summary": "Retrieve contact fields",
+   "pathParams": [],
+   "query": {}
+  },
+  "POST /ContactCustomField": {
+   "operationId": "createContactField",
+   "summary": "Create contact field",
+   "pathParams": [],
+   "query": {}
+  },
+  "GET /ContactCustomField/{contactCustomFieldId}": {
+   "operationId": "getContactFieldsById",
+   "summary": "Retrieve contact fields",
+   "pathParams": [
+    "contactCustomFieldId"
+   ],
+   "query": {}
+  },
+  "PUT /ContactCustomField/{contactCustomFieldId}": {
+   "operationId": "updateContactfield",
+   "summary": "Update a contact field",
+   "pathParams": [
+    "contactCustomFieldId"
+   ],
+   "query": {}
+  },
+  "DELETE /ContactCustomField/{contactCustomFieldId}": {
+   "operationId": "deleteContactCustomFieldId",
+   "summary": "delete a contact field",
+   "pathParams": [
+    "contactCustomFieldId"
+   ],
+   "query": {}
+  },
+  "GET /ContactCustomFieldSetting": {
+   "operationId": "getContactFieldSettings",
+   "summary": "Retrieve contact field settings",
+   "pathParams": [],
+   "query": {}
+  },
+  "POST /ContactCustomFieldSetting": {
+   "operationId": "createContactFieldSetting",
+   "summary": "Create contact field setting",
+   "pathParams": [],
+   "query": {}
+  },
+  "GET /ContactCustomFieldSetting/{contactCustomFieldSettingId}": {
+   "operationId": "getContactFieldSettingById",
+   "summary": "Find contact field setting by ID",
+   "pathParams": [
+    "contactCustomFieldSettingId"
+   ],
+   "query": {}
+  },
+  "PUT /ContactCustomFieldSetting/{contactCustomFieldSettingId}": {
+   "operationId": "updateContactFieldSetting",
+   "summary": "Update contact field setting",
+   "pathParams": [
+    "contactCustomFieldSettingId"
+   ],
+   "query": {}
+  },
+  "DELETE /ContactCustomFieldSetting/{contactCustomFieldSettingId}": {
+   "operationId": "deleteContactFieldSetting",
+   "summary": "Deletes a contact field setting",
+   "pathParams": [
+    "contactCustomFieldSettingId"
+   ],
+   "query": {}
+  },
+  "GET /ContactCustomFieldSetting/{contactCustomFieldSettingId}/getReferenceCount": {
+   "operationId": "getReferenceCount",
+   "summary": "Receive count reference",
+   "pathParams": [
+    "contactCustomFieldSettingId"
+   ],
+   "query": {}
+  },
+  "GET /CreditNote": {
+   "operationId": "getCreditNotes",
+   "summary": "Retrieve CreditNote",
+   "pathParams": [],
+   "query": {
+    "status": {
+     "type": "string",
+     "enum": [
+      "100",
+      "200",
+      "300",
+      "500",
+      "750",
+      "1000"
+     ]
+    },
+    "creditNoteNumber": {
+     "type": "string"
+    },
+    "startDate": {
+     "type": "integer"
+    },
+    "endDate": {
+     "type": "integer"
+    },
+    "contact[id]": {
+     "type": "integer"
+    },
+    "contact[objectName]": {
+     "type": "string"
+    }
+   }
+  },
+  "POST /CreditNote/Factory/saveCreditNote": {
+   "operationId": "createcreditNote",
+   "summary": "Create a new creditNote",
+   "pathParams": [],
+   "query": {}
+  },
+  "POST /CreditNote/Factory/createFromInvoice": {
+   "operationId": "createCreditNoteFromInvoice",
+   "summary": "Creates a new creditNote from an invoice",
+   "pathParams": [],
+   "query": {}
+  },
+  "POST /CreditNote/Factory/createFromVoucher": {
+   "operationId": "createCreditNoteFromVoucher",
+   "summary": "Creates a new creditNote from a voucher",
+   "pathParams": [],
+   "query": {}
+  },
+  "GET /CreditNote/{creditNoteId}": {
+   "operationId": "getcreditNoteById",
+   "summary": "Find creditNote by ID",
+   "pathParams": [
+    "creditNoteId"
+   ],
+   "query": {}
+  },
+  "PUT /CreditNote/{creditNoteId}": {
+   "operationId": "updatecreditNote",
+   "summary": "Update an existing creditNote",
+   "pathParams": [
+    "creditNoteId"
+   ],
+   "query": {}
+  },
+  "DELETE /CreditNote/{creditNoteId}": {
+   "operationId": "deletecreditNote",
+   "summary": "Deletes an creditNote",
+   "pathParams": [
+    "creditNoteId"
+   ],
+   "query": {}
+  },
+  "GET /CreditNote/{creditNoteId}/sendByWithRender": {
+   "operationId": "sendCreditNoteByPrinting",
+   "summary": "Send credit note by printing",
+   "pathParams": [
+    "creditNoteId"
+   ],
+   "query": {
+    "sendType": {
+     "type": "string",
+     "required": true
+    }
+   }
+  },
+  "PUT /CreditNote/{creditNoteId}/sendBy": {
+   "operationId": "creditNoteSendBy",
+   "summary": "Mark credit note as sent",
+   "pathParams": [
+    "creditNoteId"
+   ],
+   "query": {}
+  },
+  "PUT /CreditNote/{creditNoteId}/enshrine": {
+   "operationId": "creditNoteEnshrine",
+   "summary": "Enshrine",
+   "pathParams": [
+    "creditNoteId"
+   ],
+   "query": {}
+  },
+  "GET /CreditNote/{creditNoteId}/getPdf": {
+   "operationId": "creditNoteGetPdf",
+   "summary": "Retrieve pdf document of a credit note",
+   "pathParams": [
+    "creditNoteId"
+   ],
+   "query": {
+    "download": {
+     "type": "boolean"
+    },
+    "preventSendBy": {
+     "type": "boolean"
+    }
+   }
+  },
+  "POST /CreditNote/{creditNoteId}/sendViaEmail": {
+   "operationId": "sendCreditNoteViaEMail",
+   "summary": "Send credit note via email",
+   "pathParams": [
+    "creditNoteId"
+   ],
+   "query": {}
+  },
+  "PUT /CreditNote/{creditNoteId}/bookAmount": {
+   "operationId": "bookCreditNote",
+   "summary": "Book a credit note",
+   "pathParams": [
+    "creditNoteId"
+   ],
+   "query": {}
+  },
+  "PUT /CreditNote/{creditNoteId}/resetToOpen": {
+   "operationId": "creditNoteResetToOpen",
+   "summary": "Reset status to open",
+   "pathParams": [
+    "creditNoteId"
+   ],
+   "query": {}
+  },
+  "PUT /CreditNote/{creditNoteId}/resetToDraft": {
+   "operationId": "creditNoteResetToDraft",
+   "summary": "Reset status to draft",
+   "pathParams": [
+    "creditNoteId"
+   ],
+   "query": {}
+  },
+  "GET /CreditNotePos": {
+   "operationId": "getcreditNotePositions",
+   "summary": "Retrieve creditNote positions",
+   "pathParams": [],
+   "query": {
+    "creditNote[id]": {
+     "type": "integer"
+    },
+    "creditNote[objectName]": {
+     "type": "string"
+    }
+   }
+  },
+  "PUT /SevClient/{SevClientId}/updateExportConfig": {
+   "operationId": "updateExportConfig",
+   "summary": "Update export config",
+   "pathParams": [
+    "SevClientId"
+   ],
+   "query": {}
+  },
+  "GET /Export/datevCSV": {
+   "operationId": "exportDatevDepricated",
+   "summary": "Export datev",
+   "pathParams": [],
+   "query": {
+    "Download": {
+     "type": "boolean"
+    },
+    "startDate": {
+     "type": "integer",
+     "required": true
+    },
+    "endDate": {
+     "type": "integer",
+     "required": true
+    },
+    "scope": {
+     "type": "string",
+     "required": true
+    },
+    "withUnpaidDocuments": {
+     "type": "boolean"
+    },
+    "withEnshrinedDocuments": {
+     "type": "boolean"
+    },
+    "enshrine": {
+     "type": "boolean"
+    }
+   }
+  },
+  "GET /Export/createDatevCsvZipExportJob": {
+   "operationId": "exportDatevCSV",
+   "summary": "Start DATEV CSV ZIP export",
+   "pathParams": [],
+   "query": {
+    "startDate": {
+     "type": "integer",
+     "required": true
+    },
+    "endDate": {
+     "type": "integer",
+     "required": true
+    },
+    "scope": {
+     "type": "string",
+     "required": true
+    },
+    "exportByPaydate": {
+     "type": "boolean"
+    },
+    "includeEnshrined": {
+     "type": "boolean"
+    },
+    "enshrineDocuments": {
+     "type": "boolean"
+    },
+    "includeDocumentImages": {
+     "type": "boolean"
+    }
+   }
+  },
+  "GET /Export/createDatevXmlZipExportJob": {
+   "operationId": "exportDatevXML",
+   "summary": "Start DATEV XML ZIP export",
+   "pathParams": [],
+   "query": {
+    "startDate": {
+     "type": "integer",
+     "required": true
+    },
+    "endDate": {
+     "type": "integer",
+     "required": true
+    },
+    "scope": {
+     "type": "string",
+     "required": true
+    },
+    "exportByPaydate": {
+     "type": "boolean"
+    },
+    "includeEnshrined": {
+     "type": "boolean"
+    },
+    "includeExportedDocuments": {
+     "type": "boolean"
+    },
+    "includeDocumentXml": {
+     "type": "boolean"
+    }
+   }
+  },
+  "GET /Progress/generateDownloadHash": {
+   "operationId": "generateDownloadHash",
+   "summary": "Generate download hash",
+   "pathParams": [],
+   "query": {
+    "jobId": {
+     "type": "string",
+     "required": true
+    }
+   }
+  },
+  "GET /Progress/getProgress": {
+   "operationId": "getProgress",
+   "summary": "Get progress",
+   "pathParams": [],
+   "query": {
+    "hash": {
+     "type": "string",
+     "required": true
+    }
+   }
+  },
+  "GET /ExportJob/jobDownloadInfo": {
+   "operationId": "jobDownloadInfo",
+   "summary": "Get job download info",
+   "pathParams": [],
+   "query": {
+    "jobId": {
+     "type": "string",
+     "required": true
+    }
+   }
+  },
+  "GET /Export/invoiceCsv": {
+   "operationId": "exportInvoice",
+   "summary": "Export invoice",
+   "pathParams": [],
+   "query": {
+    "download": {
+     "type": "boolean"
+    },
+    "sevQuery": {
+     "type": "object",
+     "required": true
+    }
+   }
+  },
+  "GET /Export/invoiceZip": {
+   "operationId": "exportInvoiceZip",
+   "summary": "Export Invoice as zip",
+   "pathParams": [],
+   "query": {
+    "download": {
+     "type": "boolean"
+    },
+    "sevQuery": {
+     "type": "object",
+     "required": true
+    }
+   }
+  },
+  "GET /Export/creditNoteCsv": {
+   "operationId": "exportCreditNote",
+   "summary": "Export creditNote",
+   "pathParams": [],
+   "query": {
+    "download": {
+     "type": "boolean"
+    },
+    "sevQuery": {
+     "type": "object",
+     "required": true
+    }
+   }
+  },
+  "GET /Export/voucherListCsv": {
+   "operationId": "exportVoucher",
+   "summary": "Export voucher as zip",
+   "pathParams": [],
+   "query": {
+    "download": {
+     "type": "boolean"
+    },
+    "sevQuery": {
+     "type": "object",
+     "required": true
+    }
+   }
+  },
+  "GET /Export/transactionsCsv": {
+   "operationId": "exportTransactions",
+   "summary": "Export transaction",
+   "pathParams": [],
+   "query": {
+    "download": {
+     "type": "boolean"
+    },
+    "sevQuery": {
+     "type": "object",
+     "required": true
+    }
+   }
+  },
+  "GET /Export/voucherZip": {
+   "operationId": "exportVoucherZip",
+   "summary": "Export voucher zip",
+   "pathParams": [],
+   "query": {
+    "download": {
+     "type": "boolean"
+    },
+    "sevQuery": {
+     "type": "object",
+     "required": true
+    }
+   }
+  },
+  "GET /Export/contactListCsv": {
+   "operationId": "exportContact",
+   "summary": "Export contact",
+   "pathParams": [],
+   "query": {
+    "download": {
+     "type": "boolean"
+    },
+    "sevQuery": {
+     "type": "object",
+     "required": true
+    }
+   }
+  },
+  "GET /Part": {
+   "operationId": "getParts",
+   "summary": "Retrieve parts",
+   "pathParams": [],
+   "query": {
+    "partNumber": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    }
+   }
+  },
+  "POST /Part": {
+   "operationId": "createPart",
+   "summary": "Create a new part",
+   "pathParams": [],
+   "query": {}
+  },
+  "GET /Part/{partId}": {
+   "operationId": "getPartById",
+   "summary": "Find part by ID",
+   "pathParams": [
+    "partId"
+   ],
+   "query": {}
+  },
+  "PUT /Part/{partId}": {
+   "operationId": "updatePart",
+   "summary": "Update an existing part",
+   "pathParams": [
+    "partId"
+   ],
+   "query": {}
+  },
+  "GET /Part/{partId}/getStock": {
+   "operationId": "partGetStock",
+   "summary": "Get stock of a part",
+   "pathParams": [
+    "partId"
+   ],
+   "query": {}
+  },
+  "GET /Invoice": {
+   "operationId": "getInvoices",
+   "summary": "Retrieve invoices",
+   "pathParams": [],
+   "query": {
+    "status": {
+     "type": "number",
+     "enum": [
+      100,
+      200,
+      1000
+     ]
+    },
+    "invoiceNumber": {
+     "type": "string"
+    },
+    "startDate": {
+     "type": "integer"
+    },
+    "endDate": {
+     "type": "integer"
+    },
+    "contact[id]": {
+     "type": "integer"
+    },
+    "contact[objectName]": {
+     "type": "string"
+    }
+   }
+  },
+  "POST /Invoice/Factory/saveInvoice": {
+   "operationId": "createInvoiceByFactory",
+   "summary": "Create a new invoice",
+   "pathParams": [],
+   "query": {}
+  },
+  "GET /Invoice/{invoiceId}": {
+   "operationId": "getInvoiceById",
+   "summary": "Find invoice by ID",
+   "pathParams": [
+    "invoiceId"
+   ],
+   "query": {}
+  },
+  "GET /Invoice/{invoiceId}/getPositions": {
+   "operationId": "getInvoicePositionsById",
+   "summary": "Find invoice positions",
+   "pathParams": [
+    "invoiceId"
+   ],
+   "query": {
+    "limit": {
+     "type": "integer"
+    },
+    "offset": {
+     "type": "integer"
+    },
+    "embed": {
+     "type": "array"
+    }
+   }
+  },
+  "POST /Invoice/Factory/createInvoiceFromOrder": {
+   "operationId": "createInvoiceFromOrder",
+   "summary": "Create invoice from order",
+   "pathParams": [],
+   "query": {}
+  },
+  "POST /Invoice/Factory/createInvoiceReminder": {
+   "operationId": "createInvoiceReminder",
+   "summary": "Create invoice reminder",
+   "pathParams": [],
+   "query": {
+    "invoice[id]": {
+     "type": "integer",
+     "required": true
+    },
+    "invoice[objectName]": {
+     "type": "string",
+     "required": true
+    }
+   }
+  },
+  "GET /Invoice/{invoiceId}/getIsPartiallyPaid": {
+   "operationId": "getIsInvoicePartiallyPaid",
+   "summary": "Check if an invoice is already partially paid",
+   "pathParams": [
+    "invoiceId"
+   ],
+   "query": {}
+  },
+  "POST /Invoice/{invoiceId}/cancelInvoice": {
+   "operationId": "cancelInvoice",
+   "summary": "Cancel an invoice / Create cancellation invoice",
+   "pathParams": [
+    "invoiceId"
+   ],
+   "query": {}
+  },
+  "POST /Invoice/{invoiceId}/render": {
+   "operationId": "invoiceRender",
+   "summary": "Render the pdf document of an invoice",
+   "pathParams": [
+    "invoiceId"
+   ],
+   "query": {}
+  },
+  "POST /Invoice/{invoiceId}/sendViaEmail": {
+   "operationId": "sendInvoiceViaEMail",
+   "summary": "Send invoice via email",
+   "pathParams": [
+    "invoiceId"
+   ],
+   "query": {}
+  },
+  "GET /Invoice/{invoiceId}/getPdf": {
+   "operationId": "invoiceGetPdf",
+   "summary": "Retrieve pdf document of an invoice",
+   "pathParams": [
+    "invoiceId"
+   ],
+   "query": {
+    "download": {
+     "type": "boolean"
+    },
+    "preventSendBy": {
+     "type": "boolean"
+    }
+   }
+  },
+  "GET /Invoice/{invoiceId}/getXml": {
+   "operationId": "invoiceGetXml",
+   "summary": "Retrieve XML of an e-invoice",
+   "pathParams": [
+    "invoiceId"
+   ],
+   "query": {}
+  },
+  "PUT /Invoice/{invoiceId}/sendBy": {
+   "operationId": "invoiceSendBy",
+   "summary": "Mark invoice as sent",
+   "pathParams": [
+    "invoiceId"
+   ],
+   "query": {}
+  },
+  "PUT /Invoice/{invoiceId}/enshrine": {
+   "operationId": "invoiceEnshrine",
+   "summary": "Enshrine",
+   "pathParams": [
+    "invoiceId"
+   ],
+   "query": {}
+  },
+  "PUT /Invoice/{invoiceId}/bookAmount": {
+   "operationId": "bookInvoice",
+   "summary": "Book an invoice",
+   "pathParams": [
+    "invoiceId"
+   ],
+   "query": {}
+  },
+  "PUT /Invoice/{invoiceId}/resetToOpen": {
+   "operationId": "invoiceResetToOpen",
+   "summary": "Reset status to open",
+   "pathParams": [
+    "invoiceId"
+   ],
+   "query": {}
+  },
+  "PUT /Invoice/{invoiceId}/resetToDraft": {
+   "operationId": "invoiceResetToDraft",
+   "summary": "Reset status to draft",
+   "pathParams": [
+    "invoiceId"
+   ],
+   "query": {}
+  },
+  "GET /InvoicePos": {
+   "operationId": "getInvoicePos",
+   "summary": "Retrieve InvoicePos",
+   "pathParams": [],
+   "query": {
+    "id": {
+     "type": "number"
+    },
+    "invoice[id]": {
+     "type": "number"
+    },
+    "invoice[objectName]": {
+     "type": "string"
+    },
+    "part[id]": {
+     "type": "number"
+    },
+    "part[objectName]": {
+     "type": "string"
+    }
+   }
+  },
+  "GET /DocServer/getLetterpapersWithThumb": {
+   "operationId": "getLetterpapersWithThumb",
+   "summary": "Retrieve letterpapers",
+   "pathParams": [],
+   "query": {}
+  },
+  "GET /DocServer/getTemplatesWithThumb": {
+   "operationId": "getTemplates",
+   "summary": "Retrieve templates",
+   "pathParams": [],
+   "query": {
+    "type": {
+     "type": "string",
+     "enum": [
+      "Invoice",
+      "invoicereminder",
+      "Order",
+      "Contractnote",
+      "Packinglist",
+      "Letter",
+      "Creditnote"
+     ]
+    }
+   }
+  },
+  "PUT /Invoice/{invoiceId}/changeParameter": {
+   "operationId": "updateInvoiceTemplate",
+   "summary": "Update an invoice template",
+   "pathParams": [
+    "invoiceId"
+   ],
+   "query": {}
+  },
+  "PUT /Order/{orderId}/changeParameter": {
+   "operationId": "updateOrderTemplate",
+   "summary": "Update an order template",
+   "pathParams": [
+    "orderId"
+   ],
+   "query": {}
+  },
+  "PUT /CreditNote/{creditNoteId}/changeParameter": {
+   "operationId": "updateCreditNoteTemplate",
+   "summary": "Update an of credit note template",
+   "pathParams": [
+    "creditNoteId"
+   ],
+   "query": {}
+  },
+  "GET /Order": {
+   "operationId": "getOrders",
+   "summary": "Retrieve orders",
+   "pathParams": [],
+   "query": {
+    "status": {
+     "type": "integer",
+     "enum": [
+      100,
+      200,
+      300,
+      500,
+      750,
+      1000
+     ]
+    },
+    "orderNumber": {
+     "type": "string"
+    },
+    "startDate": {
+     "type": "integer"
+    },
+    "endDate": {
+     "type": "integer"
+    },
+    "contact[id]": {
+     "type": "integer"
+    },
+    "contact[objectName]": {
+     "type": "string"
+    }
+   }
+  },
+  "POST /Order/Factory/saveOrder": {
+   "operationId": "createOrder",
+   "summary": "Create a new order",
+   "pathParams": [],
+   "query": {}
+  },
+  "GET /Order/{orderId}": {
+   "operationId": "getOrderById",
+   "summary": "Find order by ID",
+   "pathParams": [
+    "orderId"
+   ],
+   "query": {}
+  },
+  "PUT /Order/{orderId}": {
+   "operationId": "updateOrder",
+   "summary": "Update an existing order",
+   "pathParams": [
+    "orderId"
+   ],
+   "query": {}
+  },
+  "DELETE /Order/{orderId}": {
+   "operationId": "deleteOrder",
+   "summary": "Deletes an order",
+   "pathParams": [
+    "orderId"
+   ],
+   "query": {}
+  },
+  "GET /Order/{orderId}/getPositions": {
+   "operationId": "getOrderPositionsById",
+   "summary": "Find order positions",
+   "pathParams": [
+    "orderId"
+   ],
+   "query": {
+    "limit": {
+     "type": "integer"
+    },
+    "offset": {
+     "type": "integer"
+    },
+    "embed": {
+     "type": "array"
+    }
+   }
+  },
+  "GET /Order/{orderId}/getDiscounts": {
+   "operationId": "getDiscounts",
+   "summary": "Find order discounts",
+   "pathParams": [
+    "orderId"
+   ],
+   "query": {
+    "limit": {
+     "type": "integer"
+    },
+    "offset": {
+     "type": "integer"
+    },
+    "embed": {
+     "type": "array"
+    }
+   }
+  },
+  "GET /Order/{orderId}/getRelatedObjects": {
+   "operationId": "getRelatedObjects",
+   "summary": "Find related objects",
+   "pathParams": [
+    "orderId"
+   ],
+   "query": {
+    "includeItself": {
+     "type": "boolean"
+    },
+    "sortByType": {
+     "type": "boolean"
+    },
+    "embed": {
+     "type": "array"
+    }
+   }
+  },
+  "POST /Order/{orderId}/sendViaEmail": {
+   "operationId": "sendorderViaEMail",
+   "summary": "Send order via email",
+   "pathParams": [
+    "orderId"
+   ],
+   "query": {}
+  },
+  "POST /Order/Factory/createPackingListFromOrder": {
+   "operationId": "createPackingListFromOrder",
+   "summary": "Create packing list from order",
+   "pathParams": [],
+   "query": {
+    "order[id]": {
+     "type": "integer",
+     "required": true
+    },
+    "order[objectName]": {
+     "type": "string",
+     "required": true
+    }
+   }
+  },
+  "POST /Order/Factory/createContractNoteFromOrder": {
+   "operationId": "createContractNoteFromOrder",
+   "summary": "Create contract note from order",
+   "pathParams": [],
+   "query": {
+    "order[id]": {
+     "type": "integer",
+     "required": true
+    },
+    "order[objectName]": {
+     "type": "string",
+     "required": true
+    }
+   }
+  },
+  "GET /Order/{orderId}/getPdf": {
+   "operationId": "orderGetPdf",
+   "summary": "Retrieve pdf document of an order",
+   "pathParams": [
+    "orderId"
+   ],
+   "query": {
+    "download": {
+     "type": "boolean"
+    },
+    "preventSendBy": {
+     "type": "boolean"
+    }
+   }
+  },
+  "PUT /Order/{orderId}/sendBy": {
+   "operationId": "orderSendBy",
+   "summary": "Mark order as sent",
+   "pathParams": [
+    "orderId"
+   ],
+   "query": {}
+  },
+  "GET /OrderPos": {
+   "operationId": "getOrderPositions",
+   "summary": "Retrieve order positions",
+   "pathParams": [],
+   "query": {
+    "order[id]": {
+     "type": "integer"
+    },
+    "order[objectName]": {
+     "type": "string"
+    }
+   }
+  },
+  "GET /OrderPos/{orderPosId}": {
+   "operationId": "getOrderPositionById",
+   "summary": "Find order position by ID",
+   "pathParams": [
+    "orderPosId"
+   ],
+   "query": {}
+  },
+  "PUT /OrderPos/{orderPosId}": {
+   "operationId": "updateOrderPosition",
+   "summary": "Update an existing order position",
+   "pathParams": [
+    "orderPosId"
+   ],
+   "query": {}
+  },
+  "DELETE /OrderPos/{orderPosId}": {
+   "operationId": "deleteOrderPos",
+   "summary": "Deletes an order Position",
+   "pathParams": [
+    "orderPosId"
+   ],
+   "query": {}
+  },
+  "POST /Voucher/Factory/saveVoucher": {
+   "operationId": "voucherFactorySaveVoucher",
+   "summary": "Create a new voucher",
+   "pathParams": [],
+   "query": {}
+  },
+  "POST /Voucher/Factory/uploadTempFile": {
+   "operationId": "voucherUploadFile",
+   "summary": "Upload voucher file",
+   "pathParams": [],
+   "query": {}
+  },
+  "GET /Voucher": {
+   "operationId": "getVouchers",
+   "summary": "Retrieve vouchers",
+   "pathParams": [],
+   "query": {
+    "status": {
+     "type": "number",
+     "enum": [
+      50,
+      100,
+      1000
+     ]
+    },
+    "creditDebit": {
+     "type": "string",
+     "enum": [
+      "C",
+      "D"
+     ]
+    },
+    "descriptionLike": {
+     "type": "string"
+    },
+    "startDate": {
+     "type": "integer"
+    },
+    "endDate": {
+     "type": "integer"
+    },
+    "contact[id]": {
+     "type": "integer"
+    },
+    "contact[objectName]": {
+     "type": "string"
+    }
+   }
+  },
+  "GET /Voucher/{voucherId}": {
+   "operationId": "getVoucherById",
+   "summary": "Find voucher by ID",
+   "pathParams": [
+    "voucherId"
+   ],
+   "query": {}
+  },
+  "PUT /Voucher/{voucherId}": {
+   "operationId": "updateVoucher",
+   "summary": "Update an existing voucher",
+   "pathParams": [
+    "voucherId"
+   ],
+   "query": {}
+  },
+  "PUT /Voucher/{voucherId}/enshrine": {
+   "operationId": "voucherEnshrine",
+   "summary": "Enshrine",
+   "pathParams": [
+    "voucherId"
+   ],
+   "query": {}
+  },
+  "PUT /Voucher/{voucherId}/bookAmount": {
+   "operationId": "bookVoucher",
+   "summary": "Book a voucher",
+   "pathParams": [
+    "voucherId"
+   ],
+   "query": {}
+  },
+  "PUT /Voucher/{voucherId}/resetToOpen": {
+   "operationId": "voucherResetToOpen",
+   "summary": "Reset status to open",
+   "pathParams": [
+    "voucherId"
+   ],
+   "query": {}
+  },
+  "PUT /Voucher/{voucherId}/resetToDraft": {
+   "operationId": "voucherResetToDraft",
+   "summary": "Reset status to draft",
+   "pathParams": [
+    "voucherId"
+   ],
+   "query": {}
+  },
+  "GET /VoucherPos": {
+   "operationId": "getVoucherPositions",
+   "summary": "Retrieve voucher positions",
+   "pathParams": [],
+   "query": {
+    "voucher[id]": {
+     "type": "integer"
+    },
+    "voucher[objectName]": {
+     "type": "string"
+    }
+   }
+  },
+  "GET /ReceiptGuidance/forAllAccounts": {
+   "operationId": "forAllAccounts",
+   "summary": "Get all account guides",
+   "pathParams": [],
+   "query": {}
+  },
+  "GET /ReceiptGuidance/forAccountNumber": {
+   "operationId": "forAccountNumber",
+   "summary": "Get guidance by account number",
+   "pathParams": [],
+   "query": {
+    "accountNumber": {
+     "type": "integer",
+     "required": true
+    }
+   }
+  },
+  "GET /ReceiptGuidance/forTaxRule": {
+   "operationId": "forTaxRule",
+   "summary": "Get guidance by Tax Rule",
+   "pathParams": [],
+   "query": {
+    "taxRule": {
+     "type": "string",
+     "required": true
+    }
+   }
+  },
+  "GET /ReceiptGuidance/forRevenue": {
+   "operationId": "forRevenue",
+   "summary": "Get guidance for revenue accounts",
+   "pathParams": [],
+   "query": {}
+  },
+  "GET /ReceiptGuidance/forExpense": {
+   "operationId": "forExpense",
+   "summary": "Get guidance for expense accounts",
+   "pathParams": [],
+   "query": {}
+  },
+  "GET /Report/invoicelist": {
+   "operationId": "reportInvoice",
+   "summary": "Export invoice list",
+   "pathParams": [],
+   "query": {
+    "download": {
+     "type": "boolean"
+    },
+    "view": {
+     "type": "string",
+     "required": true
+    },
+    "sevQuery": {
+     "type": "object",
+     "required": true
+    }
+   }
+  },
+  "GET /Report/orderlist": {
+   "operationId": "reportOrder",
+   "summary": "Export order list",
+   "pathParams": [],
+   "query": {
+    "download": {
+     "type": "boolean"
+    },
+    "view": {
+     "type": "string",
+     "required": true
+    },
+    "sevQuery": {
+     "type": "object",
+     "required": true
+    }
+   }
+  },
+  "GET /Report/contactlist": {
+   "operationId": "reportContact",
+   "summary": "Export contact list",
+   "pathParams": [],
+   "query": {
+    "download": {
+     "type": "boolean"
+    },
+    "sevQuery": {
+     "type": "object",
+     "required": true
+    }
+   }
+  },
+  "GET /Report/voucherlist": {
+   "operationId": "reportVoucher",
+   "summary": "Export voucher list",
+   "pathParams": [],
+   "query": {
+    "download": {
+     "type": "boolean"
+    },
+    "sevQuery": {
+     "type": "object",
+     "required": true
+    }
+   }
+  },
+  "GET /Tag": {
+   "operationId": "getTags",
+   "summary": "Retrieve tags",
+   "pathParams": [],
+   "query": {
+    "id": {
+     "type": "number"
+    },
+    "name": {
+     "type": "string"
+    }
+   }
+  },
+  "GET /Tag/{tagId}": {
+   "operationId": "getTagById",
+   "summary": "Find tag by ID",
+   "pathParams": [
+    "tagId"
+   ],
+   "query": {}
+  },
+  "PUT /Tag/{tagId}": {
+   "operationId": "updateTag",
+   "summary": "Update tag",
+   "pathParams": [
+    "tagId"
+   ],
+   "query": {}
+  },
+  "DELETE /Tag/{tagId}": {
+   "operationId": "deleteTag",
+   "summary": "Deletes a tag",
+   "pathParams": [
+    "tagId"
+   ],
+   "query": {}
+  },
+  "POST /Tag/Factory/create": {
+   "operationId": "createTag",
+   "summary": "Create a new tag",
+   "pathParams": [],
+   "query": {}
+  },
+  "GET /TagRelation": {
+   "operationId": "getTagRelations",
+   "summary": "Retrieve tag relations",
+   "pathParams": [],
+   "query": {}
+  }
+ }
+}
