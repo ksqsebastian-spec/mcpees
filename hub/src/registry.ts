@@ -59,6 +59,21 @@ const TARIF_MARK: Mark = {
   fill: 0.62,
 };
 
+/**
+ * FLOWWER ist eine fremde Marke, für die kein frei verwendbares Zeichen vorliegt.
+ * Statt eines Nachbaus steht hier ein neutrales: ein Blatt mit Haken — freigegebener Beleg.
+ */
+const FLOWWER_MARK: Mark = {
+  inner:
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">' +
+    '<path fill="#ffffff" d="M16 6h20l12 12v40a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4V10a4 4 0 0 1 4-4Z" opacity=".28"/>' +
+    '<path fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" ' +
+    'd="M21 34.5 29 42.5 44 24"/></svg>',
+  bg: "#0E5FD8",
+  accent: "#0E5FD8",
+  fill: 0.6,
+};
+
 export const REGISTRY: ServerEntry[] = [
   {
     id: "hero",
@@ -137,6 +152,35 @@ export const REGISTRY: ServerEntry[] = [
       "Für das Tischlerhandwerk gibt es keine Allgemeinverbindlicherklärung und damit " +
         "keine öffentliche Volltextquelle. Überwacht wird dort nur die Downloadseite; " +
         "der Vertragstext wird von Hand hochgeladen.",
+    ],
+  },
+  {
+    id: "flowwer",
+    name: "FLOWWER",
+    tagline: "Rechnungsfreigabe",
+    description:
+      "Rechnungen und Belege aus FLOWWER: suchen, Kontierung lesen, nach Lieferant oder " +
+      "Freigabestufe auswerten, neue Belege hochladen. Kein Ändern, kein Löschen.",
+    origin: "https://flowwer-mcp.ksqsebastian.workers.dev",
+    mcpUrl: "https://flowwer-mcp.ksqsebastian.workers.dev/mcp",
+    auth: "oauth",
+    status: "aktiv",
+    mark: FLOWWER_MARK,
+    accent: FLOWWER_MARK.accent,
+    icon: "F",
+    catalog: "tools.json",
+    binding: "FLOWWER",
+    notes: [
+      "Die Anmeldung fragt zwei Dinge ab: die Kontokennung (der Teil vor .flowwer.de) und " +
+        "den Schlüssel eines API-Benutzers. Gib dem API-Benutzer nur Leserechte, dann kann " +
+        "über diesen Server auch nichts anderes passieren.",
+      "Welche Felder es gibt, ist von Konto zu Konto verschieden. Der Server liest sie aus " +
+        "dem Reporting des Kontos und lehnt einen Filter auf ein unbekanntes Feld ab, " +
+        "statt einen unverständlichen 400er zu erzeugen.",
+      "FLOWWER dokumentiert öffentlich nur einen Teil seiner API. Was das eigene Konto " +
+        "sonst noch anbietet, zeigt das Tool 'api_erkunden' — geraten wird nichts.",
+      "Noch nicht gegen ein echtes FLOWWER-Konto erprobt; geprüft ist bislang nur gegen " +
+        "eine Attrappe.",
     ],
   },
 ];

@@ -32,6 +32,12 @@ var TARIF_MARK = {
   accent: "#1F7A5C",
   fill: 0.62
 };
+var FLOWWER_MARK = {
+  inner: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path fill="#ffffff" d="M16 6h20l12 12v40a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4V10a4 4 0 0 1 4-4Z" opacity=".28"/><path fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M21 34.5 29 42.5 44 24"/></svg>',
+  bg: "#0E5FD8",
+  accent: "#0E5FD8",
+  fill: 0.6
+};
 var REGISTRY = [
   {
     id: "hero",
@@ -96,6 +102,27 @@ var REGISTRY = [
       "Ausschlie\xDFlich lesend. Hochladen und Quellen \xE4ndern geht nur \xFCber die Seite selbst.",
       "Jede Antwort f\xFChrt mit, von wann die Fassung ist und ob sie allgemeinverbindlich ist. Beim Maler-Rahmentarifvertrag kursieren \xE4ltere Fassungen \u2014 ohne diesen Vorbehalt w\xE4re eine Zahl daraus wertlos.",
       "F\xFCr das Tischlerhandwerk gibt es keine Allgemeinverbindlicherkl\xE4rung und damit keine \xF6ffentliche Volltextquelle. \xDCberwacht wird dort nur die Downloadseite; der Vertragstext wird von Hand hochgeladen."
+    ]
+  },
+  {
+    id: "flowwer",
+    name: "FLOWWER",
+    tagline: "Rechnungsfreigabe",
+    description: "Rechnungen und Belege aus FLOWWER: suchen, Kontierung lesen, nach Lieferant oder Freigabestufe auswerten, neue Belege hochladen. Kein \xC4ndern, kein L\xF6schen.",
+    origin: "https://flowwer-mcp.ksqsebastian.workers.dev",
+    mcpUrl: "https://flowwer-mcp.ksqsebastian.workers.dev/mcp",
+    auth: "oauth",
+    status: "aktiv",
+    mark: FLOWWER_MARK,
+    accent: FLOWWER_MARK.accent,
+    icon: "F",
+    catalog: "tools.json",
+    binding: "FLOWWER",
+    notes: [
+      "Die Anmeldung fragt zwei Dinge ab: die Kontokennung (der Teil vor .flowwer.de) und den Schl\xFCssel eines API-Benutzers. Gib dem API-Benutzer nur Leserechte, dann kann \xFCber diesen Server auch nichts anderes passieren.",
+      "Welche Felder es gibt, ist von Konto zu Konto verschieden. Der Server liest sie aus dem Reporting des Kontos und lehnt einen Filter auf ein unbekanntes Feld ab, statt einen unverst\xE4ndlichen 400er zu erzeugen.",
+      "FLOWWER dokumentiert \xF6ffentlich nur einen Teil seiner API. Was das eigene Konto sonst noch anbietet, zeigt das Tool 'api_erkunden' \u2014 geraten wird nichts.",
+      "Noch nicht gegen ein echtes FLOWWER-Konto erprobt; gepr\xFCft ist bislang nur gegen eine Attrappe."
     ]
   }
 ];

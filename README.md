@@ -8,7 +8,7 @@ OAuth-geschützte MCP-Server auf Cloudflare Workers — plus die Übersichtsseit
 | HERO MCP (Endpoint für Claude) | https://hero-mcp.ksqsebastian.workers.dev/mcp |
 | Lexware Office MCP | https://lexware-mcp.ksqsebastian.workers.dev/mcp |
 | Tarifcheck MCP | https://tarifcheck.ksqsebastian.workers.dev/mcp |
-| FLOWWER MCP | gebaut und getestet, **noch nicht deployt** (siehe unten) |
+| FLOWWER MCP | https://flowwer-mcp.ksqsebastian.workers.dev/mcp |
 
 Der Vorgänger auf Vercel (`hero-mcp.vercel.app`) ist am 06.08.2026 abgeschaltet worden und
 antwortet auf jeden Aufruf mit HTTP 410 samt Verweis auf den neuen Endpoint. Aus der Übersicht
@@ -105,19 +105,19 @@ OData-Reporting. Find-API und Archiv-Import stehen nur im Swagger des jeweiligen
 Dieser Server rät deren Pfade nicht, sondern liest die OpenAPI-Beschreibung des Mandanten
 (`api_erkunden`) — ein geratener Pfad, der still 404t, wäre schlimmer als kein Tool.
 
-**Noch nicht deployt.** Der Cloudflare-Deploy-Token ist am 08.08.2026 abgelaufen. Der
-KV-Namespace liegt bereits an (`89d122cbf13c4b919b4e4830d81fad4d`, in der wrangler.jsonc
-eingetragen), es fehlt nur:
+Beim ersten Deployment fiel ein Fehler auf, den die Attrappe nicht hergab: FLOWWER
+beantwortet ein **unbekanntes Konto** nicht mit 404, sondern mit einer 302-Weiterleitung
+auf `www.flowwer.de/unbekanntes-flowwer-konto/`. Weil `fetch` Weiterleitungen von sich aus
+folgt, landete die Prüfung auf einer Marketingseite mit HTTP 200 und hielt das für Erfolg —
+eine erfundene Kontokennung mit falschem Schlüssel bekam ein Token. Der Client folgt
+Weiterleitungen jetzt nicht mehr (`redirect: "manual"`) und verlangt als Nachweis ein
+echtes OData-Servicedokument; ein 200 allein genügt nicht. Beides ist als Regressionstest
+festgehalten, die Attrappe bildet die Weiterleitung nun nach.
 
-```bash
-export CLOUDFLARE_API_TOKEN=… CLOUDFLARE_ACCOUNT_ID=…
-node scripts/deploy.mjs servers/flowwer/wrangler.jsonc servers/flowwer/dist/worker.js
-```
-
-Danach in den Hub aufnehmen: Eintrag in `hub/src/registry.ts` und
-`{ "binding": "FLOWWER", "service": "flowwer-mcp" }` in `hub/wrangler.jsonc`. Beides
-bewusst noch nicht eingetragen — ein Service-Binding auf einen Worker, den es nicht gibt,
-lässt das Deployment des Hubs scheitern.
+**Noch offen:** gegen ein echtes FLOWWER-Konto ist nichts erprobt. Am ehesten
+korrekturbedürftig sind die Antwortform von `POST /api/v1/upload` und der Pfad der
+OpenAPI-Beschreibung — `api_erkunden` probiert fünf übliche Orte und meldet ehrlich,
+wenn keiner passt.
 
 ## Korrektheit ohne Live-Zugang
 

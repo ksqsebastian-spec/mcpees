@@ -81,7 +81,15 @@ export class Flowwer {
     }
     this.calls++;
     try {
-      return await fetch(url.toString(), { method: opts.method ?? "GET", headers, body });
+      // Weiterleitungen NICHT folgen. Ein unbekanntes Konto antwortet mit 302 auf
+      // www.flowwer.de/unbekanntes-flowwer-konto/ — wer dem folgt, bekommt eine
+      // Marketingseite mit HTTP 200 und hält sie für eine gültige Antwort.
+      return await fetch(url.toString(), {
+        method: opts.method ?? "GET",
+        headers,
+        body,
+        redirect: "manual",
+      });
     } catch (e) {
       throw new FlowwerError(
         `${this.base} nicht erreichbar: ${(e as Error).message}. Stimmt die Kontokennung?`,
@@ -91,6 +99,9 @@ export class Flowwer {
 
   async json<T = any>(path: string, opts: RequestOptions = {}): Promise<T> {
     const res = await this.request(path, opts);
+    if (res.status >= 300 && res.status < 400) {
+      throw new FlowwerError(redirectMeaning(res, this.account, path));
+    }
     const text = await res.text();
     if (!res.ok) {
       let detail: unknown = text.slice(0, 800);
@@ -109,9 +120,18 @@ export class Flowwer {
     }
   }
 
-  /** Prüft Kennung und Schlüssel, indem der OData-Dienst gelesen wird. */
+  /**
+   * Prüft Kennung und Schlüssel, indem der OData-Dienst gelesen wird.
+   *
+   * Verlangt einen positiven Nachweis: die Antwort muss ein OData-Servicedokument sein.
+   * Ein 200 allein genügt nicht — FLOWWER leitet unbekannte Konten auf eine Marketingseite
+   * um, und die antwortet ebenfalls mit 200.
+   */
   async whoami(): Promise<{ account: string; entitySets: string[] }> {
     const res = await this.request("/odata/reporting/");
+    if (res.status >= 300 && res.status < 400) {
+      throw new FlowwerError(redirectMeaning(res, this.account, "/odata/reporting/"));
+    }
     if (res.status === 401 || res.status === 403) {
       throw new FlowwerError(
         `FLOWWER lehnt den API-Key für '${this.account}' ab (HTTP ${res.status}). ` +
@@ -127,15 +147,44 @@ export class Flowwer {
     if (!res.ok) throw new FlowwerError(explain(res.status, "/odata/reporting/"));
 
     const text = await res.text();
-    let sets: string[] = [];
+    let doc: any;
     try {
-      const doc = JSON.parse(text);
-      sets = (doc.value ?? []).map((v: any) => v.name ?? v.url).filter(Boolean);
+      doc = JSON.parse(text);
     } catch {
-      /* Der Servicekatalog ist nicht überall JSON — das ist kein Fehlgrund. */
+      throw new FlowwerError(
+        `https://${this.account}.flowwer.de/odata/reporting/ antwortet nicht mit JSON, sondern ` +
+          `mit ${(res.headers.get("content-type") ?? "unbekanntem Inhalt").split(";")[0]}. ` +
+          `Das ist kein FLOWWER-Reporting — stimmt die Kontokennung?`,
+        text.slice(0, 200),
+      );
     }
+    // Ein OData-Servicedokument hat @odata.context und/oder eine value-Liste.
+    const istOData = Array.isArray(doc?.value) || typeof doc?.["@odata.context"] === "string";
+    if (!istOData) {
+      throw new FlowwerError(
+        `Die Antwort von /odata/reporting/ sieht nicht wie ein OData-Dienst aus. ` +
+          `Stimmen Kontokennung und Schlüssel?`,
+        JSON.stringify(doc).slice(0, 200),
+      );
+    }
+    const sets = (doc.value ?? []).map((v: any) => v.name ?? v.url).filter(Boolean);
     return { account: this.account, entitySets: sets };
   }
+}
+
+/** Was eine Weiterleitung bedeutet — bei FLOWWER fast immer: das Konto gibt es nicht. */
+function redirectMeaning(res: Response, account: string, path: string): string {
+  const ziel = res.headers.get("location") ?? "";
+  if (/unbekanntes-flowwer-konto/i.test(ziel) || /\/\/www\.flowwer\.de/i.test(ziel)) {
+    return (
+      `Ein FLOWWER-Konto '${account}' gibt es nicht — FLOWWER leitet auf die Seite ` +
+      `„unbekanntes Konto\" um. Erwartet wird der Teil vor .flowwer.de.`
+    );
+  }
+  return (
+    `${path} leitet weiter auf ${ziel || "(ohne Ziel)"} statt zu antworten. Weiterleitungen ` +
+    `werden bewusst nicht verfolgt, weil sie hier auf Seiten außerhalb der API führen.`
+  );
 }
 
 function explain(status: number, path: string): string {

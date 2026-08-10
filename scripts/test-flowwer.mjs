@@ -76,14 +76,31 @@ globalThis.fetch = async (input, init = {}) => {
   const key = init.headers?.["X-FLOWWER-ApiKey"];
   calls.push({ host: url.host, path: url.pathname, query: Object.fromEntries(url.searchParams) });
 
-  if (url.host !== `${ACCOUNT}.flowwer.de`) return new Response("no such tenant", { status: 404 });
+  // So verhält sich FLOWWER wirklich: unbekannte Konten werden auf die Marketingseite
+  // umgeleitet. Wer der Weiterleitung folgt, bekommt HTTP 200 und hält es für Erfolg.
+  if (url.host !== `${ACCOUNT}.flowwer.de`) {
+    if (init.redirect !== "manual") {
+      return new Response("<html>FLOWWER — unbekanntes Konto</html>", {
+        status: 200, headers: { "content-type": "text/html" },
+      });
+    }
+    return new Response("", {
+      status: 302,
+      headers: { location: `https://www.flowwer.de/unbekanntes-flowwer-konto/?url=${url.host}` },
+    });
+  }
+  // Sonderfall vor der Schlüsselprüfung: ein Konto, das mit 200 und HTML antwortet
+  // statt mit OData — etwa weil dort eine Anmeldeseite steht.
+  if (key === "html-statt-odata" && url.pathname === "/odata/reporting/") {
+    return new Response("<html>Anmeldung</html>", { status: 200, headers: { "content-type": "text/html" } });
+  }
   if (key !== KEY) return new Response(JSON.stringify({ error: "nope" }), { status: 401 });
 
   const json = (d, s = 200) =>
     new Response(JSON.stringify(d), { status: s, headers: { "content-type": "application/json" } });
 
   if (url.pathname === "/odata/reporting/") {
-    return json({ value: [{ name: "Documents" }, { name: "DocumentsWithReceiptSplits" }] });
+    return json({ "@odata.context": "https://x/$metadata", value: [{ name: "Documents" }, { name: "DocumentsWithReceiptSplits" }] });
   }
   if (url.pathname === "/odata/reporting/$metadata") {
     return new Response(EDMX, { headers: { "content-type": "application/xml" } });
@@ -156,7 +173,21 @@ check("Die Kontokennung ist kein Passwortfeld", /name="account"[^>]*type="text"/
 
 check("Fehlendes Feld wird benannt", (await (await post({ ...base, account: ACCOUNT, apiKey: "" })).text()).includes("API-Key"));
 check("Falscher Schlüssel wird abgewiesen", (await (await post({ ...base, account: ACCOUNT, apiKey: "falsch" })).text()).includes("abgelehnt"));
-check("Falsche Kontokennung wird abgewiesen", (await (await post({ ...base, account: "gibtsnicht", apiKey: KEY })).text()).includes("abgelehnt"));
+const unbekannt = await post({ ...base, account: "gibtsnicht", apiKey: KEY });
+check(
+  "Unbekanntes Konto stellt KEINEN Code aus",
+  !unbekannt.headers.get("location"),
+  `Weiterleitung: ${unbekannt.headers.get("location")}`,
+);
+check(
+  "…und die Meldung nennt den Grund",
+  (await unbekannt.clone().text()).includes("gibt es nicht"),
+);
+const htmlKonto = await post({ ...base, account: ACCOUNT, apiKey: "html-statt-odata" });
+check(
+  "Ein Konto, das HTML statt OData liefert, wird abgewiesen",
+  !htmlKonto.headers.get("location") && (await htmlKonto.text()).includes("nicht mit JSON"),
+);
 check(
   "Eine ganze URL als Kontokennung wird akzeptiert und gekürzt",
   Boolean((await post({ ...base, account: "https://musterbau.flowwer.de/", apiKey: KEY })).headers.get("location")),

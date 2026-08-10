@@ -936,7 +936,12 @@ var Flowwer = class {
     }
     this.calls++;
     try {
-      return await fetch(url.toString(), { method: opts.method ?? "GET", headers, body });
+      return await fetch(url.toString(), {
+        method: opts.method ?? "GET",
+        headers,
+        body,
+        redirect: "manual"
+      });
     } catch (e) {
       throw new FlowwerError(
         `${this.base} nicht erreichbar: ${e.message}. Stimmt die Kontokennung?`
@@ -945,6 +950,9 @@ var Flowwer = class {
   }
   async json(path, opts = {}) {
     const res = await this.request(path, opts);
+    if (res.status >= 300 && res.status < 400) {
+      throw new FlowwerError(redirectMeaning(res, this.account, path));
+    }
     const text = await res.text();
     if (!res.ok) {
       let detail = text.slice(0, 800);
@@ -961,9 +969,18 @@ var Flowwer = class {
       throw new FlowwerError(`FLOWWER lieferte kein JSON f\xFCr ${path}`, text.slice(0, 300));
     }
   }
-  /** Prüft Kennung und Schlüssel, indem der OData-Dienst gelesen wird. */
+  /**
+   * Prüft Kennung und Schlüssel, indem der OData-Dienst gelesen wird.
+   *
+   * Verlangt einen positiven Nachweis: die Antwort muss ein OData-Servicedokument sein.
+   * Ein 200 allein genügt nicht — FLOWWER leitet unbekannte Konten auf eine Marketingseite
+   * um, und die antwortet ebenfalls mit 200.
+   */
   async whoami() {
     const res = await this.request("/odata/reporting/");
+    if (res.status >= 300 && res.status < 400) {
+      throw new FlowwerError(redirectMeaning(res, this.account, "/odata/reporting/"));
+    }
     if (res.status === 401 || res.status === 403) {
       throw new FlowwerError(
         `FLOWWER lehnt den API-Key f\xFCr '${this.account}' ab (HTTP ${res.status}). Stimmen Kontokennung und Schl\xFCssel zusammen, und darf der API-Benutzer lesen?`
@@ -976,15 +993,33 @@ var Flowwer = class {
     }
     if (!res.ok) throw new FlowwerError(explain(res.status, "/odata/reporting/"));
     const text = await res.text();
-    let sets = [];
+    let doc;
     try {
-      const doc = JSON.parse(text);
-      sets = (doc.value ?? []).map((v) => v.name ?? v.url).filter(Boolean);
+      doc = JSON.parse(text);
     } catch {
+      throw new FlowwerError(
+        `https://${this.account}.flowwer.de/odata/reporting/ antwortet nicht mit JSON, sondern mit ${(res.headers.get("content-type") ?? "unbekanntem Inhalt").split(";")[0]}. Das ist kein FLOWWER-Reporting \u2014 stimmt die Kontokennung?`,
+        text.slice(0, 200)
+      );
     }
+    const istOData = Array.isArray(doc?.value) || typeof doc?.["@odata.context"] === "string";
+    if (!istOData) {
+      throw new FlowwerError(
+        `Die Antwort von /odata/reporting/ sieht nicht wie ein OData-Dienst aus. Stimmen Kontokennung und Schl\xFCssel?`,
+        JSON.stringify(doc).slice(0, 200)
+      );
+    }
+    const sets = (doc.value ?? []).map((v) => v.name ?? v.url).filter(Boolean);
     return { account: this.account, entitySets: sets };
   }
 };
+function redirectMeaning(res, account, path) {
+  const ziel = res.headers.get("location") ?? "";
+  if (/unbekanntes-flowwer-konto/i.test(ziel) || /\/\/www\.flowwer\.de/i.test(ziel)) {
+    return `Ein FLOWWER-Konto '${account}' gibt es nicht \u2014 FLOWWER leitet auf die Seite \u201Eunbekanntes Konto" um. Erwartet wird der Teil vor .flowwer.de.`;
+  }
+  return `${path} leitet weiter auf ${ziel || "(ohne Ziel)"} statt zu antworten. Weiterleitungen werden bewusst nicht verfolgt, weil sie hier auf Seiten au\xDFerhalb der API f\xFChren.`;
+}
 function explain(status, path) {
   switch (status) {
     case 401:
