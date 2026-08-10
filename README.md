@@ -181,6 +181,13 @@ Originalfarben, direkt von den Anbietern:
 Vorher standen dort Nachbauten. Das ist die schlechteste Variante: es sieht aus wie die
 Marke, ist aber keine. Entweder das echte Zeichen oder ein neutrales.
 
+Neben dem SVG liegt jede Marke gerastert als PNG und ICO in `shared/src/icons.generated.ts`
+und wird unter `/favicon.ico`, `/icon.png` und `/apple-touch-icon.png` ausgeliefert. Das SVG
+allein reicht nicht: Connector-Listen, Lesezeichen und Startbildschirme holen sich eine
+dieser Dateien und zeigen sonst gar nichts. Erzeugt mit `npm run gen:icons` — das braucht
+einmalig Playwright, weil die Herstellerzeichen echte Pfade sind und kein Pixelraster. Das
+Ergebnis ist eingecheckt, der normale Build kommt ohne aus.
+
 `composeLogo()` setzt ein Zeichen mittig auf eine abgerundete Fläche — dasselbe Bild dient
 als Favicon und als Kachel. HERO steht auf seinem Gelb, sevdesk weiß auf seinem Rot
 (#FB523B) — so, wie die Anbieter es selbst zeigen. Bei sevdesk sind Ausschnitt und Größe

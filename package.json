@@ -6,6 +6,7 @@
   "description": "OAuth-gesch\u00fctzte MCP-Server auf Cloudflare Workers plus die \u00dcbersichtsseite dazu.",
   "scripts": {
     "gen": "node scripts/gen-input-fields.mjs && node scripts/gen-sevdesk-api.mjs",
+    "gen:icons": "node --experimental-strip-types scripts/gen-icons.mjs",
     "validate": "node scripts/validate-queries.mjs",
     "test": "node scripts/test-oauth-flow.mjs && node scripts/test-sevdesk.mjs",
     "typecheck": "tsc --noEmit -p servers/hero/tsconfig.json && tsc --noEmit -p servers/sevdesk/tsconfig.json && tsc --noEmit -p hub/tsconfig.json",

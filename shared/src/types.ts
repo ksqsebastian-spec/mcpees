@@ -49,6 +49,17 @@ export interface CredentialField {
   secret?: boolean;
 }
 
+/**
+ * Die Marke gerastert. logoSvg allein reicht nicht: Connector-Listen, Lesezeichen und
+ * Startbildschirme holen sich favicon.ico oder ein PNG und zeigen sonst gar nichts.
+ * Erzeugt von scripts/gen-icons.mjs, base64.
+ */
+export interface RasterIcon {
+  png512: string;
+  png180: string;
+  ico: string;
+}
+
 /** Aussehen und Wortlaut der Anmeldeseite. */
 export interface Brand {
   name: string;
@@ -58,6 +69,8 @@ export interface Brand {
   accent: string;
   /** Inline-SVG, quadratisch. Wird als Favicon und Logo benutzt. */
   logoSvg: string;
+  /** Dieselbe Marke als PNG und ICO. Fehlt sie, gibt es nur das SVG. */
+  icon?: RasterIcon;
   /** Was beim Verbinden abgefragt wird. Meist ein Feld, manchmal mehrere. */
   fields: CredentialField[];
   /** Erklärtext unter dem Formular — wo man den Schlüssel herbekommt. */

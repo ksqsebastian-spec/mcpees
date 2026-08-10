@@ -11,6 +11,7 @@
  *   POST /revoke                                     RFC 7009
  *   POST /mcp                                        MCP, Bearer-Token erforderlich
  *   GET  /tools.json                                 Tool-Katalog, öffentlich
+ *   GET  /favicon.ico | /icon.png | /favicon.svg     Bildmarke, ohne Anmeldung
  */
 import {
   handleRegister,
@@ -42,6 +43,22 @@ const json = (data: unknown, status = 200) =>
     headers: { "content-type": "application/json", "cache-control": "no-store", ...CORS },
   });
 
+/* Base64 einmal beim Kaltstart auspacken, danach aus dem Speicher ausliefern. */
+const ICON_CACHE = new Map<string, Uint8Array>();
+
+function iconResponse(b64: string, type: string): Response {
+  let bytes = ICON_CACHE.get(b64);
+  if (!bytes) {
+    const bin = atob(b64);
+    bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    ICON_CACHE.set(b64, bytes);
+  }
+  return new Response(bytes, {
+    headers: { "content-type": type, "cache-control": "public, max-age=86400", ...CORS },
+  });
+}
+
 export function createWorker<C>(config: ServerConfig<C>): ExportedHandler<Env> {
   return {
     async fetch(request: Request, env: Env): Promise<Response> {
@@ -59,9 +76,28 @@ export function createWorker<C>(config: ServerConfig<C>): ExportedHandler<Env> {
           return landingPage(config.brand, origin, config.tools.length, hub);
 
         case "GET /favicon.svg":
+        case "GET /icon.svg":
           return new Response(config.brand.logoSvg, {
-            headers: { "content-type": "image/svg+xml", "cache-control": "public, max-age=86400" },
+            headers: {
+              "content-type": "image/svg+xml",
+              "cache-control": "public, max-age=86400",
+              ...CORS,
+            },
           });
+
+        /* Rasterfassungen. Ohne sie bleibt jede Stelle leer, die kein SVG liest. */
+        case "GET /favicon.ico":
+          if (!config.brand.icon) break;
+          return iconResponse(config.brand.icon.ico, "image/x-icon");
+
+        case "GET /icon.png":
+          if (!config.brand.icon) break;
+          return iconResponse(config.brand.icon.png512, "image/png");
+
+        case "GET /apple-touch-icon.png":
+        case "GET /apple-touch-icon-precomposed.png":
+          if (!config.brand.icon) break;
+          return iconResponse(config.brand.icon.png180, "image/png");
 
         case "GET /.well-known/oauth-authorization-server":
         case "GET /.well-known/oauth-authorization-server/mcp":

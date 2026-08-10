@@ -63,13 +63,23 @@ export async function handleRpc<C>(
         },
         serverInfo: {
           ...config.serverInfo,
-          icons: [
-            {
-              src: `data:image/svg+xml;base64,${btoa(config.brand.logoSvg)}`,
-              mimeType: "image/svg+xml",
-              sizes: ["any"],
-            },
-          ],
+          /*
+           * PNG zuerst: eine data:-URI mit SVG lässt sich zwar überall einbetten, wird aber
+           * von etlichen Clients nicht als Bild angenommen. Nur wenn keine Rasterfassung
+           * vorliegt, bleibt das SVG die einzige Angabe.
+           */
+          icons: config.brand.icon
+            ? [
+                { src: `${origin}/icon.png`, mimeType: "image/png", sizes: ["512x512"] },
+                { src: `${origin}/icon.svg`, mimeType: "image/svg+xml", sizes: ["any"] },
+              ]
+            : [
+                {
+                  src: `data:image/svg+xml;base64,${btoa(config.brand.logoSvg)}`,
+                  mimeType: "image/svg+xml",
+                  sizes: ["any"],
+                },
+              ],
         },
         instructions: config.instructions,
       });

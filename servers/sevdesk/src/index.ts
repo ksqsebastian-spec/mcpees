@@ -15,6 +15,7 @@
 import { createWorker } from "../../../shared/src/worker";
 import type { ServerConfig } from "../../../shared/src/types";
 import { composeLogo, SEVDESK_MARK } from "../../../shared/src/marks";
+import { SEVDESK_ICON } from "../../../shared/src/icons.generated";
 import { Sevdesk } from "./client";
 import { serveFile } from "./files";
 import { readTools } from "./tools/read";
@@ -30,6 +31,7 @@ const config: ServerConfig<ToolContext> = {
     tagline: "Buchhaltung für Claude",
     accent: SEVDESK_MARK.accent,
     logoSvg: composeLogo(SEVDESK_MARK),
+    icon: SEVDESK_ICON,
     fields: [
       {
         name: "apiToken",

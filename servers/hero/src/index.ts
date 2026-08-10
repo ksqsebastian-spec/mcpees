@@ -5,6 +5,7 @@
 import { createWorker } from "../../../shared/src/worker";
 import type { ServerConfig } from "../../../shared/src/types";
 import { composeLogo, HERO_MARK } from "../../../shared/src/marks";
+import { HERO_ICON } from "../../../shared/src/icons.generated";
 import { Hero } from "./hero";
 import { getConfig } from "./tenant";
 import { tools } from "./tools";
@@ -19,6 +20,7 @@ const config: ServerConfig<ToolContext> = {
     tagline: "Handwerkersoftware für Claude",
     accent: HERO_MARK.accent,
     logoSvg: LOGO,
+    icon: HERO_ICON,
     fields: [
       {
         name: "apiKey",
