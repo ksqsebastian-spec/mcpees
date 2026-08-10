@@ -26,10 +26,10 @@ function composeLogo(mark, size = 512) {
 
 // hub/src/registry.ts
 var TARIF_MARK = {
-  inner: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><g fill="#ffffff"><rect x="10" y="16" width="44" height="7" rx="3.5"/><rect x="10" y="29" width="44" height="7" rx="3.5"/><rect x="10" y="42" width="26" height="7" rx="3.5"/></g></svg>',
-  bg: "#1F7A5C",
-  accent: "#1F7A5C",
-  fill: 0.62
+  inner: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="9 9 42 46"><rect x="9" y="9" width="32" height="40" rx="5" fill="#fff" opacity=".62"/><rect x="19" y="15" width="32" height="40" rx="5" fill="#fff"/><path fill="none" stroke="#0E7A55" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round" d="M26 35.5l6 6 12-12.5"/></svg>',
+  bg: "#0E7A55",
+  accent: "#0E7A55",
+  fill: 0.446
 };
 var MIKDATEN_MARK = {
   inner: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 10" shape-rendering="crispEdges"><g fill="#ffffff"><rect x="2" y="0" width="2" height="1"/><rect x="8" y="0" width="2" height="1"/><rect x="1" y="1" width="4" height="1"/><rect x="7" y="1" width="4" height="1"/><rect x="0" y="2" width="12" height="1"/><rect x="0" y="3" width="12" height="1"/><rect x="2" y="5" width="2" height="1"/><rect x="8" y="5" width="2" height="1"/><rect x="2" y="6" width="2" height="1"/><rect x="8" y="6" width="2" height="1"/><rect x="5" y="8" width="2" height="1"/><rect x="5" y="9" width="2" height="1"/></g><g fill="#FF4A1C"><rect x="0" y="4" width="12" height="1"/><rect x="0" y="5" width="2" height="1"/><rect x="4" y="5" width="4" height="1"/><rect x="10" y="5" width="2" height="1"/><rect x="0" y="6" width="2" height="1"/><rect x="4" y="6" width="4" height="1"/><rect x="10" y="6" width="2" height="1"/><rect x="0" y="7" width="12" height="1"/><rect x="0" y="8" width="5" height="1"/><rect x="7" y="8" width="5" height="1"/><rect x="0" y="9" width="5" height="1"/><rect x="7" y="9" width="5" height="1"/></g></svg>',

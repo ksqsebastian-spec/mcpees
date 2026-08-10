@@ -45,18 +45,26 @@ export interface ServerEntry {
 }
 
 /**
- * Tarifcheck ist ein eigener Dienst, keine fremde Marke — das Zeichen ist deshalb frei
- * gewählt: drei Balken, der letzte kürzer, wie Absätze in einem Vertragstext.
+ * Tarifcheck ist ein eigener Dienst, keine fremde Marke. Das Zeichen ist trotzdem nicht
+ * frei gewählt, sondern das, was die Anwendung selbst führt: zwei versetzte Blätter mit
+ * Häkchen — ein geprüfter Vertrag. Hier stand vorher ein anderes (drei Balken auf
+ * #1F7A5C); zwei Zeichen für einen Dienst sind eines zu viel.
+ *
+ * Übernommen sind nur die drei Formen, ohne die Fläche darunter — die baut composeLogo.
+ * viewBox und fill sind aus dem Original abgemessen (Elemente von 9/9 bis 51/55, im
+ * Original mit scale .62 auf 64), damit die Kachel dieselben Proportionen hat wie das
+ * Zeichen im Browser-Tab und nicht nur so ähnlich aussieht.
  */
 const TARIF_MARK: Mark = {
   inner:
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><g fill="#ffffff">' +
-    '<rect x="10" y="16" width="44" height="7" rx="3.5"/>' +
-    '<rect x="10" y="29" width="44" height="7" rx="3.5"/>' +
-    '<rect x="10" y="42" width="26" height="7" rx="3.5"/></g></svg>',
-  bg: "#1F7A5C",
-  accent: "#1F7A5C",
-  fill: 0.62,
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="9 9 42 46">' +
+    '<rect x="9" y="9" width="32" height="40" rx="5" fill="#fff" opacity=".62"/>' +
+    '<rect x="19" y="15" width="32" height="40" rx="5" fill="#fff"/>' +
+    '<path fill="none" stroke="#0E7A55" stroke-width="6.5" stroke-linecap="round" ' +
+    'stroke-linejoin="round" d="M26 35.5l6 6 12-12.5"/></svg>',
+  bg: "#0E7A55",
+  accent: "#0E7A55",
+  fill: 0.446,
 };
 
 /**
