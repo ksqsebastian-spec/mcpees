@@ -10,7 +10,6 @@
   "services": [
     { "binding": "HERO", "service": "hero-mcp" },
     { "binding": "LEXWARE", "service": "lexware-mcp" },
-    { "binding": "TARIFCHECK", "service": "tarifcheck" },
-    { "binding": "FLOWWER", "service": "flowwer-mcp" }
+    { "binding": "TARIFCHECK", "service": "tarifcheck" }
   ]
 }

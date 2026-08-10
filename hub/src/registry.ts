@@ -5,7 +5,7 @@
  * gepflegt, sondern zur Laufzeit vom Server selbst geholt (`catalog`), damit die Übersicht
  * nicht auseinanderläuft, sobald jemand ein Tool ändert.
  */
-import { HERO_MARK, LEXWARE_MARK, FLOWWER_MARK, type Mark } from "../../shared/src/marks";
+import { HERO_MARK, LEXWARE_MARK, type Mark } from "../../shared/src/marks";
 
 export interface ServerEntry {
   id: string;
@@ -137,36 +137,6 @@ export const REGISTRY: ServerEntry[] = [
       "Für das Tischlerhandwerk gibt es keine Allgemeinverbindlicherklärung und damit " +
         "keine öffentliche Volltextquelle. Überwacht wird dort nur die Downloadseite; " +
         "der Vertragstext wird von Hand hochgeladen.",
-    ],
-  },
-  {
-    id: "flowwer",
-    name: "FLOWWER",
-    tagline: "Rechnungsfreigabe",
-    description:
-      "Rechnungen und Belege aus FLOWWER: suchen, Kontierung lesen, nach Lieferant oder " +
-      "Freigabestufe auswerten, neue Belege hochladen. Kein Ändern, kein Löschen.",
-    origin: "https://flowwer-mcp.ksqsebastian.workers.dev",
-    mcpUrl: "https://flowwer-mcp.ksqsebastian.workers.dev/mcp",
-    auth: "oauth",
-    status: "aktiv",
-    mark: FLOWWER_MARK,
-    thirdPartyBrand: true,
-    accent: FLOWWER_MARK.accent,
-    icon: "F",
-    catalog: "tools.json",
-    binding: "FLOWWER",
-    notes: [
-      "Die Anmeldung fragt zwei Dinge ab: die Kontokennung (der Teil vor .flowwer.de) und " +
-        "den Schlüssel eines API-Benutzers. Gib dem API-Benutzer nur Leserechte, dann kann " +
-        "über diesen Server auch nichts anderes passieren.",
-      "Welche Felder es gibt, ist von Konto zu Konto verschieden. Der Server liest sie aus " +
-        "dem Reporting des Kontos und lehnt einen Filter auf ein unbekanntes Feld ab, " +
-        "statt einen unverständlichen 400er zu erzeugen.",
-      "FLOWWER dokumentiert öffentlich nur einen Teil seiner API. Was das eigene Konto " +
-        "sonst noch anbietet, zeigt das Tool 'api_erkunden' — geraten wird nichts.",
-      "Noch nicht gegen ein echtes FLOWWER-Konto erprobt; geprüft ist bislang nur gegen " +
-        "eine Attrappe.",
     ],
   },
 ];

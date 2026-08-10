@@ -11,12 +11,6 @@ var LEXWARE_MARK = {
   accent: "#FF4554",
   fill: 0.64
 };
-var FLOWWER_MARK = {
-  inner: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 1.9 18.1 27.4"><path fill="#fff" fill-opacity="0.70" d="M4.55 11.07C2.03 11.07 0.00 13.10 0.00 15.61L0.00 6.52C0.00 4.00 2.03 1.97 4.55 1.97L13.67 1.97V1.98H28.05V5.00C28.05 8.35 25.33 11.07 21.98 11.07L4.55 11.07Z"/><path fill="#fff" fill-opacity="0.41" d="M0.00 24.71C0.00 22.20 2.04 20.16 4.55 20.16L13.53 20.16C16.05 20.16 18.08 18.13 18.08 15.62C18.08 13.10 16.05 11.07 13.53 11.07L4.55 11.07C2.04 11.07 0.00 13.10 0.00 15.62L0.00 24.71Z"/><path fill="#fff" fill-opacity="0.32" d="M-0.00 24.72C-0.00 22.20 2.03 20.17 4.54 20.17C7.06 20.17 9.09 22.20 9.09 24.72C9.09 27.23 7.06 29.27 4.54 29.27C2.03 29.27 -0.00 27.23 -0.00 24.72Z"/></svg>',
-  bg: "#155EEF",
-  accent: "#155EEF",
-  fill: 0.6
-};
 var FILL = 0.56;
 function composeLogo(mark, size = 512) {
   const vb = /viewBox="([\d.\s-]+)"/.exec(mark.inner)?.[1]?.trim().split(/\s+/).map(Number);
@@ -102,28 +96,6 @@ var REGISTRY = [
       "Ausschlie\xDFlich lesend. Hochladen und Quellen \xE4ndern geht nur \xFCber die Seite selbst.",
       "Jede Antwort f\xFChrt mit, von wann die Fassung ist und ob sie allgemeinverbindlich ist. Beim Maler-Rahmentarifvertrag kursieren \xE4ltere Fassungen \u2014 ohne diesen Vorbehalt w\xE4re eine Zahl daraus wertlos.",
       "F\xFCr das Tischlerhandwerk gibt es keine Allgemeinverbindlicherkl\xE4rung und damit keine \xF6ffentliche Volltextquelle. \xDCberwacht wird dort nur die Downloadseite; der Vertragstext wird von Hand hochgeladen."
-    ]
-  },
-  {
-    id: "flowwer",
-    name: "FLOWWER",
-    tagline: "Rechnungsfreigabe",
-    description: "Rechnungen und Belege aus FLOWWER: suchen, Kontierung lesen, nach Lieferant oder Freigabestufe auswerten, neue Belege hochladen. Kein \xC4ndern, kein L\xF6schen.",
-    origin: "https://flowwer-mcp.ksqsebastian.workers.dev",
-    mcpUrl: "https://flowwer-mcp.ksqsebastian.workers.dev/mcp",
-    auth: "oauth",
-    status: "aktiv",
-    mark: FLOWWER_MARK,
-    thirdPartyBrand: true,
-    accent: FLOWWER_MARK.accent,
-    icon: "F",
-    catalog: "tools.json",
-    binding: "FLOWWER",
-    notes: [
-      "Die Anmeldung fragt zwei Dinge ab: die Kontokennung (der Teil vor .flowwer.de) und den Schl\xFCssel eines API-Benutzers. Gib dem API-Benutzer nur Leserechte, dann kann \xFCber diesen Server auch nichts anderes passieren.",
-      "Welche Felder es gibt, ist von Konto zu Konto verschieden. Der Server liest sie aus dem Reporting des Kontos und lehnt einen Filter auf ein unbekanntes Feld ab, statt einen unverst\xE4ndlichen 400er zu erzeugen.",
-      "FLOWWER dokumentiert \xF6ffentlich nur einen Teil seiner API. Was das eigene Konto sonst noch anbietet, zeigt das Tool 'api_erkunden' \u2014 geraten wird nichts.",
-      "Noch nicht gegen ein echtes FLOWWER-Konto erprobt; gepr\xFCft ist bislang nur gegen eine Attrappe."
     ]
   }
 ];

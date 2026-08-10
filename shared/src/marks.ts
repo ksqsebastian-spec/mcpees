@@ -4,7 +4,6 @@
  * Die Pfade stammen unverändert von den Anbietern selbst:
  *   HERO    — hero-software.de/assets/img/static/logos/hero-logomark-dark.svg
  *   Lexware — app.lexware.de/favicon.svg
- *   FLOWWER — www.flowwer.de/…/Flowwer-Logo.svg (nur das Zeichen, ohne Schriftzug)
  *
  * Bewusst unverändert: Farben und Formen bleiben, wie der Anbieter sie ausliefert.
  * Ein nachgezeichnetes Logo ist die schlechteste Variante — es sieht aus wie die Marke,
@@ -51,24 +50,6 @@ export const LEXWARE_MARK: Mark = {
   border: true,
   accent: "#FF4554",
   fill: 0.64,
-};
-
-/**
- * FLOWWER zeigt sein Zeichen als App-Icon weiß auf Markenblau. Im Logo liegen die Formen
- * umgekehrt — blau auf weiß — mit anderen Deckkraftwerten. Die hier gesetzten Werte sind
- * aus dem offiziellen Favicon ausgemessen, damit die Kachel dem entspricht, was FLOWWER
- * selbst zeigt, statt aus dem Logo geraten zu sein.
- */
-export const FLOWWER_MARK: Mark = {
-  inner:
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 1.9 18.1 27.4">' +
-    '<path fill="#fff" fill-opacity="0.70" d="M4.55 11.07C2.03 11.07 0.00 13.10 0.00 15.61L0.00 6.52C0.00 4.00 2.03 1.97 4.55 1.97L13.67 1.97V1.98H28.05V5.00C28.05 8.35 25.33 11.07 21.98 11.07L4.55 11.07Z"/>' +
-    '<path fill="#fff" fill-opacity="0.41" d="M0.00 24.71C0.00 22.20 2.04 20.16 4.55 20.16L13.53 20.16C16.05 20.16 18.08 18.13 18.08 15.62C18.08 13.10 16.05 11.07 13.53 11.07L4.55 11.07C2.04 11.07 0.00 13.10 0.00 15.62L0.00 24.71Z"/>' +
-    '<path fill="#fff" fill-opacity="0.32" d="M-0.00 24.72C-0.00 22.20 2.03 20.17 4.54 20.17C7.06 20.17 9.09 22.20 9.09 24.72C9.09 27.23 7.06 29.27 4.54 29.27C2.03 29.27 -0.00 27.23 -0.00 24.72Z"/>' +
-    "</svg>",
-  bg: "#155EEF",
-  accent: "#155EEF",
-  fill: 0.6,
 };
 
 /** Voreinstellung; einzelne Marken weichen ab (siehe Mark.fill). */

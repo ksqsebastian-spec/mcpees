@@ -8,7 +8,6 @@ OAuth-geschützte MCP-Server auf Cloudflare Workers — plus die Übersichtsseit
 | HERO MCP (Endpoint für Claude) | https://hero-mcp.ksqsebastian.workers.dev/mcp |
 | Lexware Office MCP | https://lexware-mcp.ksqsebastian.workers.dev/mcp |
 | Tarifcheck MCP | https://tarifcheck.ksqsebastian.workers.dev/mcp |
-| FLOWWER MCP | https://flowwer-mcp.ksqsebastian.workers.dev/mcp |
 
 Der Vorgänger auf Vercel (`hero-mcp.vercel.app`) ist am 06.08.2026 abgeschaltet worden und
 antwortet auf jeden Aufruf mit HTTP 410 samt Verweis auf den neuen Endpoint. Aus der Übersicht
@@ -20,7 +19,6 @@ ist er entfernt; der 410-Stub bleibt für alle, die noch die alte URL eingetrage
 shared/           OAuth-Server, MCP-Protokoll, Gestaltung — von allen Servern benutzt
 servers/hero/     HERO-Handwerkersoftware, 34 Tools
 servers/lexware/  Lexware Office, 17 Tools
-servers/flowwer/  FLOWWER Rechnungsfreigabe, 6 Tools
 hub/              Übersichtsseite: alle Server, alle Tools, live vom Server geholt
 scripts/          Build, Schema-Validierung, Tests, Deployment
 ```
@@ -83,41 +81,11 @@ stammt aus [JannikWempe/mcp-lexware-office](https://github.com/JannikWempe/mcp-l
 QuickJS-Sandbox und zwei generischen Tools (`search`, `execute`); hier sind es benannte Tools
 hinter OAuth, damit er als Remote-Connector zum Rest dieses Repos passt.
 
-## FLOWWER MCP
-
-6 Tools für [FLOWWER](https://www.flowwer.de) (Rechnungsfreigabe): Dokumente suchen,
-Belegaufteilungen, Auswertungen, Feld- und Endpunktübersicht, Upload. Kein Ändern, kein
-Löschen — auch das von der API angebotene Ersetzen von Belegaufteilungen bleibt draußen.
-
-Zwei Dinge unterscheiden ihn von den anderen:
-
-- **Die Basis-URL gehört dem Mandanten** (`https://<kontokennung>.flowwer.de`). Die
-  Anmeldung fragt deshalb zwei Felder ab statt einem. Dafür nimmt `Brand.fields` jetzt
-  eine Liste von Eingabefeldern; HERO und Lexware deklarieren dort schlicht eines.
-- **Die Feldliste ist nicht öffentlich dokumentiert.** Sie steht im `$metadata` des Kontos
-  und wird zur Laufzeit gelesen und zwischengespeichert — wie bei HERO die Mandanten-IDs.
-  Ein Filter auf ein Feld, das es nicht gibt, wird damit abgefangen, bevor er rausgeht;
-  OData beantwortet so etwas sonst mit einem 400er, aus dem niemand schlau wird.
-
-Was FLOWWER öffentlich dokumentiert, ist wenig: der Header `X-FLOWWER-ApiKey`,
-`POST /api/v1/upload`, `GET|PUT /api/v1/documents/{id}/receiptsplits` und das
-OData-Reporting. Find-API und Archiv-Import stehen nur im Swagger des jeweiligen Kontos.
-Dieser Server rät deren Pfade nicht, sondern liest die OpenAPI-Beschreibung des Mandanten
-(`api_erkunden`) — ein geratener Pfad, der still 404t, wäre schlimmer als kein Tool.
-
-Beim ersten Deployment fiel ein Fehler auf, den die Attrappe nicht hergab: FLOWWER
-beantwortet ein **unbekanntes Konto** nicht mit 404, sondern mit einer 302-Weiterleitung
-auf `www.flowwer.de/unbekanntes-flowwer-konto/`. Weil `fetch` Weiterleitungen von sich aus
-folgt, landete die Prüfung auf einer Marketingseite mit HTTP 200 und hielt das für Erfolg —
-eine erfundene Kontokennung mit falschem Schlüssel bekam ein Token. Der Client folgt
-Weiterleitungen jetzt nicht mehr (`redirect: "manual"`) und verlangt als Nachweis ein
-echtes OData-Servicedokument; ein 200 allein genügt nicht. Beides ist als Regressionstest
-festgehalten, die Attrappe bildet die Weiterleitung nun nach.
-
-**Noch offen:** gegen ein echtes FLOWWER-Konto ist nichts erprobt. Am ehesten
-korrekturbedürftig sind die Antwortform von `POST /api/v1/upload` und der Pfad der
-OpenAPI-Beschreibung — `api_erkunden` probiert fünf übliche Orte und meldet ehrlich,
-wenn keiner passt.
+Ein FLOWWER-Server (Rechnungsfreigabe) lag hier ebenfalls, ist aber am 10.08.2026 wieder
+entfernt worden — samt Worker und KV-Namensraum. Die eine Sache, die davon bleibt:
+`Brand.fields` nimmt seither eine *Liste* von Eingabefeldern statt eines einzelnen, weil
+FLOWWERs Basis-URL dem Mandanten gehörte und die Anmeldung zwei Felder brauchte. HERO und
+Lexware deklarieren dort schlicht eines.
 
 ## Korrektheit ohne Live-Zugang
 
@@ -145,10 +113,6 @@ ein Request rausgeht.
 - **19 Prüfungen HERO** — kompletter OAuth-Flow: Code-Tausch, PKCE, Einmalgebrauch des Codes,
   Refresh-Rotation, Widerruf, ein echter `tools/call`, und dass weder Key noch Token im
   Klartext in KV landen.
-- **29 Prüfungen FLOWWER** — Kontokennung-Normalisierung, Lesen der Feldbeschreibung aus
-  EDMX, Ablehnung unbekannter Felder und Operatoren, Maskierung von Apostrophen im
-  `$filter`, Datumsliterale ohne Anführungszeichen, Gruppierung und die Warnung bei
-  unvollständig geladenen Zeilen.
 - **30 Prüfungen Lexware** — dazu die Rechenlogik (Umsatz gestellt/bezahlt, offene Posten,
   Überfälligkeit), die Statusprüfung, die Paginierung über mehrere Seiten, der eingehaltene
   Mindestabstand von 2 Anfragen/Sekunde und der Download-Link samt Ablauf.
@@ -182,20 +146,14 @@ Originalfarben, direkt von den Anbietern:
 |---|---|
 | HERO | `hero-software.de/assets/img/static/logos/hero-logomark-dark.svg` |
 | Lexware | `app.lexware.de/favicon.svg` |
-| FLOWWER | `www.flowwer.de/…/Flowwer-Logo.svg` — nur das Zeichen, ohne Schriftzug |
 
 Vorher standen dort Nachbauten. Das ist die schlechteste Variante: es sieht aus wie die
 Marke, ist aber keine. Entweder das echte Zeichen oder ein neutrales.
 
 `composeLogo()` setzt ein Zeichen mittig auf eine abgerundete Fläche — dasselbe Bild dient
-als Favicon und als Kachel. HERO steht auf seinem Gelb, Lexware auf Weiß mit Haarlinie,
-FLOWWER weiß auf seinem Blau, so wie die Anbieter es selbst zeigen.
-
-Bei FLOWWER liegen die Formen im Logo blau auf weiß, im App-Icon aber umgekehrt und mit
-anderer Deckkraft. Die drei Werte (0,70 / 0,41 / 0,32) sind aus dem offiziellen Favicon
-ausgemessen statt aus dem Logo übernommen — sonst hätte die Kachel anders ausgesehen als
-das, was FLOWWER selbst zeigt. Nebenbefund: Lexware ist rot (#FF4554), nicht grün —
-das Grün war altes lexoffice-Branding.
+als Favicon und als Kachel. HERO steht auf seinem Gelb, Lexware auf Weiß mit Haarlinie —
+so, wie die Anbieter es selbst zeigen. Nebenbefund beim Nachschlagen: Lexware ist rot
+(#FF4554), nicht grün — das Grün war altes lexoffice-Branding.
 
 Die Logos kennzeichnen das angebundene System, mehr nicht. Der Fuß jeder Seite sagt, dass
 es fremde Marken sind und dass dies keine offiziellen Integrationen der Anbieter sind.
@@ -204,7 +162,7 @@ es fremde Marken sind und dass dies keine offiziellen Integrationen der Anbieter
 
 Ein Stylesheet für alles: `shared/src/style.ts`. Viel Weiß, wenige Farben, harte Kontraste
 bei der Schrift, Haarlinien statt Schatten. Die Akzentfarbe gehört dem jeweiligen System
-(HERO gelb, Lexware grün) und kommt nur in kleinen Flächen vor — die Seiten selbst bleiben
+(HERO gelb, Lexware rot) und kommt nur in kleinen Flächen vor — die Seiten selbst bleiben
 schwarzweiß.
 
 Bewegung gibt es nur dort, wo sie etwas bedeutet: Inhalt tritt beim Laden gestaffelt ein,
