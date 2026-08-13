@@ -37,6 +37,12 @@ var MIKDATEN_MARK = {
   accent: "#FF4A1C",
   fill: 0.6
 };
+var TUERWERK_MARK = {
+  inner: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 52"><g fill="none" stroke="#fff"><path stroke-width="9" stroke-linecap="butt" d="M0 46h14M50 46h14"/><path stroke-width="9" stroke-linecap="round" d="M14 46V10"/><path stroke-width="5" stroke-linecap="round" opacity=".85" d="M14 10a36 36 0 0 1 36 36"/></g></svg>',
+  bg: "#1B54D6",
+  accent: "#1B54D6",
+  fill: 0.72
+};
 var REGISTRY = [
   {
     id: "hero",
@@ -125,6 +131,29 @@ var REGISTRY = [
       "Anlegen und Fortschreiben ist erlaubt: Aufgaben verschieben, erledigen, kommentieren, Checklisten abhaken, Objektdaten fortschreiben. Gel\xF6scht wird nichts.",
       "Personen und Objekte d\xFCrfen als Name, Benutzername oder Objektnummer angegeben werden, nicht nur als ID.",
       "Verbundene Anwendungen stehen in Mikdaten unter Einstellungen \u2192 KI-Anbindung und lassen sich dort einzeln trennen."
+    ]
+  },
+  {
+    id: "tuerwerk",
+    name: "T\xFCrwerk",
+    tagline: "T\xFCrenwartung",
+    description: "Die T\xFCrenwartung von Seehafer Elemente \u2014 vor Ort diktiert, hier gesammelt, am Ende fertige Wartungsprotokolle als PDF. Drehfl\xFCgelt\xFCren, Fenster, Feststellanlagen.",
+    origin: "https://tuerwerk.ksqsebastian.workers.dev",
+    mcpUrl: "https://tuerwerk.ksqsebastian.workers.dev/mcp",
+    auth: "oauth",
+    status: "aktiv",
+    mark: TUERWERK_MARK,
+    accent: TUERWERK_MARK.accent,
+    icon: "T",
+    catalog: "tools.json",
+    binding: "TUERWERK",
+    notes: [
+      "Eigene Anmeldung mit Benutzer und Passwort \u2014 dieselbe wie auf der Seite. Kein externer Anbieter dahinter.",
+      "Gedacht f\xFCrs Diktat am Handy: der Monteur spricht, jede T\xFCr wird sofort geschrieben. Bricht das Gespr\xE4ch ab, ist nichts verloren \u2014 weiter geht es mit derselben Kennung.",
+      "Standard ist \u201Ealles in Ordnung\u201C; genannt werden nur die Abweichungen, als Punkt-Nummer aus der jeweiligen Vorlage. Was eine Nummer bedeutet, liefert 'pruefpunkte'.",
+      "Die Protokolle entstehen im Worker selbst: die Original-Formulare werden mit den erfassten Werten \xFCberdruckt und in R2 abgelegt, einzeln oder als ZIP abrufbar.",
+      "Die Unterschrift kommt aus dem Konto dessen, der die Wartung angelegt hat. Fehlt sie, bleibt das Feld leer \u2014 der Bericht entsteht trotzdem.",
+      "Gel\xF6scht wird \xFCber den Server nichts."
     ]
   }
 ];

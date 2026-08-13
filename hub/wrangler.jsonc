@@ -11,6 +11,7 @@
     { "binding": "HERO", "service": "hero-mcp" },
     { "binding": "SEVDESK", "service": "sevdesk-mcp" },
     { "binding": "TARIFCHECK", "service": "tarifcheck" },
-    { "binding": "MIKDATEN", "service": "mikdaten" }
+    { "binding": "MIKDATEN", "service": "mikdaten" },
+    { "binding": "TUERWERK", "service": "tuerwerk" }
   ]
 }

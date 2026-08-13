@@ -97,6 +97,24 @@ const MIKDATEN_MARK: Mark = {
   fill: 0.6,
 };
 
+/**
+ * Türwerk führt ein eigenes Zeichen: das Türsymbol aus dem Grundriss — Wand, offen stehendes
+ * Blatt, Schwenkbogen. Wer Baupläne liest, erkennt es sofort; als Bildmarke führt es sonst
+ * niemand. Dieselben drei Pfade stehen im Worker selbst, damit Kachel und Favicon übereinstimmen.
+ */
+const TUERWERK_MARK: Mark = {
+  inner:
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 52">' +
+    '<g fill="none" stroke="#fff">' +
+    '<path stroke-width="9" stroke-linecap="butt" d="M0 46h14M50 46h14"/>' +
+    '<path stroke-width="9" stroke-linecap="round" d="M14 46V10"/>' +
+    '<path stroke-width="5" stroke-linecap="round" opacity=".85" d="M14 10a36 36 0 0 1 36 36"/>' +
+    '</g></svg>',
+  bg: "#1B54D6",
+  accent: "#1B54D6",
+  fill: 0.72,
+};
+
 export const REGISTRY: ServerEntry[] = [
   {
     id: "hero",
@@ -210,6 +228,36 @@ export const REGISTRY: ServerEntry[] = [
         "werden, nicht nur als ID.",
       "Verbundene Anwendungen stehen in Mikdaten unter Einstellungen → KI-Anbindung und " +
         "lassen sich dort einzeln trennen.",
+    ],
+  },
+  {
+    id: "tuerwerk",
+    name: "Türwerk",
+    tagline: "Türenwartung",
+    description:
+      "Die Türenwartung von Seehafer Elemente — vor Ort diktiert, hier gesammelt, am Ende " +
+      "fertige Wartungsprotokolle als PDF. Drehflügeltüren, Fenster, Feststellanlagen.",
+    origin: "https://tuerwerk.ksqsebastian.workers.dev",
+    mcpUrl: "https://tuerwerk.ksqsebastian.workers.dev/mcp",
+    auth: "oauth",
+    status: "aktiv",
+    mark: TUERWERK_MARK,
+    accent: TUERWERK_MARK.accent,
+    icon: "T",
+    catalog: "tools.json",
+    binding: "TUERWERK",
+    notes: [
+      "Eigene Anmeldung mit Benutzer und Passwort — dieselbe wie auf der Seite. " +
+        "Kein externer Anbieter dahinter.",
+      "Gedacht fürs Diktat am Handy: der Monteur spricht, jede Tür wird sofort geschrieben. " +
+        "Bricht das Gespräch ab, ist nichts verloren — weiter geht es mit derselben Kennung.",
+      "Standard ist „alles in Ordnung“; genannt werden nur die Abweichungen, als Punkt-Nummer " +
+        "aus der jeweiligen Vorlage. Was eine Nummer bedeutet, liefert 'pruefpunkte'.",
+      "Die Protokolle entstehen im Worker selbst: die Original-Formulare werden mit den " +
+        "erfassten Werten überdruckt und in R2 abgelegt, einzeln oder als ZIP abrufbar.",
+      "Die Unterschrift kommt aus dem Konto dessen, der die Wartung angelegt hat. Fehlt sie, " +
+        "bleibt das Feld leer — der Bericht entsteht trotzdem.",
+      "Gelöscht wird über den Server nichts.",
     ],
   },
 ];
