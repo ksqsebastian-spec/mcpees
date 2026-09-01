@@ -16,7 +16,12 @@ export interface ServerEntry {
   origin: string;
   /** Der Endpoint, den man in Claude einträgt. */
   mcpUrl: string;
-  auth: "oauth" | "none";
+  /**
+   * Wie sich der Aufrufer ausweist. "token" ist ein fester Bearer-Token aus
+   * dem Betrieb heraus — nicht dasselbe wie der OAuth-Fluss, und die Seite
+   * soll das nicht behaupten.
+   */
+  auth: "oauth" | "token" | "none";
   status: "aktiv" | "abgeschaltet";
   /** Offizielles Herstellerzeichen. Fehlt es, wird der Buchstabe genommen. */
   mark?: Mark;
@@ -283,7 +288,7 @@ export const REGISTRY: ServerEntry[] = [
       "schon draußen ist und was nicht zurückgekommen ist. Gebucht wird per NFC vor Ort.",
     origin: "https://nfclager.ksqsebastian.workers.dev",
     mcpUrl: "https://nfclager.ksqsebastian.workers.dev/mcp",
-    auth: "oauth",
+    auth: "token",
     status: "aktiv",
     mark: RUESTZEUG_MARK,
     accent: RUESTZEUG_MARK.accent,
@@ -291,6 +296,8 @@ export const REGISTRY: ServerEntry[] = [
     catalog: "tools.json",
     binding: "RUESTZEUG",
     notes: [
+      "Anmeldung über einen festen Bearer-Token, den das Büro vergibt — kein OAuth-Fluss " +
+        "und kein eigener Zugang je Person. Wer den Token hat, sieht den ganzen Lagerbestand.",
       "Getaggt sind Ladungsträger — Gitterboxen, Stapel, Bündel — mit gezähltem Inhalt, " +
         "dazu Großteile wie Treppentürme. Mengen sind deshalb kistengenau, nicht stückgenau.",
       "Gebucht wird durch Scannen vor Ort: der NFC-Chip trägt die URL, das Handy öffnet die " +

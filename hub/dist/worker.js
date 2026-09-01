@@ -169,7 +169,7 @@ var REGISTRY = [
     description: "Das Ger\xFCstlager von J. Werner Ger\xFCstbau \u2014 welches Material wo steht, wie lange es schon drau\xDFen ist und was nicht zur\xFCckgekommen ist. Gebucht wird per NFC vor Ort.",
     origin: "https://nfclager.ksqsebastian.workers.dev",
     mcpUrl: "https://nfclager.ksqsebastian.workers.dev/mcp",
-    auth: "oauth",
+    auth: "token",
     status: "aktiv",
     mark: RUESTZEUG_MARK,
     accent: RUESTZEUG_MARK.accent,
@@ -177,6 +177,7 @@ var REGISTRY = [
     catalog: "tools.json",
     binding: "RUESTZEUG",
     notes: [
+      "Anmeldung \xFCber einen festen Bearer-Token, den das B\xFCro vergibt \u2014 kein OAuth-Fluss und kein eigener Zugang je Person. Wer den Token hat, sieht den ganzen Lagerbestand.",
       "Getaggt sind Ladungstr\xE4ger \u2014 Gitterboxen, Stapel, B\xFCndel \u2014 mit gez\xE4hltem Inhalt, dazu Gro\xDFteile wie Treppent\xFCrme. Mengen sind deshalb kistengenau, nicht st\xFCckgenau.",
       "Gebucht wird durch Scannen vor Ort: der NFC-Chip tr\xE4gt die URL, das Handy \xF6ffnet die Einheit, zwei Kn\xF6pfe. Kein Login, kein Passwort \u2014 das Ger\xE4t ist \xFCber einen Einmallink erkannt.",
       "'buchung_anlegen' ist f\xFCr Korrekturen aus dem B\xFCro gedacht, nicht f\xFCr die t\xE4gliche Erfassung. Wer damit Bewegungen nachtr\xE4gt, die niemand gescannt hat, macht die Vorhaltezeiten wertlos.",
@@ -391,6 +392,16 @@ document.addEventListener('click', function (e) {
 });`;
 
 // hub/src/ui.ts
+var AUTH_KURZ = {
+  oauth: "OAuth",
+  token: "Token",
+  none: "offen"
+};
+var AUTH_LANG = {
+  oauth: "OAuth 2.1 mit PKCE",
+  token: "fester Bearer-Token",
+  none: "ohne Authentifizierung"
+};
 function esc(s) {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
@@ -581,7 +592,8 @@ function overviewPage(rows) {
     const kinds = !write ? "nur lesend" : !read ? "nur schreibend" : `${read} lesend, ${write} schreibend`;
     const facts = catalog.ok ? `<span class="live">Aktiv</span><span class="sep">\xB7</span>
            <span>${catalog.tools.length} Tools</span><span class="sep">\xB7</span>
-           <span>${kinds}</span><span class="sep">\xB7</span><span>OAuth</span>` : catalog.retired ? `<span class="down">Abgeschaltet</span>` : `<span class="down">Nicht erreichbar</span>`;
+           <span>${kinds}</span><span class="sep">\xB7</span>
+           <span>${esc(AUTH_KURZ[entry.auth] ?? entry.auth)}</span>` : catalog.retired ? `<span class="down">Abgeschaltet</span>` : `<span class="down">Nicht erreichbar</span>`;
     return `<div class="card srv hoverable rise d${Math.min(6, i + 3)}">
 <div class="top">${tile(entry)}
 <div><h3><a href="/s/${esc(entry.id)}">${esc(entry.name)}</a></h3>
@@ -670,7 +682,7 @@ antwortet auf jeden Aufruf mit <b>HTTP 410</b> und nennt den Nachfolger.</div>` 
 neu startet.</div>`;
   const facts = [
     catalog.ok ? `${catalog.tools.length} Tools` : null,
-    entry.auth === "oauth" ? "OAuth 2.1 mit PKCE" : "ohne Authentifizierung",
+    AUTH_LANG[entry.auth] ?? entry.auth,
     catalog.serverVersion ? `v${catalog.serverVersion}` : null
   ].filter(Boolean).join(' <span style="opacity:.45">\xB7</span> ');
   return shell(

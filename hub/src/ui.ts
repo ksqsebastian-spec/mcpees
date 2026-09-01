@@ -4,7 +4,19 @@ import type { Catalog, ToolInfo } from "./catalog";
 import { BASE_CSS, COPY_JS, inkOn } from "../../shared/src/style";
 import { composeLogo } from "../../shared/src/marks";
 
-export function esc(s: unknown): string {
+export /** Wie sich der Aufrufer ausweist — kurz für die Kachel, ausführlich für die Detailseite. */
+const AUTH_KURZ: Record<string, string> = {
+  oauth: "OAuth",
+  token: "Token",
+  none: "offen",
+};
+const AUTH_LANG: Record<string, string> = {
+  oauth: "OAuth 2.1 mit PKCE",
+  token: "fester Bearer-Token",
+  none: "ohne Authentifizierung",
+};
+
+function esc(s: unknown): string {
   return String(s ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -242,7 +254,8 @@ export function overviewPage(rows: Array<{ entry: ServerEntry; catalog: Catalog 
       const facts = catalog.ok
         ? `<span class="live">Aktiv</span><span class="sep">·</span>
            <span>${catalog.tools.length} Tools</span><span class="sep">·</span>
-           <span>${kinds}</span><span class="sep">·</span><span>OAuth</span>`
+           <span>${kinds}</span><span class="sep">·</span>
+           <span>${esc(AUTH_KURZ[entry.auth] ?? entry.auth)}</span>`
         : catalog.retired
           ? `<span class="down">Abgeschaltet</span>`
           : `<span class="down">Nicht erreichbar</span>`;
@@ -359,7 +372,7 @@ neu startet.</div>`;
 
   const facts = [
     catalog.ok ? `${catalog.tools.length} Tools` : null,
-    entry.auth === "oauth" ? "OAuth 2.1 mit PKCE" : "ohne Authentifizierung",
+    AUTH_LANG[entry.auth] ?? entry.auth,
     catalog.serverVersion ? `v${catalog.serverVersion}` : null,
   ]
     .filter(Boolean)
