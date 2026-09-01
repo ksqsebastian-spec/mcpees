@@ -43,6 +43,12 @@ var TUERWERK_MARK = {
   accent: "#1B54D6",
   fill: 0.72
 };
+var RUESTZEUG_MARK = {
+  inner: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><g fill="none" stroke="#fff" stroke-width="6.5" stroke-linecap="round"><path d="M12 13v38M32 13v38M52 13v38"/><path d="M12 13h40M12 36h40"/></g><path fill="none" stroke="#F5B800" stroke-width="6.5" stroke-linecap="round" d="M14 34 50 15"/></svg>',
+  bg: "#1E2A38",
+  accent: "#F5B800",
+  fill: 0.78
+};
 var REGISTRY = [
   {
     id: "hero",
@@ -154,6 +160,28 @@ var REGISTRY = [
       "Die Protokolle entstehen im Worker selbst: die Original-Formulare werden mit den erfassten Werten \xFCberdruckt und in R2 abgelegt, einzeln oder als ZIP abrufbar.",
       "Die Unterschrift kommt aus dem Konto dessen, der die Wartung angelegt hat. Fehlt sie, bleibt das Feld leer \u2014 der Bericht entsteht trotzdem.",
       "Gel\xF6scht wird \xFCber den Server nichts."
+    ]
+  },
+  {
+    id: "ruestzeug",
+    name: "R\xFCstzeug",
+    tagline: "Ger\xFCstlager",
+    description: "Das Ger\xFCstlager von J. Werner Ger\xFCstbau \u2014 welches Material wo steht, wie lange es schon drau\xDFen ist und was nicht zur\xFCckgekommen ist. Gebucht wird per NFC vor Ort.",
+    origin: "https://nfclager.ksqsebastian.workers.dev",
+    mcpUrl: "https://nfclager.ksqsebastian.workers.dev/mcp",
+    auth: "oauth",
+    status: "aktiv",
+    mark: RUESTZEUG_MARK,
+    accent: RUESTZEUG_MARK.accent,
+    icon: "R",
+    catalog: "tools.json",
+    binding: "RUESTZEUG",
+    notes: [
+      "Getaggt sind Ladungstr\xE4ger \u2014 Gitterboxen, Stapel, B\xFCndel \u2014 mit gez\xE4hltem Inhalt, dazu Gro\xDFteile wie Treppent\xFCrme. Mengen sind deshalb kistengenau, nicht st\xFCckgenau.",
+      "Gebucht wird durch Scannen vor Ort: der NFC-Chip tr\xE4gt die URL, das Handy \xF6ffnet die Einheit, zwei Kn\xF6pfe. Kein Login, kein Passwort \u2014 das Ger\xE4t ist \xFCber einen Einmallink erkannt.",
+      "'buchung_anlegen' ist f\xFCr Korrekturen aus dem B\xFCro gedacht, nicht f\xFCr die t\xE4gliche Erfassung. Wer damit Bewegungen nachtr\xE4gt, die niemand gescannt hat, macht die Vorhaltezeiten wertlos.",
+      "Vorhaltetage werden in Einheitentagen gez\xE4hlt: drei Gitterboxen \xFCber 67 Tage sind 201, nicht 67. Das ist die Zahl, die bei Streit \xFCber die Mietdauer z\xE4hlt.",
+      "Gel\xF6scht wird \xFCber den Server nichts. Standorte lassen sich beenden, Einheiten nicht entfernen."
     ]
   }
 ];

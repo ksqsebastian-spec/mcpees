@@ -12,6 +12,7 @@
     { "binding": "SEVDESK", "service": "sevdesk-mcp" },
     { "binding": "TARIFCHECK", "service": "tarifcheck" },
     { "binding": "MIKDATEN", "service": "mikdaten" },
-    { "binding": "TUERWERK", "service": "tuerwerk" }
+    { "binding": "TUERWERK", "service": "tuerwerk" },
+    { "binding": "RUESTZEUG", "service": "nfclager" }
   ]
 }

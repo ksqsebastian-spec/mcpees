@@ -115,6 +115,20 @@ const TUERWERK_MARK: Mark = {
   fill: 0.72,
 };
 
+const RUESTZEUG_MARK: Mark = {
+  inner:
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">' +
+    '<g fill="none" stroke="#fff" stroke-width="6.5" stroke-linecap="round">' +
+    '<path d="M12 13v38M32 13v38M52 13v38"/>' +
+    '<path d="M12 13h40M12 36h40"/>' +
+    '</g>' +
+    '<path fill="none" stroke="#F5B800" stroke-width="6.5" stroke-linecap="round" d="M14 34 50 15"/>' +
+    '</svg>',
+  bg: "#1E2A38",
+  accent: "#F5B800",
+  fill: 0.78,
+};
+
 export const REGISTRY: ServerEntry[] = [
   {
     id: "hero",
@@ -258,6 +272,37 @@ export const REGISTRY: ServerEntry[] = [
       "Die Unterschrift kommt aus dem Konto dessen, der die Wartung angelegt hat. Fehlt sie, " +
         "bleibt das Feld leer — der Bericht entsteht trotzdem.",
       "Gelöscht wird über den Server nichts.",
+    ],
+  },
+  {
+    id: "ruestzeug",
+    name: "Rüstzeug",
+    tagline: "Gerüstlager",
+    description:
+      "Das Gerüstlager von J. Werner Gerüstbau — welches Material wo steht, wie lange es " +
+      "schon draußen ist und was nicht zurückgekommen ist. Gebucht wird per NFC vor Ort.",
+    origin: "https://nfclager.ksqsebastian.workers.dev",
+    mcpUrl: "https://nfclager.ksqsebastian.workers.dev/mcp",
+    auth: "oauth",
+    status: "aktiv",
+    mark: RUESTZEUG_MARK,
+    accent: RUESTZEUG_MARK.accent,
+    icon: "R",
+    catalog: "tools.json",
+    binding: "RUESTZEUG",
+    notes: [
+      "Getaggt sind Ladungsträger — Gitterboxen, Stapel, Bündel — mit gezähltem Inhalt, " +
+        "dazu Großteile wie Treppentürme. Mengen sind deshalb kistengenau, nicht stückgenau.",
+      "Gebucht wird durch Scannen vor Ort: der NFC-Chip trägt die URL, das Handy öffnet die " +
+        "Einheit, zwei Knöpfe. Kein Login, kein Passwort — das Gerät ist über einen " +
+        "Einmallink erkannt.",
+      "'buchung_anlegen' ist für Korrekturen aus dem Büro gedacht, nicht für die tägliche " +
+        "Erfassung. Wer damit Bewegungen nachträgt, die niemand gescannt hat, macht die " +
+        "Vorhaltezeiten wertlos.",
+      "Vorhaltetage werden in Einheitentagen gezählt: drei Gitterboxen über 67 Tage sind 201, " +
+        "nicht 67. Das ist die Zahl, die bei Streit über die Mietdauer zählt.",
+      "Gelöscht wird über den Server nichts. Standorte lassen sich beenden, Einheiten nicht " +
+        "entfernen.",
     ],
   },
 ];
