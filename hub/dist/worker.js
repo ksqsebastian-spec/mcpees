@@ -10,6 +10,18 @@ var SEVDESK_MARK = {
   accent: "#FB523B",
   fill: 0.507
 };
+var PLAUSIBLE_MARK = {
+  inner: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45.36 60"><defs><linearGradient id="pl-a" x1="14.8413403" y1="22.5436904" x2="27.4731407" y2="44.6493411" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#909cf7"/><stop offset="1" stop-color="#4b38d8"/></linearGradient><linearGradient id="pl-b" x1="7.9837957" y1="-1.3582919" x2="21.0009873" y2="21.4217935" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#909cf7"/><stop offset="1" stop-color="#4b38d8"/></linearGradient></defs><path fill="url(#pl-a)" d="M45.2456059,22.6027536c-1.0911024,10.4557623-10.2327486,18.2272825-20.7452872,18.2272807h-4.047804v9.570007c0,5.3019285-4.2980623,9.5999908-9.5999908,9.5999908H3.3599854c-1.8556687,0-3.3599854-1.5043167-3.3599854-3.3599854v-19.7025146l5.0380685-7.0686343c.9118097-1.2793096,2.587965-1.7566996,4.0369945-1.1497867l2.8657142,1.2002785c1.4444817.6050081,3.1153774.12945,4.0247968-1.1455083l6.7172007-9.417163c.9071158-1.2717288,2.5743943-1.7450816,4.0144283-1.1397262l5.5198678,2.3204187c1.4430268.6066135,3.1137697.1319561,4.0223175-1.1427389l6.4594145-9.0625757c2.0248091,3.5597961,3.0145069,7.7887694,2.5468032,12.2706573Z"/><path fill="url(#pl-b)" d="M3.2920959,28.8726296c.82329-1.1551271,2.0209115-2.0434967,3.4138697-2.3114381,1.0861554-.2089265,2.156905-.0992829,3.1472499.3155174l2.8649902,1.1999512c.1651001.0691528.3388672.104187.5164795.104187.4365845,0,.8488159-.2124634,1.1026611-.5683594l6.5942097-9.2447929c.8231505-1.154021,2.0204067-2.0410099,3.4124878-2.3083136,1.0821376-.2077892,2.1463585-.0989034,3.1282512.3138487l5.5198364,2.3204346c.1665649.0700684.3417969.1055298.5206909.1055298.4351807,0,.8456421-.2113647,1.0979614-.5653687l6.9192505-9.7077637C37.8272145,3.3644409,31.7802174,0,24.9450124,0H3.3599904C1.5043217,0,.000005,1.5043167.000005,3.3599854v30.1316528l3.2920909-4.6190085Z"/></svg>',
+  /*
+   * Weiße Kachel mit Haarlinie statt einer Farbfläche: das Zeichen ist selbst ein
+   * Farbverlauf und steht bei Plausible auf Weiß. Auf eine eigene Farbe gesetzt wäre es
+   * nicht mehr das Zeichen des Anbieters, sondern eine Auslegung davon.
+   */
+  bg: "#ffffff",
+  border: true,
+  accent: "#4b38d8",
+  fill: 0.62
+};
 var FILL = 0.56;
 function composeLogo(mark, size = 512) {
   const vb = /viewBox="([\d.\s-]+)"/.exec(mark.inner)?.[1]?.trim().split(/\s+/).map(Number);
@@ -87,6 +99,30 @@ var REGISTRY = [
       "Seit dem sevdesk-Update 2.0 hei\xDFt die Steuerregel taxRule statt taxType. Der Server fragt die Version des Kontos ab und schickt die passende Angabe.",
       "PDFs bekommen einen zeitlich begrenzten Link von diesem Server \u2014 sevdesk liefert sie nur als base64 gegen den Token aus.",
       "Die eingefrorene API-Beschreibung stammt aus github.com/nikolausm/mcp-sevdesk (MIT)."
+    ]
+  },
+  {
+    id: "plausible",
+    name: "Plausible",
+    tagline: "Web-Statistik",
+    description: "Besucher, Seitenaufrufe, Herkunft, Ziele und Zeitvergleiche aus Plausible Analytics. Ausschlie\xDFlich lesend \u2014 die Stats API kann nichts ver\xE4ndern.",
+    origin: "https://plausible-mcp.ksqsebastian.workers.dev",
+    mcpUrl: "https://plausible-mcp.ksqsebastian.workers.dev/mcp",
+    auth: "oauth",
+    status: "aktiv",
+    mark: PLAUSIBLE_MARK,
+    thirdPartyBrand: true,
+    accent: PLAUSIBLE_MARK.accent,
+    icon: "P",
+    catalog: "tools.json",
+    binding: "PLAUSIBLE",
+    notes: [
+      "OAuth 2.1 mit PKCE \u2014 jeder Nutzer hinterlegt beim Verbinden seinen eigenen Plausible-API-Key (Account Settings \u2192 API Keys) und die Domain seiner Seite.",
+      "Die Domain geh\xF6rt zu den Zugangsdaten, weil die Stats API keinen Aufruf ohne Seitenangabe kennt. Beim Verbinden wird sie mitgepr\xFCft: eine Seite, die es im Konto nicht gibt, f\xE4llt sofort auf und nicht erst beim ersten Aufruf.",
+      "Land, Region und Stadt f\xFChrt Plausible doppelt \u2014 als ISO-Code und als Klarname. Gefragt wird immer die Namensfassung; ein Ergebnis mit 'DE' statt 'Germany' hilft im Gespr\xE4ch niemandem.",
+      "Antworten kommen mit Feldnamen zur\xFCck. Plausible selbst liefert Parallel-Arrays, bei denen die Bedeutung einer Zahl nur aus der Reihenfolge der Anfrage hervorgeht.",
+      "Der Zuschnitt der Tools ist an getsentry/plausible-mcp (MIT) angelehnt; der Quelltext ist eigener, auf dem gemeinsamen Ger\xFCst dieses Projekts.",
+      "Plausible begrenzt die Stats API auf 600 Anfragen pro Stunde und Konto."
     ]
   },
   {

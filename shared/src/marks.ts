@@ -4,6 +4,7 @@
  * Die Pfade stammen unverändert von den Anbietern selbst:
  *   HERO    — hero-software.de/assets/img/static/logos/hero-logomark-dark.svg
  *   sevdesk — my.sevdesk.de/images/logo.svg (nur das Zeichen, ohne Schriftzug)
+ *   Plausible — plausible.io/assets/images/icon/plausible_logo.svg (dito)
  *
  * Bewusst unverändert: Farben und Formen bleiben, wie der Anbieter sie ausliefert.
  * Ein nachgezeichnetes Logo ist die schlechteste Variante — es sieht aus wie die Marke,
@@ -61,6 +62,59 @@ export const SEVDESK_MARK: Mark = {
   bg: "#FB523B",
   accent: "#FB523B",
   fill: 0.507,
+};
+
+/**
+ * Plausible liefert Zeichen und Schriftzug in einer Datei
+ * (plausible.io/assets/images/icon/plausible_logo.svg). Übernommen sind nur die beiden
+ * Verlaufsflächen — der Schriftzug daneben fällt weg, er gehört nicht auf eine Kachel.
+ *
+ * Der Ausschnitt ist nicht geschätzt, sondern gemessen: die beiden Pfade füllen im
+ * Original exakt 0/0 bis 45.36/60. Genau das ist die viewBox, und das ursprüngliche
+ * Koordinatensystem bleibt damit erhalten — nötig, weil die beiden Verläufe
+ * gradientUnits="userSpaceOnUse" benutzen. Wer hier auf 0 0 64 64 normalisieren würde,
+ * behielte die Formen und verschöbe die Farben.
+ *
+ * Die Verlaufs-IDs heißen pl-a und pl-b statt wie im Original New_Gradient_Swatch_1.
+ * Heute schadete der Originalname nicht — Übersichtsseite wie Anmeldeseite betten jede
+ * Marke einzeln als data:-URI ein, und darin ist jede ihr eigenes Dokument. Sobald aber
+ * zwei Marken nebeneinander in eine Seite geschrieben werden, gewinnt bei gleichem
+ * Namen der zuerst geschriebene Verlauf für beide. Ein eindeutiger Name kostet nichts
+ * und nimmt der Einbettung diese Bedingung ab.
+ */
+export const PLAUSIBLE_MARK: Mark = {
+  inner:
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45.36 60"><defs><linearGradient ' +
+    'id="pl-a" x1="14.8413403" y1="22.5436904" x2="27.4731407" y2="44.6493411" ' +
+    'gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#909cf7"/><stop offset="1" ' +
+    'stop-color="#4b38d8"/></linearGradient><linearGradient id="pl-b" x1="7.9837957" ' +
+    'y1="-1.3582919" x2="21.0009873" y2="21.4217935" gradientUnits="userSpaceOnUse"><stop ' +
+    'offset="0" stop-color="#909cf7"/><stop offset="1" ' +
+    'stop-color="#4b38d8"/></linearGradient></defs><path fill="url(#pl-a)" d="M45.2456059,22.60' +
+    '27536c-1.0911024,10.4557623-10.2327486,18.2272825-20.7452872,18.2272807h-4.047804v9.570007' +
+    'c0,5.3019285-4.2980623,9.5999908-9.5999908,9.5999908H3.3599854c-1.8556687,0-3.3599854-1.50' +
+    '43167-3.3599854-3.3599854v-19.7025146l5.0380685-7.0686343c.9118097-1.2793096,2.587965-1.75' +
+    '66996,4.0369945-1.1497867l2.8657142,1.2002785c1.4444817.6050081,3.1153774.12945,4.0247968-' +
+    '1.1455083l6.7172007-9.417163c.9071158-1.2717288,2.5743943-1.7450816,4.0144283-1.1397262l5.' +
+    '5198678,2.3204187c1.4430268.6066135,3.1137697.1319561,4.0223175-1.1427389l6.4594145-9.0625' +
+    '757c2.0248091,3.5597961,3.0145069,7.7887694,2.5468032,12.2706573Z"/><path ' +
+    'fill="url(#pl-b)" d="M3.2920959,28.8726296c.82329-1.1551271,2.0209115-2.0434967,3.4138697-' +
+    '2.3114381,1.0861554-.2089265,2.156905-.0992829,3.1472499.3155174l2.8649902,1.1999512c.1651' +
+    '001.0691528.3388672.104187.5164795.104187.4365845,0,.8488159-.2124634,1.1026611-.5683594l6' +
+    '.5942097-9.2447929c.8231505-1.154021,2.0204067-2.0410099,3.4124878-2.3083136,1.0821376-.20' +
+    '77892,2.1463585-.0989034,3.1282512.3138487l5.5198364,2.3204346c.1665649.0700684.3417969.10' +
+    '55298.5206909.1055298.4351807,0,.8456421-.2113647,1.0979614-.5653687l6.9192505-9.7077637C3' +
+    '7.8272145,3.3644409,31.7802174,0,24.9450124,0H3.3599904C1.5043217,0,.000005,1.5043167.0000' +
+    '05,3.3599854v30.1316528l3.2920909-4.6190085Z"/></svg>',
+  /*
+   * Weiße Kachel mit Haarlinie statt einer Farbfläche: das Zeichen ist selbst ein
+   * Farbverlauf und steht bei Plausible auf Weiß. Auf eine eigene Farbe gesetzt wäre es
+   * nicht mehr das Zeichen des Anbieters, sondern eine Auslegung davon.
+   */
+  bg: "#ffffff",
+  border: true,
+  accent: "#4b38d8",
+  fill: 0.62,
 };
 
 /** Voreinstellung; einzelne Marken weichen ab (siehe Mark.fill). */

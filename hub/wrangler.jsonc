@@ -10,6 +10,7 @@
   "services": [
     { "binding": "HERO", "service": "hero-mcp" },
     { "binding": "SEVDESK", "service": "sevdesk-mcp" },
+    { "binding": "PLAUSIBLE", "service": "plausible-mcp" },
     { "binding": "TARIFCHECK", "service": "tarifcheck" },
     { "binding": "MIKDATEN", "service": "mikdaten" },
     { "binding": "TUERWERK", "service": "tuerwerk" }

@@ -5,7 +5,7 @@
  * gepflegt, sondern zur Laufzeit vom Server selbst geholt (`catalog`), damit die Übersicht
  * nicht auseinanderläuft, sobald jemand ein Tool ändert.
  */
-import { HERO_MARK, SEVDESK_MARK, type Mark } from "../../shared/src/marks";
+import { HERO_MARK, PLAUSIBLE_MARK, SEVDESK_MARK, type Mark } from "../../shared/src/marks";
 
 export interface ServerEntry {
   id: string;
@@ -169,6 +169,39 @@ export const REGISTRY: ServerEntry[] = [
       "PDFs bekommen einen zeitlich begrenzten Link von diesem Server — sevdesk liefert sie " +
         "nur als base64 gegen den Token aus.",
       "Die eingefrorene API-Beschreibung stammt aus github.com/nikolausm/mcp-sevdesk (MIT).",
+    ],
+  },
+  {
+    id: "plausible",
+    name: "Plausible",
+    tagline: "Web-Statistik",
+    description:
+      "Besucher, Seitenaufrufe, Herkunft, Ziele und Zeitvergleiche aus Plausible " +
+      "Analytics. Ausschließlich lesend — die Stats API kann nichts verändern.",
+    origin: "https://plausible-mcp.ksqsebastian.workers.dev",
+    mcpUrl: "https://plausible-mcp.ksqsebastian.workers.dev/mcp",
+    auth: "oauth",
+    status: "aktiv",
+    mark: PLAUSIBLE_MARK,
+    thirdPartyBrand: true,
+    accent: PLAUSIBLE_MARK.accent,
+    icon: "P",
+    catalog: "tools.json",
+    binding: "PLAUSIBLE",
+    notes: [
+      "OAuth 2.1 mit PKCE — jeder Nutzer hinterlegt beim Verbinden seinen eigenen " +
+        "Plausible-API-Key (Account Settings → API Keys) und die Domain seiner Seite.",
+      "Die Domain gehört zu den Zugangsdaten, weil die Stats API keinen Aufruf ohne " +
+        "Seitenangabe kennt. Beim Verbinden wird sie mitgeprüft: eine Seite, die es im " +
+        "Konto nicht gibt, fällt sofort auf und nicht erst beim ersten Aufruf.",
+      "Land, Region und Stadt führt Plausible doppelt — als ISO-Code und als Klarname. " +
+        "Gefragt wird immer die Namensfassung; ein Ergebnis mit 'DE' statt 'Germany' " +
+        "hilft im Gespräch niemandem.",
+      "Antworten kommen mit Feldnamen zurück. Plausible selbst liefert Parallel-Arrays, " +
+        "bei denen die Bedeutung einer Zahl nur aus der Reihenfolge der Anfrage hervorgeht.",
+      "Der Zuschnitt der Tools ist an getsentry/plausible-mcp (MIT) angelehnt; der " +
+        "Quelltext ist eigener, auf dem gemeinsamen Gerüst dieses Projekts.",
+      "Plausible begrenzt die Stats API auf 600 Anfragen pro Stunde und Konto.",
     ],
   },
   {

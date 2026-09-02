@@ -9,6 +9,8 @@ OAuth-geschützte MCP-Server auf Cloudflare Workers — plus die Übersichtsseit
 | sevdesk MCP | https://sevdesk-mcp.ksqsebastian.workers.dev/mcp |
 | Tarifcheck MCP | https://tarifcheck.ksqsebastian.workers.dev/mcp |
 | Mikdaten MCP | https://mikdaten.ksqsebastian.workers.dev/mcp |
+| Türwerk MCP | https://tuerwerk.ksqsebastian.workers.dev/mcp |
+| Plausible MCP | https://plausible-mcp.ksqsebastian.workers.dev/mcp |
 
 Der Vorgänger auf Vercel (`hero-mcp.vercel.app`) ist am 06.08.2026 abgeschaltet worden und
 antwortet auf jeden Aufruf mit HTTP 410 samt Verweis auf den neuen Endpoint. Aus der Übersicht
@@ -20,6 +22,7 @@ ist er entfernt; der 410-Stub bleibt für alle, die noch die alte URL eingetrage
 shared/           OAuth-Server, MCP-Protokoll, Gestaltung — von allen Servern benutzt
 servers/hero/     HERO-Handwerkersoftware, 34 Tools
 servers/sevdesk/  sevdesk-Buchhaltung, 21 Tools
+servers/plausible/ Plausible-Web-Statistik, 5 Tools, nur lesend
 hub/              Übersichtsseite: alle Server, alle Tools, live vom Server geholt
 scripts/          Build, Schema-Validierung, Tests, Deployment
 ```
@@ -108,6 +111,53 @@ Vorher stand an dieser Stelle ein Server für **Lexware Office** (17 Tools). Er 
 worden. Was von FLOWWER bleibt: `Brand.fields` nimmt seither eine *Liste* von
 Eingabefeldern statt eines einzelnen.
 
+## Plausible MCP
+
+Ein Server für die [Stats API v2](https://plausible.io/docs/stats-api) von Plausible
+Analytics. Fünf Tools, **alle lesend** — anders als bei HERO und sevdesk fehlt das
+Schreiben hier nicht aus Vorsicht, sondern weil die Stats API nichts anbietet, was etwas
+verändern könnte.
+
+| Tool | Wofür |
+|---|---|
+| `overview` | Eckwerte eines Zeitraums als eine Zeile |
+| `timeseries` | dieselben Kennzahlen über die Zeit (Stunde/Tag/Woche/Monat) |
+| `breakdown` | nach Seite, Herkunft, Kanal, Land, Gerät, UTM oder eigener Eigenschaft |
+| `conversions` | Zielerreichungen mit Rate, wahlweise je Seite |
+| `compare` | zwei beliebige Zeiträume nebeneinander, mit Differenz |
+
+**Zwei Zugangsfelder.** Die Stats API kennt keinen Aufruf ohne Seitenangabe, deshalb
+gehören API-Key *und* Domain zu den Zugangsdaten. Beide werden beim Verbinden gegen
+Plausible geprüft: eine Domain, die es im Konto nicht gibt, fällt sofort auf statt beim
+ersten Tool-Aufruf. `https://` und ein Schrägstrich am Ende werden abgeschnitten — das ist
+der häufigste Tippfehler. Jedes Tool nimmt zusätzlich ein optionales `site`, falls der Key
+mehrere Seiten sieht.
+
+**Vier Fallen der API**, alle in `servers/plausible/src/client.ts` eingebaut statt
+kommentiert:
+
+1. Ein absoluter Zeitraum ist ein **Array**, kein `"von,bis"`. Die naheliegende
+   Zeichenkette ergibt einen 400er, dessen Text die Ursache nicht nennt.
+2. Ergebnisse sind **Parallel-Arrays** — die Namen stehen nur in der Anfrage. `zip()` setzt
+   sie wieder an die Werte, sonst müsste der Leser Spalten zählen.
+3. `conversion_rate` braucht einen **Ziel-Bezug**; ohne ihn lehnt Plausible ab, ohne zu
+   sagen, was fehlt.
+4. Ziele lassen sich **filtern, aber nicht ausschließen** — `is_not` auf `event:goal` ist
+   ein 400er.
+
+Dazu eine Eigenheit, die kein Fehler ist und trotzdem stört: Land, Region und Stadt führt
+Plausible doppelt, als ISO-Code (`visit:country` → `"DE"`) und als Klarname
+(`visit:country_name` → `"Germany"`). Gefragt wird immer die Namensfassung; die Antwort
+sagt dazu, dass getauscht wurde.
+
+Der Zuschnitt ist an [getsentry/plausible-mcp](https://github.com/getsentry/plausible-mcp)
+(MIT) angelehnt — dort ein Node-Prozess mit dem offiziellen MCP-SDK, zod und
+Sentry-Telemetrie, wahlweise über stdio oder als Worker hinter Cloudflare Access.
+Übernommen sind die Einteilung der Tools und das Wissen um die Fallen, kein Quelltext.
+
+Plausible begrenzt die Stats API auf 600 Anfragen pro Stunde und Konto. Eine Drossel wie im
+sevdesk-Client wäre dort nur Ballast; 429 wird gemeldet, nicht wiederholt.
+
 ## Korrektheit ohne Live-Zugang
 
 Die HERO-API meldet bei mehreren Operationen Erfolg und verwirft dabei still Daten. Der
@@ -138,6 +188,11 @@ ein Request rausgeht.
   mit Teilzahlung, Überfälligkeit), die vier Fallen von oben, die Paginierung über mehrere
   Seiten, der Download-Link samt base64-Dekodierung, das Zurücklesen nach dem Anlegen und
   ein zweites Konto, das keinerlei Belege hat.
+- **41 Prüfungen Plausible** — die vier Fallen der Stats API, der Tausch von ISO-Code auf
+  Klarnamen, die Filter-Kurzformen, und für jede Fehlbedienung zusätzlich die Zusicherung,
+  dass sie *vor* dem Netzaufruf auffliegt. Die Attrappe ist dabei so streng wie Plausible
+  selbst: sie lehnt einen Zeitraum als Zeichenkette ab, sonst würde der Test die Falle gar
+  nicht sehen.
 
 Zwei Dinge daran sind mehr als Zierde. Erstens prüft eine Zusicherung, dass **jedes** Tool
 mindestens einmal wirklich läuft — weil der Client jeden Aufruf gegen die API-Beschreibung
@@ -177,6 +232,7 @@ Originalfarben, direkt von den Anbietern:
 |---|---|
 | HERO | `hero-software.de/assets/img/static/logos/hero-logomark-dark.svg` |
 | sevdesk | `my.sevdesk.de/images/logo.svg` — nur das Zeichen, ohne Schriftzug |
+| Plausible | `plausible.io/assets/images/icon/plausible_logo.svg` — dito |
 
 Vorher standen dort Nachbauten. Das ist die schlechteste Variante: es sieht aus wie die
 Marke, ist aber keine. Entweder das echte Zeichen oder ein neutrales.
@@ -186,13 +242,20 @@ und wird unter `/favicon.ico`, `/icon.png` und `/apple-touch-icon.png` ausgelief
 allein reicht nicht: Connector-Listen, Lesezeichen und Startbildschirme holen sich eine
 dieser Dateien und zeigen sonst gar nichts. Erzeugt mit `npm run gen:icons` — das braucht
 einmalig Playwright, weil die Herstellerzeichen echte Pfade sind und kein Pixelraster. Das
-Ergebnis ist eingecheckt, der normale Build kommt ohne aus.
+Ergebnis ist eingecheckt, der normale Build kommt ohne aus. Passt das installierte
+Playwright nicht zum vorhandenen Browser, zeigt `CHROMIUM_PATH=/pfad/zu/chrome` auf ein
+beliebiges Chromium.
 
 `composeLogo()` setzt ein Zeichen mittig auf eine abgerundete Fläche — dasselbe Bild dient
 als Favicon und als Kachel. HERO steht auf seinem Gelb, sevdesk weiß auf seinem Rot
-(#FB523B) — so, wie die Anbieter es selbst zeigen. Bei sevdesk sind Ausschnitt und Größe
-aus der Originaldatei abgemessen, damit die Kachel dieselben Proportionen hat wie das
-App-Icon; dafür beachtet `composeLogo()` jetzt auch einen viewBox-Ursprung ungleich null.
+(#FB523B), Plausible mit seinem Farbverlauf auf Weiß mit Haarlinie — so, wie die Anbieter
+es selbst zeigen. Bei sevdesk sind Ausschnitt und Größe aus der Originaldatei abgemessen,
+damit die Kachel dieselben Proportionen hat wie das App-Icon; dafür beachtet
+`composeLogo()` jetzt auch einen viewBox-Ursprung ungleich null. Beim Plausible-Zeichen
+ist der Ausschnitt nicht abgemessen, sondern ausgerechnet: die beiden Pfade füllen genau
+0/0 bis 45.36/60, und diese viewBox behält das ursprüngliche Koordinatensystem — nötig,
+weil die Farbverläufe `gradientUnits="userSpaceOnUse"` benutzen und beim Normalisieren
+verrutschen würden.
 
 Die Logos kennzeichnen das angebundene System, mehr nicht. Der Fuß jeder Seite sagt, dass
 es fremde Marken sind und dass dies keine offiziellen Integrationen der Anbieter sind.
@@ -201,7 +264,7 @@ es fremde Marken sind und dass dies keine offiziellen Integrationen der Anbieter
 
 Ein Stylesheet für alles: `shared/src/style.ts`. Viel Weiß, wenige Farben, harte Kontraste
 bei der Schrift, Haarlinien statt Schatten. Die Akzentfarbe gehört dem jeweiligen System
-(HERO gelb, sevdesk rot) und kommt nur in kleinen Flächen vor — die Seiten selbst bleiben
+(HERO gelb, sevdesk rot, Plausible indigo) und kommt nur in kleinen Flächen vor — die Seiten selbst bleiben
 schwarzweiß.
 
 Bewegung gibt es nur dort, wo sie etwas bedeutet: Inhalt tritt beim Laden gestaffelt ein,
