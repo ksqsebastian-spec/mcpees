@@ -126,12 +126,18 @@ verändern könnte.
 | `conversions` | Zielerreichungen mit Rate, wahlweise je Seite |
 | `compare` | zwei beliebige Zeiträume nebeneinander, mit Differenz |
 
-**Zwei Zugangsfelder.** Die Stats API kennt keinen Aufruf ohne Seitenangabe, deshalb
-gehören API-Key *und* Domain zu den Zugangsdaten. Beide werden beim Verbinden gegen
-Plausible geprüft: eine Domain, die es im Konto nicht gibt, fällt sofort auf statt beim
-ersten Tool-Aufruf. `https://` und ein Schrägstrich am Ende werden abgeschnitten — das ist
-der häufigste Tippfehler. Jedes Tool nimmt zusätzlich ein optionales `site`, falls der Key
-mehrere Seiten sieht.
+**Zwei Zugangsfelder — aber nur eine Verbindung, egal wie viele Seiten.** Die hinterlegte
+Domain ist die *Vorgabe* für Fragen ohne Ortsangabe; jedes Tool nimmt daneben ein
+optionales `site` und beantwortet damit jede Seite, die der Key sehen darf. Zehn Seiten
+brauchen also keine zehn Verbindungen.
+
+Dass die Vorgabe trotzdem Pflicht ist, hat zwei Gründe: die Stats API kennt keinen Aufruf
+ohne Seitenangabe, und die [Sites API](https://plausible.io/docs/sites-api), mit der sich
+die Seiten eines Kontos auflisten ließen, ist **Enterprise-only**. Der Server kann die
+Domains also weder erraten noch abfragen. Beim Verbinden wird die Vorgabe mitgeprüft: eine
+Seite, die es im Konto nicht gibt, fällt sofort auf statt beim ersten Tool-Aufruf.
+`https://` und ein Schrägstrich am Ende werden abgeschnitten — das ist der häufigste
+Tippfehler.
 
 **Vier Fallen der API**, alle in `servers/plausible/src/client.ts` eingebaut statt
 kommentiert:

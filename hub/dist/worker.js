@@ -118,7 +118,8 @@ var REGISTRY = [
     binding: "PLAUSIBLE",
     notes: [
       "OAuth 2.1 mit PKCE \u2014 jeder Nutzer hinterlegt beim Verbinden seinen eigenen Plausible-API-Key (Account Settings \u2192 API Keys) und die Domain seiner Seite.",
-      "Die Domain geh\xF6rt zu den Zugangsdaten, weil die Stats API keinen Aufruf ohne Seitenangabe kennt. Beim Verbinden wird sie mitgepr\xFCft: eine Seite, die es im Konto nicht gibt, f\xE4llt sofort auf und nicht erst beim ersten Aufruf.",
+      "Eine Verbindung reicht f\xFCr alle Seiten eines Kontos. Die hinterlegte Domain ist nur die Vorgabe f\xFCr Fragen ohne Ortsangabe; jedes Tool nimmt daneben eine beliebige andere Seite entgegen, die der Key sehen darf.",
+      "Warum es die Vorgabe \xFCberhaupt braucht: die Stats API kennt keinen Aufruf ohne Seitenangabe, und die Sites API, die ein Konto auflisten k\xF6nnte, gibt Plausible nur im Enterprise-Tarif frei. Beim Verbinden wird die Domain mitgepr\xFCft \u2014 eine Seite, die es nicht gibt, f\xE4llt sofort auf und nicht erst beim ersten Aufruf.",
       "Land, Region und Stadt f\xFChrt Plausible doppelt \u2014 als ISO-Code und als Klarname. Gefragt wird immer die Namensfassung; ein Ergebnis mit 'DE' statt 'Germany' hilft im Gespr\xE4ch niemandem.",
       "Antworten kommen mit Feldnamen zur\xFCck. Plausible selbst liefert Parallel-Arrays, bei denen die Bedeutung einer Zahl nur aus der Reihenfolge der Anfrage hervorgeht.",
       "Der Zuschnitt der Tools ist an getsentry/plausible-mcp (MIT) angelehnt; der Quelltext ist eigener, auf dem gemeinsamen Ger\xFCst dieses Projekts.",

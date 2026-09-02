@@ -191,9 +191,13 @@ export const REGISTRY: ServerEntry[] = [
     notes: [
       "OAuth 2.1 mit PKCE — jeder Nutzer hinterlegt beim Verbinden seinen eigenen " +
         "Plausible-API-Key (Account Settings → API Keys) und die Domain seiner Seite.",
-      "Die Domain gehört zu den Zugangsdaten, weil die Stats API keinen Aufruf ohne " +
-        "Seitenangabe kennt. Beim Verbinden wird sie mitgeprüft: eine Seite, die es im " +
-        "Konto nicht gibt, fällt sofort auf und nicht erst beim ersten Aufruf.",
+      "Eine Verbindung reicht für alle Seiten eines Kontos. Die hinterlegte Domain ist " +
+        "nur die Vorgabe für Fragen ohne Ortsangabe; jedes Tool nimmt daneben eine " +
+        "beliebige andere Seite entgegen, die der Key sehen darf.",
+      "Warum es die Vorgabe überhaupt braucht: die Stats API kennt keinen Aufruf ohne " +
+        "Seitenangabe, und die Sites API, die ein Konto auflisten könnte, gibt Plausible " +
+        "nur im Enterprise-Tarif frei. Beim Verbinden wird die Domain mitgeprüft — eine " +
+        "Seite, die es nicht gibt, fällt sofort auf und nicht erst beim ersten Aufruf.",
       "Land, Region und Stadt führt Plausible doppelt — als ISO-Code und als Klarname. " +
         "Gefragt wird immer die Namensfassung; ein Ergebnis mit 'DE' statt 'Germany' " +
         "hilft im Gespräch niemandem.",

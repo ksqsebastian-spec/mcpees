@@ -31,9 +31,14 @@ const config: ServerConfig<ToolContext> = {
     icon: PLAUSIBLE_ICON,
     /*
      * Zwei Felder, nicht eines: die Stats API kennt keinen Endpunkt, der ohne Angabe
-     * einer Seite antwortet. Die Domain gehört deshalb zu den Zugangsdaten und nicht in
-     * jeden Tool-Aufruf. Überschreiben lässt sie sich trotzdem — jedes Tool nimmt ein
-     * optionales 'site', falls der Key mehrere Seiten sieht.
+     * einer Seite antwortet, und die Sites API — die die Seiten eines Kontos auflisten
+     * könnte — gibt es nur im Enterprise-Tarif. Ohne eine Domain wüsste der Server also
+     * weder, wogegen er den Key prüfen soll, noch was er ohne nähere Angabe abfragen soll.
+     *
+     * Es ist aber eine VORGABE, keine Bindung: jedes Tool nimmt ein optionales 'site'.
+     * Wer zehn Seiten hat, braucht trotzdem nur diese eine Verbindung. Das muss die
+     * Beschriftung hergeben — stand hier nur „Domain der Seite", las sich das wie eine
+     * Verbindung je Seite.
      */
     fields: [
       {
@@ -44,16 +49,21 @@ const config: ServerConfig<ToolContext> = {
       },
       {
         name: "site",
-        label: "Domain der Seite",
+        label: "Standard-Seite (Domain)",
         placeholder: "example.com",
       },
     ],
     credentialHelp:
       "Den Key erzeugst du in Plausible unter <b>Account Settings → API Keys → New API " +
-      "Key</b>. Er wird nur einmal angezeigt. Als Domain trägst du die Seite genau so ein, " +
-      "wie sie in Plausible steht — ohne <code>https://</code> und ohne Schrägstrich am " +
-      "Ende, also z. B. <code>example.com</code>. Der Key liest nur; Plausible bietet für " +
-      "die Stats API gar keine schreibenden Aufrufe an. Zurückziehen kannst du den Zugriff " +
+      "Key</b> (Typ <b>Stats API</b>). Er wird nur einmal angezeigt. " +
+      "<b>Eine Verbindung reicht für alle deine Seiten.</b> Die Domain hier ist bloß die " +
+      "Vorgabe für Fragen ohne Ortsangabe — jede andere Seite, die der Key sehen darf, " +
+      "fragst du einfach mit Namen ab („Besucher von kunde-b.de letzte Woche\"). Trag sie " +
+      "genau so ein, wie sie in Plausible steht: ohne <code>https://</code> und ohne " +
+      "Schrägstrich am Ende, also <code>example.com</code>. Welche Seiten es in deinem " +
+      "Konto gibt, kann dieser Server nicht auflisten — dafür bräuchte es die Sites API, " +
+      "und die gibt Plausible nur im Enterprise-Tarif frei. Der Key liest nur; schreibende " +
+      "Aufrufe bietet die Stats API gar nicht an. Zurückziehen kannst du den Zugriff " +
       "jederzeit, indem du den Key in Plausible löschst.",
     summary: "Model-Context-Protocol-Server für Plausible Analytics —",
     bullets: [
@@ -65,6 +75,9 @@ const config: ServerConfig<ToolContext> = {
         "UTM-Parametern oder einer eigenen Ereignis-Eigenschaft",
       "<b>Ziele und Vergleich</b> — Zielerreichungen mit Rate, und zwei beliebige " +
         "Zeiträume nebeneinander samt Differenz",
+      "<b>Mehrere Seiten</b> — eine Verbindung genügt. Die hinterlegte Domain ist nur die " +
+        "Vorgabe; jedes Tool nimmt daneben eine beliebige andere Seite entgegen, die der " +
+        "Key sehen darf.",
       "<b>Nicht enthalten</b> — alles Schreibende. Die Stats API von Plausible ist " +
         "ausschließlich lesend; es gibt nichts, was dieser Server verändern könnte.",
     ],
@@ -81,8 +94,11 @@ const config: ServerConfig<ToolContext> = {
     "immer 'overview' (die Eckwerte), danach 'breakdown' für das Warum und 'timeseries' " +
     "für das Wann. Vier Dinge vorweg: (1) Zeiträume sind entweder Kürzel ('7d', '30d', " +
     "'12mo', 'day', 'month', 'year', 'all') oder absolut als " +
-    "'YYYY-MM-DD,YYYY-MM-DD' — dazwischen gibt es nichts. (2) Die Seite steckt in den " +
-    "Zugangsdaten; 'site' nur setzen, wenn ausdrücklich eine andere Domain gemeint ist. " +
+    "'YYYY-MM-DD,YYYY-MM-DD' — dazwischen gibt es nichts. (2) Eine Vorgabe-Seite steckt " +
+    "in den Zugangsdaten und gilt, wenn keine genannt wird; derselbe Key kann aber " +
+    "mehrere Seiten sehen — für eine andere Domain einfach 'site' setzen, eine zweite " +
+    "Verbindung braucht es nie. Welche Seiten es gibt, kann der Server nicht auflisten " +
+    "(dafür wäre die Sites API nötig, die nur Enterprise hat) — im Zweifel nachfragen. " +
     "(3) conversion_rate rechnet gegen ein Ziel — ohne Ziel-Aufschlüsselung oder " +
     "Zielfilter ist sie nicht zu haben, dafür gibt es 'conversions'. (4) Ziele lassen " +
     "sich filtern, aber nicht ausschließen. " +

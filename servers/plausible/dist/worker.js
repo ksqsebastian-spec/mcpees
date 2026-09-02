@@ -1510,9 +1510,14 @@ var config = {
     icon: PLAUSIBLE_ICON,
     /*
      * Zwei Felder, nicht eines: die Stats API kennt keinen Endpunkt, der ohne Angabe
-     * einer Seite antwortet. Die Domain gehört deshalb zu den Zugangsdaten und nicht in
-     * jeden Tool-Aufruf. Überschreiben lässt sie sich trotzdem — jedes Tool nimmt ein
-     * optionales 'site', falls der Key mehrere Seiten sieht.
+     * einer Seite antwortet, und die Sites API — die die Seiten eines Kontos auflisten
+     * könnte — gibt es nur im Enterprise-Tarif. Ohne eine Domain wüsste der Server also
+     * weder, wogegen er den Key prüfen soll, noch was er ohne nähere Angabe abfragen soll.
+     *
+     * Es ist aber eine VORGABE, keine Bindung: jedes Tool nimmt ein optionales 'site'.
+     * Wer zehn Seiten hat, braucht trotzdem nur diese eine Verbindung. Das muss die
+     * Beschriftung hergeben — stand hier nur „Domain der Seite", las sich das wie eine
+     * Verbindung je Seite.
      */
     fields: [
       {
@@ -1523,17 +1528,18 @@ var config = {
       },
       {
         name: "site",
-        label: "Domain der Seite",
+        label: "Standard-Seite (Domain)",
         placeholder: "example.com"
       }
     ],
-    credentialHelp: "Den Key erzeugst du in Plausible unter <b>Account Settings \u2192 API Keys \u2192 New API Key</b>. Er wird nur einmal angezeigt. Als Domain tr\xE4gst du die Seite genau so ein, wie sie in Plausible steht \u2014 ohne <code>https://</code> und ohne Schr\xE4gstrich am Ende, also z. B. <code>example.com</code>. Der Key liest nur; Plausible bietet f\xFCr die Stats API gar keine schreibenden Aufrufe an. Zur\xFCckziehen kannst du den Zugriff jederzeit, indem du den Key in Plausible l\xF6schst.",
+    credentialHelp: 'Den Key erzeugst du in Plausible unter <b>Account Settings \u2192 API Keys \u2192 New API Key</b> (Typ <b>Stats API</b>). Er wird nur einmal angezeigt. <b>Eine Verbindung reicht f\xFCr alle deine Seiten.</b> Die Domain hier ist blo\xDF die Vorgabe f\xFCr Fragen ohne Ortsangabe \u2014 jede andere Seite, die der Key sehen darf, fragst du einfach mit Namen ab (\u201EBesucher von kunde-b.de letzte Woche"). Trag sie genau so ein, wie sie in Plausible steht: ohne <code>https://</code> und ohne Schr\xE4gstrich am Ende, also <code>example.com</code>. Welche Seiten es in deinem Konto gibt, kann dieser Server nicht auflisten \u2014 daf\xFCr br\xE4uchte es die Sites API, und die gibt Plausible nur im Enterprise-Tarif frei. Der Key liest nur; schreibende Aufrufe bietet die Stats API gar nicht an. Zur\xFCckziehen kannst du den Zugriff jederzeit, indem du den Key in Plausible l\xF6schst.',
     summary: "Model-Context-Protocol-Server f\xFCr Plausible Analytics \u2014",
     bullets: [
       "<b>\xDCberblick</b> \u2014 Besucher, Seitenaufrufe, Absprungrate und Verweildauer f\xFCr jeden Zeitraum, wahlweise auf eine Seite oder ein Ziel eingegrenzt",
       "<b>Verlauf</b> \u2014 dieselben Kennzahlen \xFCber die Zeit, in Stunden, Tagen, Wochen oder Monaten; daf\xFCr da, Ausschl\xE4ge einem Datum zuzuordnen",
       "<b>Aufschl\xFCsselung</b> \u2014 nach Seite, Herkunft, Kanal, Land, Ger\xE4t, Browser, UTM-Parametern oder einer eigenen Ereignis-Eigenschaft",
       "<b>Ziele und Vergleich</b> \u2014 Zielerreichungen mit Rate, und zwei beliebige Zeitr\xE4ume nebeneinander samt Differenz",
+      "<b>Mehrere Seiten</b> \u2014 eine Verbindung gen\xFCgt. Die hinterlegte Domain ist nur die Vorgabe; jedes Tool nimmt daneben eine beliebige andere Seite entgegen, die der Key sehen darf.",
       "<b>Nicht enthalten</b> \u2014 alles Schreibende. Die Stats API von Plausible ist ausschlie\xDFlich lesend; es gibt nichts, was dieser Server ver\xE4ndern k\xF6nnte."
     ]
   },
@@ -1544,7 +1550,7 @@ var config = {
     websiteUrl: "https://plausible.io"
   },
   scopes: "plausible:read",
-  instructions: "Plausible \u2014 Web-Statistik im Gespr\xE4ch. 5 Tools, alle lesend. Der Einstieg ist fast immer 'overview' (die Eckwerte), danach 'breakdown' f\xFCr das Warum und 'timeseries' f\xFCr das Wann. Vier Dinge vorweg: (1) Zeitr\xE4ume sind entweder K\xFCrzel ('7d', '30d', '12mo', 'day', 'month', 'year', 'all') oder absolut als 'YYYY-MM-DD,YYYY-MM-DD' \u2014 dazwischen gibt es nichts. (2) Die Seite steckt in den Zugangsdaten; 'site' nur setzen, wenn ausdr\xFCcklich eine andere Domain gemeint ist. (3) conversion_rate rechnet gegen ein Ziel \u2014 ohne Ziel-Aufschl\xFCsselung oder Zielfilter ist sie nicht zu haben, daf\xFCr gibt es 'conversions'. (4) Ziele lassen sich filtern, aber nicht ausschlie\xDFen. Absprungrate und Verweildauer sind Besuchs-Kennzahlen: zusammen mit einer Seiten-Dimension beziehen sie sich auf den Besuch, der die Seite enthielt, nicht auf die Seite allein.",
+  instructions: "Plausible \u2014 Web-Statistik im Gespr\xE4ch. 5 Tools, alle lesend. Der Einstieg ist fast immer 'overview' (die Eckwerte), danach 'breakdown' f\xFCr das Warum und 'timeseries' f\xFCr das Wann. Vier Dinge vorweg: (1) Zeitr\xE4ume sind entweder K\xFCrzel ('7d', '30d', '12mo', 'day', 'month', 'year', 'all') oder absolut als 'YYYY-MM-DD,YYYY-MM-DD' \u2014 dazwischen gibt es nichts. (2) Eine Vorgabe-Seite steckt in den Zugangsdaten und gilt, wenn keine genannt wird; derselbe Key kann aber mehrere Seiten sehen \u2014 f\xFCr eine andere Domain einfach 'site' setzen, eine zweite Verbindung braucht es nie. Welche Seiten es gibt, kann der Server nicht auflisten (daf\xFCr w\xE4re die Sites API n\xF6tig, die nur Enterprise hat) \u2014 im Zweifel nachfragen. (3) conversion_rate rechnet gegen ein Ziel \u2014 ohne Ziel-Aufschl\xFCsselung oder Zielfilter ist sie nicht zu haben, daf\xFCr gibt es 'conversions'. (4) Ziele lassen sich filtern, aber nicht ausschlie\xDFen. Absprungrate und Verweildauer sind Besuchs-Kennzahlen: zusammen mit einer Seiten-Dimension beziehen sie sich auf den Besuch, der die Seite enthielt, nicht auf die Seite allein.",
   tools: readTools,
   /**
    * Zugangsdaten prüfen.
