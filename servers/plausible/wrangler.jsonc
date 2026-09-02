@@ -8,13 +8,11 @@
   "observability": { "enabled": true },
   "kv_namespaces": [
     {
-      // TODO(deploy): eigenen Namespace anlegen und die ID hier eintragen —
-      //   npx wrangler kv namespace create OAUTH_KV --preview false
       // Die Namespaces der Server werden bewusst NICHT geteilt: die abgelegten
       // Zugangsdaten gehören je einem Fremdsystem, und ein gemeinsamer Namespace
       // hieße, dass ein Token des einen Servers Schlüssel des anderen sehen könnte.
       "binding": "OAUTH_KV",
-      "id": "PLATZHALTER_NAMESPACE_ID"
+      "id": "b848915010204f9ab66b63af90f56bae"
     }
   ],
   "vars": {
