@@ -7,6 +7,7 @@ OAuth-geschützte MCP-Server auf Cloudflare Workers — plus die Übersichtsseit
 | Übersicht aller Server | https://mcp-hub.ksqsebastian.workers.dev |
 | HERO MCP (Endpoint für Claude) | https://hero-mcp.ksqsebastian.workers.dev/mcp |
 | sevdesk MCP | https://sevdesk-mcp.ksqsebastian.workers.dev/mcp |
+| DocuWare MCP | https://docuware-mcp.ksqsebastian.workers.dev/mcp |
 | Tarifcheck MCP | https://tarifcheck.ksqsebastian.workers.dev/mcp |
 | Mikdaten MCP | https://mikdaten.ksqsebastian.workers.dev/mcp |
 
@@ -20,6 +21,7 @@ ist er entfernt; der 410-Stub bleibt für alle, die noch die alte URL eingetrage
 shared/           OAuth-Server, MCP-Protokoll, Gestaltung — von allen Servern benutzt
 servers/hero/     HERO-Handwerkersoftware, 34 Tools
 servers/sevdesk/  sevdesk-Buchhaltung, 21 Tools
+servers/docuware/ DocuWare-Dokumentenarchiv, 10 Tools
 hub/              Übersichtsseite: alle Server, alle Tools, live vom Server geholt
 scripts/          Build, Schema-Validierung, Tests, Deployment
 ```
@@ -108,6 +110,78 @@ Vorher stand an dieser Stelle ein Server für **Lexware Office** (17 Tools). Er 
 worden. Was von FLOWWER bleibt: `Brand.fields` nimmt seither eine *Liste* von
 Eingabefeldern statt eines einzelnen.
 
+## DocuWare MCP
+
+10 Tools für [DocuWare](https://docuware.com): Aktenschränke und Indexfelder anzeigen,
+Auswahllisten nachschlagen, Dokumente über ihre Indexfelder suchen, ein Dokument samt
+Anhängen ansehen, den OCR-Volltext lesen und Dateien über einen Link auf Zeit
+herunterladen. Geschrieben wird ausschließlich Neues: ablegen und anhängen.
+
+Kein Ändern, kein Löschen — wie bei den anderen Servern. Bei einem Archiv wiegt das
+schwerer als anderswo: es lebt davon, dass niemand nachträglich daran dreht. Indexfelder
+korrigieren und Dokumente entfernen geht in DocuWare selbst, mit Protokoll und Rechten.
+
+**Zwei Anmeldearten, ein Formular.** DocuWare lässt beides zu: ein Benutzerkonto
+(Passwort-Grant, `client_id` ist der eingebaute `docuware.platform.net.client`) oder eine
+App-Registrierung aus *DocuWare Konfiguration → Integrationen* mit Client-ID und Secret.
+Zwei Formulare für dieselbe Sache wären eines zu viel, also stehen beide im selben
+Feldpaar. Welche gemeint ist, verrät die Gestalt — Client-IDs sind GUIDs, Benutzernamen
+nie —, und passt die erste nicht, wird die zweite versucht. Geraten wird also nichts.
+Das Token holt der Server nicht bei DocuWare, sondern bei einem Identity Service, der in
+der Cloud auf einem ganz anderen Host liegt: `/Home/IdentityServiceInfo` sagt, wo er ist,
+dessen `.well-known/openid-configuration` sagt, wie sein Token-Endpunkt heißt.
+
+**Es wird gefolgt, nicht gebaut.** Die Platform-API ist durchgehend HATEOAS: jede Antwort
+trägt `Links: [{rel, href}]`, und der nächste Schritt steht dort drin. Dieser Server setzt
+deshalb keinen einzigen Pfad zusammen. Das ist kein Purismus — DocuWare veröffentlicht die
+Pfade nirgends, und was in der Cloud gilt, gilt on premises schon nicht mehr. Fehlt eine
+Beziehung, sagt der Server, welche; er rät keine Adresse.
+
+Fünf Eigenheiten prägen die Umsetzung:
+
+- **Der Feldname auf dem Bildschirm ist nicht der Feldname der API.** Was in DocuWare
+  „Belegdatum“ heißt, kennt die API nur als `DOCDATE`. Wer die Bezeichnung durchreicht,
+  bekommt 400 — ohne Hinweis, welcher Name es hätte sein sollen. Der Server löst beides
+  gegen die Feldliste des Schranks auf und nennt bei einem Treffer ins Leere alle
+  vorhandenen Felder.
+- **Klammern in einem Suchwert sind Syntax.** „Rechnung (Eingang)“ sucht unmaskiert etwas
+  anderes als das, was dasteht, und meldet keinen Fehler, sondern liefert die falsche
+  Treffermenge. Sie werden maskiert; `*` und `?` bleiben stehen, die sind als Platzhalter
+  gemeint, wenn jemand sie schreibt.
+- **Die Sortierung gehört in den Rumpf.** Es gibt auch einen Query-Parameter `sortOrder`,
+  der nimmt aber nur ein Feld und verwirft den Rest stillschweigend.
+- **Ein Feld, das der Ablagedialog nicht führt, verfällt beim Ablegen still.** DocuWare
+  nimmt die Angabe entgegen, legt ab und schreibt sie nicht. Deshalb wird vorher geprüft
+  und hinterher zurückgelesen — was der Server meldet, ist der Stand im Schrank und nicht
+  die Antwort auf das POST.
+- **Datumswerte sind kein ISO-Datum.** DocuWare antwortet mit `/Date(1700000000000+0100)/`;
+  `/Date(0)/` heißt „kein Datum“ und nicht 1.1.1970.
+
+Dazu eine Unsicherheit, die nicht wegdiskutiert wird: für Datumsfelder schickt der Server
+beim Ablegen die Kennung `DateTime` samt ISO-Wert. Eine eigene Kennung `Date` wäre
+naheliegend, ist aber nirgends belegt — deshalb bleibt es bei dem, was nachweislich
+funktioniert.
+
+Dateien kommen nie als base64 ins Gespräch. Wer den Inhalt wissen will, bekommt mit
+`document_text` den OCR-Volltext; wer die Datei braucht, bekommt einen nicht erratbaren
+Link auf Zeit von diesem Server, der die Auslieferung selbst übernimmt.
+
+Die Erkenntnisse über diese API stammen aus dem Quelltext von
+[sniner/docuware-client](https://github.com/sniner/docuware-client) (BSD-3-Clause,
+© Stefan Schönberger) — einer gepflegten Python-Bibliothek samt CLI. Deren Code ist die
+Beschreibung, die DocuWare selbst nicht veröffentlicht: die offizielle Doku nennt
+Postman-Sammlungen und ein XSD, aber weder Endpunktpfade noch die Gestalt einer
+Suchanfrage. Übernommen ist das Wissen, nicht der Code — dort ein Python-Paket mit CLI und
+Anmeldedatei auf der Platte, hier ein remote erreichbarer Worker mit OAuth 2.1 und ohne
+Dateisystem.
+
+Vor dem ersten Deploy fehlt noch ein KV-Namensraum; seine Id gehört in
+`servers/docuware/wrangler.jsonc`:
+
+```bash
+npx wrangler kv namespace create docuware-mcp-oauth
+```
+
 ## Korrektheit ohne Live-Zugang
 
 Die HERO-API meldet bei mehreren Operationen Erfolg und verwirft dabei still Daten. Der
@@ -129,7 +203,7 @@ Client zur Laufzeit die Feldnamen jedes Input-Objekts gegen eine generierte Kart
 (`scripts/gen-input-fields.mjs`) — ein `productId` statt `product_id` fliegt auf, bevor
 ein Request rausgeht.
 
-`npm test` fährt beide Server gegen Attrappen von KV und Fremdsystem:
+`npm test` fährt die Server gegen Attrappen von KV und Fremdsystem:
 
 - **19 Prüfungen HERO** — kompletter OAuth-Flow: Code-Tausch, PKCE, Einmalgebrauch des Codes,
   Refresh-Rotation, Widerruf, ein echter `tools/call`, und dass weder Key noch Token im
@@ -138,6 +212,11 @@ ein Request rausgeht.
   mit Teilzahlung, Überfälligkeit), die vier Fallen von oben, die Paginierung über mehrere
   Seiten, der Download-Link samt base64-Dekodierung, das Zurücklesen nach dem Anlegen und
   ein zweites Konto, das keinerlei Belege hat.
+- **67 Prüfungen DocuWare** — beide Anmeldearten samt Wahl anhand der Gestalt des
+  Benutzernamens, die stille Wiederanmeldung nach einem 401, die fünf Fallen von oben, die
+  Suche über die Folgeseite, das Zusammensetzen des OCR-Texts aus Wörtern, Zeilen und
+  Zonen, der Download-Link samt Auslieferung, und dass weder Passwort noch DocuWare-Token
+  im Klartext in KV landen.
 
 Zwei Dinge daran sind mehr als Zierde. Erstens prüft eine Zusicherung, dass **jedes** Tool
 mindestens einmal wirklich läuft — weil der Client jeden Aufruf gegen die API-Beschreibung
@@ -151,6 +230,13 @@ dem Kontakt gehört.
 Ein früherer Ratenbegrenzungs-Test hat einen anderen echten Fehler gefunden: die Drossel lag
 am Client-Objekt und startete bei jedem Tool-Aufruf neu, sodass zwei Tools nacheinander ihre
 Requests im Abstand von 4 ms abgefeuert hätten. Sie liegt seither auf Modulebene, pro Token.
+
+Beim DocuWare-Server hat der Test denselben Dienst geleistet: eine Prüfung, die schlicht
+mitzählt, wie oft ein Access-Token geholt wird, hat neun Anmeldungen dort gefunden, wo eine
+genügt. Der Client holte das Token pro Request statt pro Zugang — mit KV fiel das nicht auf,
+ohne KV, also genau beim Prüfen der Zugangsdaten, dreimal hintereinander. Discovery und
+Token liegen seither am Objekt, und zwar als Promise, damit auch zwei gleichzeitige Aufrufe
+nur in eine Anmeldung laufen.
 
 ## Bauen und deployen
 
@@ -177,6 +263,7 @@ Originalfarben, direkt von den Anbietern:
 |---|---|
 | HERO | `hero-software.de/assets/img/static/logos/hero-logomark-dark.svg` |
 | sevdesk | `my.sevdesk.de/images/logo.svg` — nur das Zeichen, ohne Schriftzug |
+| DocuWare | `start.docuware.com/hubfs/… /DocuWare Icon.svg` — das Favicon des Anbieters |
 
 Vorher standen dort Nachbauten. Das ist die schlechteste Variante: es sieht aus wie die
 Marke, ist aber keine. Entweder das echte Zeichen oder ein neutrales.
@@ -193,6 +280,10 @@ als Favicon und als Kachel. HERO steht auf seinem Gelb, sevdesk weiß auf seinem
 (#FB523B) — so, wie die Anbieter es selbst zeigen. Bei sevdesk sind Ausschnitt und Größe
 aus der Originaldatei abgemessen, damit die Kachel dieselben Proportionen hat wie das
 App-Icon; dafür beachtet `composeLogo()` jetzt auch einen viewBox-Ursprung ungleich null.
+DocuWare zeigt sein Zeichen blau (#303AB2) auf Weiß — also steht es hier auf einer weißen
+Kachel mit Haarlinie, die sie auf der ebenfalls weißen Seite sonst verlöre. Geändert ist an
+der Datei nur, dass die Farben statt an CSS-Klassen am Pfad hängen; die Pfade selbst sind
+unangetastet.
 
 Die Logos kennzeichnen das angebundene System, mehr nicht. Der Fuß jeder Seite sagt, dass
 es fremde Marken sind und dass dies keine offiziellen Integrationen der Anbieter sind.

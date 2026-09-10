@@ -5,7 +5,7 @@
  * gepflegt, sondern zur Laufzeit vom Server selbst geholt (`catalog`), damit die Übersicht
  * nicht auseinanderläuft, sobald jemand ein Tool ändert.
  */
-import { HERO_MARK, SEVDESK_MARK, type Mark } from "../../shared/src/marks";
+import { HERO_MARK, SEVDESK_MARK, DOCUWARE_MARK, type Mark } from "../../shared/src/marks";
 
 export interface ServerEntry {
   id: string;
@@ -169,6 +169,42 @@ export const REGISTRY: ServerEntry[] = [
       "PDFs bekommen einen zeitlich begrenzten Link von diesem Server — sevdesk liefert sie " +
         "nur als base64 gegen den Token aus.",
       "Die eingefrorene API-Beschreibung stammt aus github.com/nikolausm/mcp-sevdesk (MIT).",
+    ],
+  },
+  {
+    id: "docuware",
+    name: "DocuWare",
+    tagline: "Dokumentenarchiv",
+    description:
+      "Aktenschränke durchsuchen, Dokumente samt Indexfeldern ansehen, den OCR-Volltext " +
+      "lesen und Neues ablegen. Kein Ändern, kein Löschen.",
+    origin: "https://docuware-mcp.ksqsebastian.workers.dev",
+    mcpUrl: "https://docuware-mcp.ksqsebastian.workers.dev/mcp",
+    auth: "oauth",
+    status: "aktiv",
+    mark: DOCUWARE_MARK,
+    thirdPartyBrand: true,
+    accent: DOCUWARE_MARK.accent,
+    icon: "D",
+    catalog: "tools.json",
+    binding: "DOCUWARE",
+    notes: [
+      "OAuth 2.1 mit PKCE — jeder Nutzer hinterlegt beim Verbinden seinen eigenen Zugang: " +
+        "entweder ein DocuWare-Benutzerkonto oder eine App-Registrierung mit Client-ID und " +
+        "Secret. Beides ist von DocuWare vorgesehen, beides geht über dasselbe Formular.",
+      "Der Zugang erbt die Rechte, die in DocuWare vergeben sind. Ein Aktenschrank, den der " +
+        "Benutzer nicht sehen darf, taucht hier gar nicht erst auf.",
+      "Es wird kein Endpunktpfad zusammengebaut. Die Platform-API gibt jeden nächsten " +
+        "Schritt als Link in der vorigen Antwort vor; gefolgt wird genau dem — ein " +
+        "geratener Pfad funktioniert auf einem DocuWare-Stand und auf dem nächsten nicht.",
+      "Feldnamen dürfen der API-Name (DOCDATE) oder die Bezeichnung (Belegdatum) sein. Wer " +
+        "die Bezeichnung an DocuWare durchreicht, bekommt sonst 400 ohne Hinweis, welcher " +
+        "Name es hätte sein sollen.",
+      "Klammern in einem Suchwert werden maskiert. Ohne das sind sie Syntax, und die " +
+        "Trefferliste wäre falsch, ohne dass eine Fehlermeldung darauf hinweist.",
+      "Dateien kommen nie als base64 ins Gespräch, sondern über einen Link auf Zeit von " +
+        "diesem Server. Für den Inhalt gibt es den OCR-Volltext ohne Umweg über die Datei.",
+      "Das Wissen über diese API stammt aus github.com/sniner/docuware-client (BSD-3-Clause).",
     ],
   },
   {

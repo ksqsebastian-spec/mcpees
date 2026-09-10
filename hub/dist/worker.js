@@ -10,6 +10,15 @@ var SEVDESK_MARK = {
   accent: "#FB523B",
   fill: 0.507
 };
+var DOCUWARE_MARK = {
+  inner: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 172.51 172.5"><circle fill="#ffffff" cx="86.25" cy="86" r="58.21"/><path fill="#303ab2" d="M113.48,86a32.84,32.84,0,0,1-32.86,32.86h-.06V97H58.63V75.08H80.56V53.15h.06A32.89,32.89,0,0,1,113.48,86"/><path fill="#303ab2" d="M147.24,25a86.24,86.24,0,1,0,25.27,61,86,86,0,0,0-25.27-61M119.79,125.17a55.05,55.05,0,0,1-39.17,16.22h-.06V118.88H58.63V97H36.69V75.08H58.63V53.15H80.56V30.62h.06a55.39,55.39,0,0,1,39.17,94.55"/></svg>',
+  bg: "#ffffff",
+  border: true,
+  accent: "#303AB2",
+  /* Ein Kreis füllt seine Umschreibung ganz aus und wirkt auf der Kachel darum kleiner
+     als ein Zeichen, das Ecken hat — deshalb hier deutlich über der Voreinstellung. */
+  fill: 0.7
+};
 var FILL = 0.56;
 function composeLogo(mark, size = 512) {
   const vb = /viewBox="([\d.\s-]+)"/.exec(mark.inner)?.[1]?.trim().split(/\s+/).map(Number);
@@ -87,6 +96,31 @@ var REGISTRY = [
       "Seit dem sevdesk-Update 2.0 hei\xDFt die Steuerregel taxRule statt taxType. Der Server fragt die Version des Kontos ab und schickt die passende Angabe.",
       "PDFs bekommen einen zeitlich begrenzten Link von diesem Server \u2014 sevdesk liefert sie nur als base64 gegen den Token aus.",
       "Die eingefrorene API-Beschreibung stammt aus github.com/nikolausm/mcp-sevdesk (MIT)."
+    ]
+  },
+  {
+    id: "docuware",
+    name: "DocuWare",
+    tagline: "Dokumentenarchiv",
+    description: "Aktenschr\xE4nke durchsuchen, Dokumente samt Indexfeldern ansehen, den OCR-Volltext lesen und Neues ablegen. Kein \xC4ndern, kein L\xF6schen.",
+    origin: "https://docuware-mcp.ksqsebastian.workers.dev",
+    mcpUrl: "https://docuware-mcp.ksqsebastian.workers.dev/mcp",
+    auth: "oauth",
+    status: "aktiv",
+    mark: DOCUWARE_MARK,
+    thirdPartyBrand: true,
+    accent: DOCUWARE_MARK.accent,
+    icon: "D",
+    catalog: "tools.json",
+    binding: "DOCUWARE",
+    notes: [
+      "OAuth 2.1 mit PKCE \u2014 jeder Nutzer hinterlegt beim Verbinden seinen eigenen Zugang: entweder ein DocuWare-Benutzerkonto oder eine App-Registrierung mit Client-ID und Secret. Beides ist von DocuWare vorgesehen, beides geht \xFCber dasselbe Formular.",
+      "Der Zugang erbt die Rechte, die in DocuWare vergeben sind. Ein Aktenschrank, den der Benutzer nicht sehen darf, taucht hier gar nicht erst auf.",
+      "Es wird kein Endpunktpfad zusammengebaut. Die Platform-API gibt jeden n\xE4chsten Schritt als Link in der vorigen Antwort vor; gefolgt wird genau dem \u2014 ein geratener Pfad funktioniert auf einem DocuWare-Stand und auf dem n\xE4chsten nicht.",
+      "Feldnamen d\xFCrfen der API-Name (DOCDATE) oder die Bezeichnung (Belegdatum) sein. Wer die Bezeichnung an DocuWare durchreicht, bekommt sonst 400 ohne Hinweis, welcher Name es h\xE4tte sein sollen.",
+      "Klammern in einem Suchwert werden maskiert. Ohne das sind sie Syntax, und die Trefferliste w\xE4re falsch, ohne dass eine Fehlermeldung darauf hinweist.",
+      "Dateien kommen nie als base64 ins Gespr\xE4ch, sondern \xFCber einen Link auf Zeit von diesem Server. F\xFCr den Inhalt gibt es den OCR-Volltext ohne Umweg \xFCber die Datei.",
+      "Das Wissen \xFCber diese API stammt aus github.com/sniner/docuware-client (BSD-3-Clause)."
     ]
   },
   {

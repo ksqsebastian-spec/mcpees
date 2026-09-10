@@ -18,7 +18,7 @@ import { deflateSync } from "node:zlib";
 import { writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { HERO_MARK, SEVDESK_MARK, composeLogo } from "../shared/src/marks.ts";
+import { HERO_MARK, SEVDESK_MARK, DOCUWARE_MARK, composeLogo } from "../shared/src/marks.ts";
 
 /* Playwright steht bewusst nicht in package.json: gebraucht wird es nur hier, und das
    Ergebnis ist eingecheckt. Wer eine Marke ändert, installiert es einmal. */
@@ -35,6 +35,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const MARKS = [
   { konstante: "HERO_ICON", mark: HERO_MARK },
   { konstante: "SEVDESK_ICON", mark: SEVDESK_MARK },
+  { konstante: "DOCUWARE_ICON", mark: DOCUWARE_MARK },
 ];
 
 /* --------------------------------------------------------------- PNG-Kodierung */

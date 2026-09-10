@@ -2,8 +2,9 @@
  * Offizielle Herstellerlogos.
  *
  * Die Pfade stammen unverändert von den Anbietern selbst:
- *   HERO    — hero-software.de/assets/img/static/logos/hero-logomark-dark.svg
- *   sevdesk — my.sevdesk.de/images/logo.svg (nur das Zeichen, ohne Schriftzug)
+ *   HERO     — hero-software.de/assets/img/static/logos/hero-logomark-dark.svg
+ *   sevdesk  — my.sevdesk.de/images/logo.svg (nur das Zeichen, ohne Schriftzug)
+ *   DocuWare — start.docuware.com, „DocuWare Icon.svg" (das Favicon des Anbieters)
  *
  * Bewusst unverändert: Farben und Formen bleiben, wie der Anbieter sie ausliefert.
  * Ein nachgezeichnetes Logo ist die schlechteste Variante — es sieht aus wie die Marke,
@@ -61,6 +62,33 @@ export const SEVDESK_MARK: Mark = {
   bg: "#FB523B",
   accent: "#FB523B",
   fill: 0.507,
+};
+
+/**
+ * DocuWare liefert sein Zeichen selbst als SVG aus — es hängt als `shortcut icon` an
+ * start.docuware.com (`__ Corporate Website/Logos/DocuWare Icon.svg`). Übernommen sind die
+ * drei Formen unverändert: der weiße Kreis und darüber die beiden blauen Pfade, die
+ * zusammen den gestuften Ring ergeben. Geändert ist nur die Schreibweise — im Original
+ * hängen die Farben an CSS-Klassen (`.cls-1`, `.cls-2`) in einem `<style>`-Block; hier
+ * stehen sie als `fill` am Pfad. Dieselben Pfade, dieselben Farben, nur ohne Klassen, die
+ * sich mit anderen eingebetteten SVGs auf derselben Seite ins Gehege kämen.
+ *
+ * DocuWare zeigt das Zeichen blau auf Weiß, nicht weiß auf Blau. Deshalb ist die Kachel
+ * hier weiß und bekommt die Haarlinie, die sie sonst auf der ebenfalls weißen Seite
+ * verlöre — die Farben des Anbieters bleiben, wie sie sind.
+ */
+export const DOCUWARE_MARK: Mark = {
+  inner:
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 172.51 172.5">' +
+    '<circle fill="#ffffff" cx="86.25" cy="86" r="58.21"/>' +
+    '<path fill="#303ab2" d="M113.48,86a32.84,32.84,0,0,1-32.86,32.86h-.06V97H58.63V75.08H80.56V53.15h.06A32.89,32.89,0,0,1,113.48,86"/>' +
+    '<path fill="#303ab2" d="M147.24,25a86.24,86.24,0,1,0,25.27,61,86,86,0,0,0-25.27-61M119.79,125.17a55.05,55.05,0,0,1-39.17,16.22h-.06V118.88H58.63V97H36.69V75.08H58.63V53.15H80.56V30.62h.06a55.39,55.39,0,0,1,39.17,94.55"/></svg>',
+  bg: "#ffffff",
+  border: true,
+  accent: "#303AB2",
+  /* Ein Kreis füllt seine Umschreibung ganz aus und wirkt auf der Kachel darum kleiner
+     als ein Zeichen, das Ecken hat — deshalb hier deutlich über der Voreinstellung. */
+  fill: 0.7,
 };
 
 /** Voreinstellung; einzelne Marken weichen ab (siehe Mark.fill). */

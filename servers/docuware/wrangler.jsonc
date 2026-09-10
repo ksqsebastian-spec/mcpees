@@ -1,0 +1,25 @@
+{
+  // Deployment läuft in dieser Umgebung über die Cloudflare-API (siehe scripts/deploy.mjs),
+  // weil kein Wrangler-Token vorliegt. Diese Datei ist die Wahrheit über die Konfiguration
+  // und macht `wrangler deploy` möglich, sobald jemand lokal mit eigenem Token arbeitet.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "docuware-mcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-01",
+  "workers_dev": true,
+  "observability": { "enabled": true },
+  // Der Namensraum existiert noch nicht — er wird einmalig angelegt und seine Id hier
+  // eingetragen, VOR dem ersten Deploy:
+  //     npx wrangler kv namespace create docuware-mcp-oauth
+  // Ein eigener Namensraum je Server ist Absicht: die Schlüssel (Zugangsdaten, Tokens,
+  // Download-Links) tragen keine Serverkennung, geteilt würden sie sich überschreiben.
+  "kv_namespaces": [
+    {
+      "binding": "OAUTH_KV",
+      "id": "HIER_DIE_KV_ID_EINTRAGEN"
+    }
+  ],
+  "vars": {
+    "HUB_URL": "https://mcp-hub.ksqsebastian.workers.dev"
+  }
+}
